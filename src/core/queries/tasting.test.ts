@@ -105,4 +105,77 @@ describe("reading the Tastings", () => {
   it("combines the filters", async () => {
     expect(await ids({ kindId: "kind_red", minRating: 3, from: "2026-07-01" })).toEqual([barolo]);
   });
+
+  // The diary's search (spec §4): what was drunk and what was said of it, word by word.
+  describe("by what the owner typed", () => {
+    it("finds a Tasting by its Label's name, producer, appellation, region, country and grapes", async () => {
+      expect(await ids({ text: "castiglione" })).toEqual([barolo]);
+      expect(await ids({ text: "VIETTI" })).toEqual([barolo]);
+      expect(await ids({ text: "chianti classico" })).toEqual([chianti]);
+      expect(await ids({ text: "islay" })).toEqual([whisky]);
+      expect(await ids({ text: "colorino" })).toEqual([chianti]);
+      const french = await aLabel({ name: "Sancerre", country: "France", vintage: 2022 });
+      const there = await recordTasting({ vintageId: french.vintageId, tastedOn: "2026-05-01" });
+      expect(await ids({ text: "france" })).toEqual([there]);
+    });
+
+    it("finds a Tasting by its Kind's name", async () => {
+      expect(await ids({ text: "whisky" })).toEqual([whisky]);
+      expect(await ids({ text: "red" })).toEqual([barolo, chianti]);
+    });
+
+    it("finds a loose Tasting by its description", async () => {
+      expect(await ids({ text: "montalcino" })).toEqual([loose]);
+      expect(await ids({ text: "sangiovese" })).toEqual([loose, chianti]);
+    });
+
+    it("finds a Tasting by its food, place, company, notes and guided answers", async () => {
+      const etna = await aLabel({ name: "Etna Rosso", producer: "Benanti", vintage: 2021 });
+      const said = await recordTasting({
+        vintageId: etna.vintageId,
+        tastedOn: "2026-09-01",
+        food: "Grilled octopus",
+        place: "Trattoria da Nino",
+        company: "Giulia",
+        notes: "Smoky, volcanic",
+        likedIt: "Very much",
+        bodyAndFeel: "Light and fresh",
+        remindedOf: "Wild strawberries",
+      });
+      for (const word of ["octopus", "nino", "giulia", "volcanic", "much", "fresh", "strawberr"]) {
+        expect(await ids({ text: word })).toEqual([said]);
+      }
+    });
+
+    it("folds accents and case on both sides", async () => {
+      const rose = await aLabel({
+        producer: "Château d'Esclans",
+        name: "Whispering Angel Rosé",
+        kindId: "kind_rose",
+        region: "Côtes de Provence",
+        appellation: null,
+        grapes: ["Grenache"],
+        vintage: 2023,
+      });
+      const tasted = await recordTasting({ vintageId: rose.vintageId, tastedOn: "2026-07-01" });
+      expect(await ids({ text: "rose chateau" })).toEqual([tasted]);
+      expect(await ids({ text: "CÔTES" })).toEqual([tasted]);
+    });
+
+    // Narrowing: *barolo vietti* is the Barolo, not every Barolo and everything by Vietti.
+    it("asks for every word, each at the start of a word", async () => {
+      expect(await ids({ text: "barolo vietti" })).toEqual([barolo]);
+      expect(await ids({ text: "barolo islay" })).toEqual([]);
+      expect(await ids({ text: "olo" })).toEqual([]);
+    });
+
+    it("reads nothing typed, or only punctuation, as no search", async () => {
+      expect(await ids({ text: "   " })).toHaveLength(4);
+      expect(await ids({ text: "—!" })).toHaveLength(4);
+    });
+
+    it("combines with the section", async () => {
+      expect(await ids({ text: "sangiovese", section: "Wine" })).toEqual([chianti]);
+    });
+  });
 });

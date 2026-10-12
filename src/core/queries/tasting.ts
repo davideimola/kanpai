@@ -37,14 +37,52 @@ export type TastingFilter = {
   from?: string;
   /** The last day, included. */
   to?: string;
+  /**
+   * What the owner typed into the diary's search: every word of it must start a word of the
+   * Tasting or of what was drunk (`everyWordIn`). Accents and case folded.
+   */
+  text?: string;
 };
+
+/**
+ * A condition that holds when **every word typed** — the parameter `typed`, folded and split as
+ * `searchLabels` splits it — starts a word of `haystack`, folded too. Both are SQL written
+ * here, never a caller's value; what was typed reaches it as a parameter, and a word holds
+ * only letters and digits by then, so it is safe inside the pattern.
+ *
+ * Every word rather than any, because the diary's search narrows: *barolo 2019* is the Barolo,
+ * not every Barolo and every 2019. The start of a word rather than anywhere in it, so *gin*
+ * finds a gin and not an *original*. Nothing typed, or nothing but punctuation, holds for all.
+ */
+export function everyWordIn(haystack: string, typed: string): string {
+  return `not exists (
+            select 1 from regexp_split_to_table(lower(unaccent(${typed})), '[^a-z0-9]+') as word
+             where word <> ''
+               and lower(unaccent(${haystack})) !~ ('(^|[^a-z0-9])' || word))`;
+}
+
+/**
+ * What a Tasting is found by, of the Tasting aliased `t`: the occasion and the owner's words —
+ * the food, the place, the company, the notes and the guided answers — and a loose one's
+ * description (ADR-0005). What was drunk is `LABEL_WORDS`.
+ */
+export const TASTING_WORDS = `concat_ws(' ', t.description, t.food, t.place, t.company, t.notes,
+                                 t.liked_it, t.body_and_feel, t.reminded_of)`;
+
+/**
+ * What a Label is found by, of the Label aliased `l` and its Kind `k`: its name, producer,
+ * appellation, region, country, grapes, and its Kind's name — *Red*, *Gin*.
+ */
+export const LABEL_WORDS = `concat_ws(' ', l.name, l.producer, l.appellation, l.region, l.country,
+                                 array_to_string(l.grapes, ' '), k.name)`;
 
 /**
  * The Tastings, newest first, filtered (spec §3, `read_tastings`).
  *
  * Loose Tastings (ADR-0005) are read alongside the others. They have no Kind, so a Kind
  * or a section filter leaves them out; a region or a grape filter also looks in their description,
- * because *a Primitivo by the glass* is a Primitivo whether or not a Label says so.
+ * because *a Primitivo by the glass* is a Primitivo whether or not a Label says so. A text
+ * filter reads both: what was drunk, and what was said of it.
  */
 export async function listTastings(filter: TastingFilter = {}): Promise<TastingEntry[]> {
   for (const day of [filter.from, filter.to]) {
@@ -78,6 +116,7 @@ export async function listTastings(filter: TastingFilter = {}): Promise<TastingE
         and ($5::date is null or t.tasted_on >= $5)
         and ($6::date is null or t.tasted_on <= $6)
         and ($7::text is null or k.section = $7)
+        and ${everyWordIn(`concat_ws(' ', ${LABEL_WORDS}, ${TASTING_WORDS})`, "$8::text")}
       order by t.tasted_on desc, t.created_at desc, t.id`,
     [
       filter.kindId ?? null,
@@ -87,6 +126,7 @@ export async function listTastings(filter: TastingFilter = {}): Promise<TastingE
       filter.from ?? null,
       filter.to ?? null,
       blankless(filter.section),
+      blankless(filter.text),
     ]
   );
 }
