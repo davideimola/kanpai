@@ -4,6 +4,7 @@ import { query } from "../db.ts";
 import { Refusal, refusing } from "../refusal.ts";
 import { type Executor, transaction } from "../transaction.ts";
 import { changing, said } from "../typed.ts";
+import type { BottleShape } from "./kind.ts";
 import { recordSource, type SourceRecord } from "./source.ts";
 import { asColumns, type Dating, vintageRefusal } from "./vintage.ts";
 
@@ -29,6 +30,8 @@ export type LabelFacts = {
   strength?: number | null;
   /** A photograph the owner uploaded. The column exists; hosting it is not built yet. */
   ownImageUrl?: string | null;
+  /** The silhouette, when it is not the Kind's: a Riesling in a flute (ADR-0012). */
+  bottleShape?: BottleShape | null;
 };
 
 /** A Label about to be created. */
@@ -62,6 +65,7 @@ const COLUMNS: Record<keyof LabelFacts, string> = {
   ageStatement: "age_statement",
   strength: "strength",
   ownImageUrl: "own_image_url",
+  bottleShape: "bottle_shape",
 };
 
 const NO_SUCH_LABEL = "No Label has that id.";
@@ -79,6 +83,8 @@ function labelRefusal(constraint: string | undefined): string {
       return "Each grape is a name.";
     case "labels_own_image_url_is_a_web_address":
       return "An image is a web address, starting with http:// or https://.";
+    case "labels_bottle_shape_is_known":
+      return "A bottle is drawn as a Bordeaux, a Burgundy, a flute, a spirit bottle, a sake bottle or a beer.";
     case "labels_kind_without_vintages_keeps_only_nv":
       return "That Kind has no vintages, and this Label has a year or an unknown Vintage. Move or merge those first.";
     case "labels_have_a_vintage":
@@ -103,6 +109,7 @@ function asStored(facts: Partial<LabelFacts>): Partial<Record<keyof LabelFacts, 
     ageStatement: said(facts.ageStatement),
     strength: facts.strength,
     ownImageUrl: said(facts.ownImageUrl),
+    bottleShape: facts.bottleShape,
   };
 }
 
@@ -124,8 +131,8 @@ export async function createLabel(
       transaction(async (run) => {
         const [label] = await run<{ id: string }>(
           `insert into labels (producer, name, kind_id, country, region, appellation, grapes,
-                               age_statement, strength, unverified, own_image_url)
-           values ($1, $2, $3, $4, $5, $6, coalesce($7::text[], '{}'), $8, $9, $10, $11)
+                               age_statement, strength, unverified, own_image_url, bottle_shape)
+           values ($1, $2, $3, $4, $5, $6, coalesce($7::text[], '{}'), $8, $9, $10, $11, $12)
            returning id`,
           [
             stored.producer ?? null,
@@ -139,6 +146,7 @@ export async function createLabel(
             stored.strength ?? null,
             input.unverified,
             stored.ownImageUrl ?? null,
+            stored.bottleShape ?? null,
           ]
         );
         if (!label) throw new Error("insert into labels returned no row");
@@ -241,7 +249,8 @@ export async function mergeLabels(survivorId: string, absorbedId: string): Promi
                   grapes = case when cardinality(s.grapes) = 0 then a.grapes else s.grapes end,
                   age_statement = coalesce(s.age_statement, a.age_statement),
                   strength = coalesce(s.strength, a.strength),
-                  own_image_url = coalesce(s.own_image_url, a.own_image_url)
+                  own_image_url = coalesce(s.own_image_url, a.own_image_url),
+                  bottle_shape = coalesce(s.bottle_shape, a.bottle_shape)
              from labels a
             where s.id = $1 and a.id = $2`,
           [survivorId, absorbedId]

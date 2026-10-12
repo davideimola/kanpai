@@ -171,6 +171,28 @@ describe("amending a Label", () => {
     });
   });
 
+  // ADR-0012: a Label may be drawn in a shape that is not its Kind's, and go back to it.
+  it("overrides its Kind's bottle shape, and clears the override", async () => {
+    const { labelId } = await aLabel({ kindId: "kind_white" });
+
+    await amendLabel(labelId, { bottleShape: "flute" });
+    expect((await getLabel(labelId))?.silhouette.shape).toBe("flute");
+
+    await amendLabel(labelId, { bottleShape: null });
+    expect(await getLabel(labelId)).toMatchObject({
+      bottleShape: null,
+      silhouette: { shape: "burgundy" },
+    });
+  });
+
+  it("refuses a shape nobody drew", async () => {
+    const { labelId } = await aLabel();
+    await expect(amendLabel(labelId, { bottleShape: "amphora" as never })).rejects.toMatchObject({
+      code: "invalid",
+      constraint: "labels_bottle_shape_is_known",
+    });
+  });
+
   it("does not mark the Label verified", async () => {
     const { labelId } = await aLabel({ unverified: true });
     await amendLabel(labelId, { region: "Langhe" });

@@ -2,6 +2,7 @@ import "server-only";
 
 import { query } from "../db.ts";
 import type { Level } from "../verbs/bottle.ts";
+import { SILHOUETTE, type Silhouette } from "./label.ts";
 
 /** One Bottle in the house, with what the sommelier needs to suggest it. */
 export type CellarBottle = {
@@ -19,6 +20,8 @@ export type CellarBottle = {
     kind: { id: string; name: string };
     region: string | null;
     appellation: string | null;
+    /** How it is drawn on the shelf (ADR-0012). */
+    silhouette: Silhouette;
   };
 };
 
@@ -39,7 +42,8 @@ export async function readCellar(): Promise<CellarSection[]> {
             json_build_object('id', v.id, 'dating', v.dating, 'year', v.year) as vintage,
             json_build_object('id', l.id, 'producer', l.producer, 'name', l.name,
               'kind', json_build_object('id', k.id, 'name', k.name),
-              'region', l.region, 'appellation', l.appellation) as label,
+              'region', l.region, 'appellation', l.appellation,
+              'silhouette', ${SILHOUETTE}) as label,
             k.section
        from bottles b
        join vintages v on v.id = b.vintage_id

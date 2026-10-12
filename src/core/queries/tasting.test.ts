@@ -53,8 +53,9 @@ describe("reading the Tastings", () => {
       vintage: { dating: "year", year: 2019 },
       label: {
         name: "Barolo Castiglione",
-        kind: { id: "kind_red", name: "Red" },
+        kind: { id: "kind_red", name: "Red", section: "Wine" },
         appellation: "Barolo",
+        silhouette: { shape: "bordeaux", liquid: "red", imageUrl: null },
       },
     });
     expect(all[1]).toMatchObject({
@@ -68,6 +69,14 @@ describe("reading the Tastings", () => {
   it("filters by Kind", async () => {
     expect(await ids({ kindId: "kind_whisky" })).toEqual([whisky]);
     expect(await ids({ kindId: "kind_red" })).toEqual([barolo, chianti]);
+  });
+
+  // The diary's chips: Wine, Spirits, and whatever section a Kind's row names. A loose
+  // Tasting has no Kind, so it has no section either (ADR-0005).
+  it("filters by section", async () => {
+    expect(await ids({ section: "Wine" })).toEqual([barolo, chianti]);
+    expect(await ids({ section: "Spirits" })).toEqual([whisky]);
+    expect(await ids({ section: "Sake, beer and more" })).toEqual([]);
   });
 
   it("filters by region or appellation, accents and case folded", async () => {

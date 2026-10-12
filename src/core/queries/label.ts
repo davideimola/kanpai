@@ -2,7 +2,27 @@ import "server-only";
 
 import { query } from "../db.ts";
 import type { Level } from "../verbs/bottle.ts";
+import type { BottleShape, Liquid } from "../verbs/kind.ts";
 import type { SourceName } from "../verbs/source.ts";
+
+/**
+ * How a Label is drawn (ADR-0012): its shape — its own, else its Kind's — the Kind's liquid,
+ * and the image to crop into the label, when there is one: the owner's own, else the first
+ * Source's that has one. Hotlinked, never ours (ADR-0011).
+ */
+export type Silhouette = { shape: BottleShape; liquid: Liquid; imageUrl: string | null };
+
+/**
+ * The `Silhouette` of the Label aliased `l`, whose Kind is aliased `k`, as one JSON column.
+ * Written once so every query that draws a Label draws it the same way.
+ */
+export const SILHOUETTE = `json_build_object(
+    'shape', coalesce(l.bottle_shape, k.bottle_shape),
+    'liquid', k.liquid,
+    'imageUrl', coalesce(l.own_image_url,
+      (select s.image_url from label_sources s
+        where s.label_id = l.id and s.image_url is not null
+        order by s.looked_up_at, s.id limit 1)))`;
 
 /** A Kind as a Label carries it. */
 export type KindOfLabel = { id: string; name: string; section: string; hasVintages: boolean };
@@ -79,6 +99,9 @@ export type LabelPage = {
   strength: number | null;
   unverified: boolean;
   ownImageUrl: string | null;
+  /** The shape this Label overrides its Kind's with; `null` for the Kind's (ADR-0012). */
+  bottleShape: BottleShape | null;
+  silhouette: Silhouette;
   createdAt: Date;
   /** Over every Vintage, the unknown one counted like any other (ADR-0010). */
   score: Score;
@@ -120,7 +143,8 @@ export async function getLabel(labelId: string): Promise<LabelPage | null> {
   >(
     `select l.id, l.producer, l.name, l.country, l.region, l.appellation, l.grapes,
             l.age_statement as "ageStatement", l.strength::float8 as strength, l.unverified,
-            l.own_image_url as "ownImageUrl", l.created_at as "createdAt",
+            l.own_image_url as "ownImageUrl", l.bottle_shape as "bottleShape",
+            ${SILHOUETTE} as silhouette, l.created_at as "createdAt",
             k.id as "kindId", k.name as "kindName", k.section as "kindSection",
             k.has_vintages as "kindHasVintages",
             ${scoreOver("t.vintage_id in (select id from vintages where label_id = l.id)")}
@@ -193,11 +217,13 @@ export type LabelInList = {
   region: string | null;
   appellation: string | null;
   unverified: boolean;
+  silhouette: Silhouette;
   createdAt: Date;
 };
 
 const IN_LIST = `l.id, l.producer, l.name, json_build_object('id', k.id, 'name', k.name) as kind,
-                 l.region, l.appellation, l.unverified, l.created_at as "createdAt"`;
+                 l.region, l.appellation, l.unverified, ${SILHOUETTE} as silhouette,
+                 l.created_at as "createdAt"`;
 
 /**
  * The Labels the assistant created and the owner has not looked at yet — the to-check page
@@ -210,6 +236,14 @@ export async function listUnverifiedLabels(): Promise<LabelInList[]> {
       where l.unverified
       order by l.created_at, l.id`
   );
+}
+
+/** How many Labels wait on the to-check page: the count the navigation carries beside it. */
+export async function countUnverifiedLabels(): Promise<number> {
+  const [row] = await query<{ count: number }>(
+    "select count(*)::int as count from labels where unverified"
+  );
+  return row?.count ?? 0;
 }
 
 /** A Label found by a search, and how well it matched. */

@@ -5,7 +5,7 @@ import { markLabelVerified } from "../verbs/label.ts";
 import { recordSource } from "../verbs/source.ts";
 import { recordTasting } from "../verbs/tasting.ts";
 import { ensureVintage } from "../verbs/vintage.ts";
-import { getLabel, listUnverifiedLabels, searchLabels } from "./label.ts";
+import { countUnverifiedLabels, getLabel, listUnverifiedLabels, searchLabels } from "./label.ts";
 
 // Seam 1, against the real Postgres. The scores are derived and never stored (ADR-0003), so
 // they are tested here, through the one question that answers them.
@@ -69,7 +69,64 @@ describe("one Label, whole", () => {
   });
 });
 
+// How a Label is drawn (ADR-0012): its Kind's shape unless it overrides it, its Kind's liquid,
+// and the image to crop into its label — the owner's own first, else its first Source's.
+describe("a Label's silhouette", () => {
+  it("is its Kind's shape and liquid, with no image when nothing has one", async () => {
+    const { labelId } = await aLabel({ kindId: "kind_sparkling", vintage: "nv" });
+
+    expect(await getLabel(labelId)).toMatchObject({
+      bottleShape: null,
+      silhouette: { shape: "flute", liquid: "white", imageUrl: null },
+    });
+  });
+
+  it("takes the Label's own shape over its Kind's, and never its liquid", async () => {
+    const { labelId } = await aLabel({ kindId: "kind_white", bottleShape: "flute" });
+
+    expect(await getLabel(labelId)).toMatchObject({
+      bottleShape: "flute",
+      silhouette: { shape: "flute", liquid: "white" },
+    });
+  });
+
+  it("crops the first Source's image, and the owner's own over any Source's", async () => {
+    const { labelId } = await aLabel();
+    await recordSource(labelId, {
+      source: "vivino",
+      idAtSource: "9",
+      imageUrl: "https://images.vivino.com/bottle.png",
+    });
+    await recordSource(labelId, {
+      source: "openfoodfacts",
+      idAtSource: "800",
+      imageUrl: "https://images.openfoodfacts.org/front.jpg",
+    });
+    expect((await getLabel(labelId))?.silhouette.imageUrl).toBe(
+      "https://images.vivino.com/bottle.png"
+    );
+
+    const own = await aLabel({
+      name: "Barolo Rocche",
+      ownImageUrl: "https://example.org/mine.jpg",
+    });
+    await recordSource(own.labelId, {
+      source: "vivino",
+      idAtSource: "10",
+      imageUrl: "https://images.vivino.com/other.png",
+    });
+    expect((await getLabel(own.labelId))?.silhouette.imageUrl).toBe("https://example.org/mine.jpg");
+  });
+});
+
 describe("the Labels to check", () => {
+  it("are counted for the navigation", async () => {
+    await aLabel({ name: "Sassicaia", unverified: true });
+    await aLabel({ name: "Brolo Campofiorin", unverified: false });
+
+    expect(await countUnverifiedLabels()).toBe(1);
+  });
+
   it("are the unverified ones, oldest first, until the owner marks them", async () => {
     const first = await aLabel({ name: "Sassicaia", unverified: true });
     await aLabel({ name: "Brolo Campofiorin", unverified: false });
