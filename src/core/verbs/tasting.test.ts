@@ -10,6 +10,40 @@ import { attachTasting, editTasting, recordTasting, strikeTasting } from "./tast
 beforeEach(emptyTheCatalogue);
 
 describe("recording a Tasting", () => {
+  it("records on a Label's unknown Vintage when the year was not written down", async () => {
+    const { labelId } = await aLabel({ vintage: 2019 });
+
+    await recordTasting({ vintageOf: { labelId, dating: "unknown" }, rating: 3.5 });
+    await recordTasting({ vintageOf: { labelId, dating: "unknown" }, rating: 4 });
+
+    const vintages = (await getLabel(labelId))?.vintages ?? [];
+    expect(vintages.map((v) => [v.dating, v.tastings.length])).toEqual([
+      ["year", 0],
+      ["unknown", 2],
+    ]);
+  });
+
+  it("refuses naming the Vintage both ways", async () => {
+    const { labelId, vintageId } = await aLabel();
+    await expect(
+      recordTasting({ vintageId, vintageOf: { labelId, dating: 2019 } })
+    ).rejects.toMatchObject({ code: "invalid" });
+  });
+
+  it("leaves no new Vintage behind when the Tasting is refused", async () => {
+    const { labelId } = await aLabel({ vintage: 2019 });
+    await expect(
+      recordTasting({ vintageOf: { labelId, dating: 2020 }, rating: 4.3 })
+    ).rejects.toMatchObject({ constraint: "tastings_rating_is_one_to_five_in_halves" });
+    expect((await getLabel(labelId))?.vintages.map((v) => v.year)).toEqual([2019]);
+  });
+
+  it("refuses a Label that does not exist", async () => {
+    await expect(
+      recordTasting({ vintageOf: { labelId: "lbl_missing", dating: 2019 } })
+    ).rejects.toMatchObject({ code: "not-found" });
+  });
+
   it("records the occasion and the opinion on a Vintage", async () => {
     const { labelId, vintageId } = await aLabel();
 

@@ -88,6 +88,11 @@ describe("reading the Tastings", () => {
     expect(await ids({ from: "2026-06-01", to: "2026-08-20" })).toEqual([loose, chianti]);
   });
 
+  it("refuses a day that is not one, rather than failing in the driver", async () => {
+    await expect(listTastings({ from: "2026-02-30" })).rejects.toMatchObject({ code: "invalid" });
+    await expect(listTastings({ to: "last week" })).rejects.toMatchObject({ code: "invalid" });
+  });
+
   it("combines the filters", async () => {
     expect(await ids({ kindId: "kind_red", minRating: 3, from: "2026-07-01" })).toEqual([barolo]);
   });

@@ -2,7 +2,9 @@ import "server-only";
 
 import { query } from "../db.ts";
 import { Refusal, refusing } from "../refusal.ts";
+import { type Executor, transaction } from "../transaction.ts";
 import { asPrice, isADay, said } from "../typed.ts";
+import { type VintageOf, vintageIdOf } from "./vintage.ts";
 
 /**
  * How much is left of an open Bottle, by eye (ADR-0007). Four coarse steps are what the
@@ -45,9 +47,12 @@ function bottleRefusal(constraint: string | undefined): string {
 /**
  * Put `count` closed Bottles of one Vintage into the Cellar, bought together. Returns their
  * ids, in the order they were added.
+ *
+ * The Vintage is named by its id, or by its Label and dating — found or created in the same
+ * transaction, so refused Bottles leave no new Vintage behind.
  */
 export async function addBottles(
-  vintageId: string,
+  vintage: string | VintageOf,
   count: number,
   purchase: Purchase = {}
 ): Promise<string[]> {
@@ -60,14 +65,22 @@ export async function addBottles(
     throw new Refusal("invalid", "A day is written 2026-10-12.");
   }
 
+  const write = async (run: Executor) =>
+    run<{ id: string }>(
+      `insert into bottles (vintage_id, bought_on, price, bought_where)
+       select $1, $2::date, $3::numeric, $4 from generate_series(1, $5)
+       returning id`,
+      [
+        await vintageIdOf(vintage, run),
+        purchase.boughtOn ?? null,
+        price,
+        said(purchase.boughtWhere) ?? null,
+        count,
+      ]
+    );
+
   const rows = await refusing(
-    () =>
-      query<{ id: string }>(
-        `insert into bottles (vintage_id, bought_on, price, bought_where)
-         select $1, $2::date, $3::numeric, $4 from generate_series(1, $5)
-         returning id`,
-        [vintageId, purchase.boughtOn ?? null, price, said(purchase.boughtWhere) ?? null, count]
-      ),
+    () => (typeof vintage === "string" ? write(query) : transaction(write)),
     bottleRefusal
   );
   return rows.map((row) => row.id);

@@ -2,7 +2,9 @@ import "server-only";
 
 import { query } from "../db.ts";
 import { Refusal, refusing } from "../refusal.ts";
+import { type Executor, transaction } from "../transaction.ts";
 import { changing, isADay, said } from "../typed.ts";
+import { type VintageOf, vintageIdOf } from "./vintage.ts";
 
 /**
  * What a Tasting says about the occasion and the opinion (`CONTEXT.md`, **Tasting**,
@@ -29,9 +31,13 @@ export type TastingFacts = {
 /**
  * A Tasting about to be recorded: on a Vintage, **or** loose with a description of what was
  * known — exactly one of the two (ADR-0005).
+ *
+ * The Vintage is named by its id, or by its Label and dating (`vintageOf`) when the year's
+ * Vintage may not exist yet — it is then found or created in the same transaction.
  */
 export type NewTasting = TastingFacts & {
   vintageId?: string | null;
+  vintageOf?: VintageOf;
   /** For a loose Tasting: *a Primitivo by the glass*, Kind, grape, region. */
   description?: string | null;
 };
@@ -88,27 +94,39 @@ function asStored(facts: TastingFacts & { description?: string | null }) {
  */
 export async function recordTasting(tasting: NewTasting): Promise<string> {
   const s = asStored(tasting);
+  if (tasting.vintageId && tasting.vintageOf) {
+    throw new Refusal("invalid", "Name the Vintage by its id or by its Label and year, not both.");
+  }
+
+  const write = async (run: Executor) => {
+    const vintageId = tasting.vintageOf
+      ? await vintageIdOf(tasting.vintageOf, run)
+      : (tasting.vintageId ?? null);
+    return run<{ id: string }>(
+      `insert into tastings (vintage_id, description, tasted_on, place, food, company, rating,
+                             notes, liked_it, body_and_feel, reminded_of)
+       values ($1, $2, coalesce($3::date, current_date), $4, $5, $6, $7, $8, $9, $10, $11)
+       returning id`,
+      [
+        vintageId,
+        s.description ?? null,
+        s.tastedOn ?? null,
+        s.place ?? null,
+        s.food ?? null,
+        s.company ?? null,
+        s.rating ?? null,
+        s.notes ?? null,
+        s.likedIt ?? null,
+        s.bodyAndFeel ?? null,
+        s.remindedOf ?? null,
+      ]
+    );
+  };
+
+  // A Vintage found or created by its Label is a second write, so the two are one
+  // transaction: a refused Tasting leaves no new Vintage behind.
   const [row] = await refusing(
-    () =>
-      query<{ id: string }>(
-        `insert into tastings (vintage_id, description, tasted_on, place, food, company, rating,
-                               notes, liked_it, body_and_feel, reminded_of)
-         values ($1, $2, coalesce($3::date, current_date), $4, $5, $6, $7, $8, $9, $10, $11)
-         returning id`,
-        [
-          tasting.vintageId ?? null,
-          s.description ?? null,
-          s.tastedOn ?? null,
-          s.place ?? null,
-          s.food ?? null,
-          s.company ?? null,
-          s.rating ?? null,
-          s.notes ?? null,
-          s.likedIt ?? null,
-          s.bodyAndFeel ?? null,
-          s.remindedOf ?? null,
-        ]
-      ),
+    () => (tasting.vintageOf ? transaction(write) : write(query)),
     tastingRefusal
   );
   if (!row) throw new Error("insert into tastings returned no row");

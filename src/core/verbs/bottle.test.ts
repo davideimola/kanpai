@@ -60,6 +60,28 @@ describe("adding Bottles", () => {
       constraint: "bottles_vintage_exists",
     });
   });
+
+  it("adds them to a Label's year, creating that Vintage when it is not there yet", async () => {
+    const { labelId, vintageId } = await aLabel({ vintage: 2019 });
+
+    await addBottles({ labelId, dating: 2021 }, 2);
+    await addBottles({ labelId, dating: 2019 }, 1);
+
+    const vintages = (await getLabel(labelId))?.vintages ?? [];
+    expect(vintages.map((v) => [v.year, v.bottles.length])).toEqual([
+      [2021, 2],
+      [2019, 1],
+    ]);
+    expect(vintages[1]?.id).toBe(vintageId);
+  });
+
+  it("refuses a year on a Label whose Kind has no vintages", async () => {
+    const { labelId } = await aLabel({ kindId: "kind_whisky", vintage: "nv" });
+    await expect(addBottles({ labelId, dating: 2019 }, 1)).rejects.toMatchObject({
+      code: "invalid",
+      constraint: "vintages_of_a_kind_without_vintages_are_nv",
+    });
+  });
 });
 
 describe("opening, levelling and finishing a Bottle", () => {

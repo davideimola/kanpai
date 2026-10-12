@@ -1,6 +1,8 @@
 import "server-only";
 
 import { query } from "../db.ts";
+import { Refusal } from "../refusal.ts";
+import { isADay } from "../typed.ts";
 import type { LabelTasting } from "./label.ts";
 
 /** A Tasting as the diary and `read_tastings` show it: the occasion, and what was drunk. */
@@ -41,6 +43,10 @@ export type TastingFilter = {
  * because *a Primitivo by the glass* is a Primitivo whether or not a Label says so.
  */
 export async function listTastings(filter: TastingFilter = {}): Promise<TastingEntry[]> {
+  for (const day of [filter.from, filter.to]) {
+    if (day !== undefined && !isADay(day))
+      throw new Refusal("invalid", "A day is written 2026-10-12.");
+  }
   return query<TastingEntry>(
     `select t.id, t.tasted_on::text as "tastedOn", t.place, t.food, t.company,
             t.rating::float8 as rating, t.notes, t.liked_it as "likedIt",

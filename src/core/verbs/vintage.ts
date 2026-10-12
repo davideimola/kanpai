@@ -20,6 +20,13 @@ export function asColumns(dating: Dating): {
   return typeof dating === "number" ? { dating: "year", year: dating } : { dating, year: null };
 }
 
+/**
+ * A Vintage named by its Label and its dating rather than by its id — *the 2019 of this
+ * Label*. What a door hands over when it knows the Label and the year and not whether that
+ * year's Vintage exists yet.
+ */
+export type VintageOf = { labelId: string; dating: Dating };
+
 const NO_SUCH_LABEL = "No Label has that id.";
 
 /** What the owner reads when the database refuses a Vintage, by the rule that refused it. */
@@ -72,6 +79,20 @@ export async function ensureVintage(
     if (!found[0]) throw new Refusal("not-found", "That Vintage could not be found.");
     return found[0].id;
   }, vintageRefusal);
+}
+
+/**
+ * The id of a Vintage named either way: an id is itself, and a Label with a dating is found
+ * or created by `ensureVintage`, on `run`. For a verb that hangs something on a Vintage and
+ * takes both.
+ */
+export async function vintageIdOf(
+  vintage: string | VintageOf,
+  run: Executor = query
+): Promise<string> {
+  return typeof vintage === "string"
+    ? vintage
+    : ensureVintage(vintage.labelId, vintage.dating, run);
 }
 
 /** What learning a year moved, and where. */
