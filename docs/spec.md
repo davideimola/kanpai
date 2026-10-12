@@ -84,7 +84,7 @@ Installable as a PWA (manifest and icons outside the gate), dark and light follo
 
 | # | slice | done when |
 | --- | --- | --- |
-| **S0** | **Scaffold** copied from tsundoku: `mise.toml`, Next.js, Drizzle, the `db` CLI, Biome, Vitest, the owner gate with `AUTH_DEV_OPEN`, the Dockerfile, `compose.yaml`, and CI that publishes the image to GHCR | `pnpm db:up && pnpm dev` shows the Kinds read from Postgres; `docker compose up` does the same from the published image |
+| **S0** | **Scaffold** copied from tsundoku: `mise.toml`, Next.js, Drizzle, the `db` CLI, Biome, Vitest, the owner gate with `AUTH_DEV_OPEN`, the Dockerfile, `compose.yaml`, and CI that publishes the image to GHCR | `pnpm db:up && pnpm dev` shows the Kinds read from Postgres; `docker compose up` does the same from the published image, after signing in (a production image never honours `AUTH_DEV_OPEN`) |
 | **S1** | **Schema and core verbs** | the tables of §2 migrate from scratch; verbs tested against a real Postgres |
 | **S2** | **The MCP door** with issued tokens (first one from a CLI command until the web view exists), the tools of §3 minus Sources | from Claude Code / Claude Desktop locally: create a Label by hand, record a Tasting, read the Cellar |
 | **S3** | **Source research, then the adapter** — measure Open Food Facts and Vivino on ~30 Labels the owner actually drank, as tsundoku measured covers | a research note in `docs/research/`; `search_catalogue` returns images |
