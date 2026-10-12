@@ -109,7 +109,7 @@ door, its gate and its rules are [`src/lib/mcp/README.md`](../src/lib/mcp/README
 | --- | --- |
 | `/` | the diary: Tastings, newest first, by day, each with its rating ring and its bottle drawn from its Kind ([ADR-0012](adr/0012-a-bottle-is-drawn-from-its-kind.md)); filtered by section; at the desk, the open bottles beside it |
 | `/cellar` | the Cellar, one shelf per section (not per Kind), each Bottle drawn — closed full, open with its level; an open Bottle stands alone, closed ones of a Vintage stand together with a count; filtered by Everything, Open, or a section |
-| `/labels/<id>` | one Label: Vintages, Bottles, Tastings, derived scores, Sources and their credit, the photo, when there is one, shown whole behind a *See the photo* link (never drawn into the bottle); edit (every field, the Kind and the bottle shape), merge, record a Tasting, add Bottles, open / set the level / finish / delete a Bottle that is not finished, set the year of the unknown Vintage, mark as checked |
+| `/labels/<id>` | one Label: Vintages, Bottles, Tastings, derived scores, Sources and their credit, the photo, when there is one, shown small and whole beside the Source's credit and full size when pressed (never drawn into the bottle); edit (every field, the Kind and the bottle shape), merge, record a Tasting, add Bottles, open / set the level / finish / delete a Bottle that is not finished, set the year of the unknown Vintage, mark as checked |
 | `/add` | search the catalogue (text — the phone's own text scan types into it — or barcode) → record a Tasting or add Bottles |
 | `/wishlist` | open Wishes |
 | `/palate` | the Palate, editable |

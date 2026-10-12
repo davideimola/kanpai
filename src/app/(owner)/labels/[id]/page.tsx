@@ -43,7 +43,7 @@ import {
 // found — and every correction the owner makes to what the assistant wrote (ADR-0004).
 //
 // The bottle is the hero, drawn from its Kind (ADR-0012). A photograph, when the Label has one,
-// is not drawn into it: it is a link beside the credit, opening the whole photograph credited to
+// is not drawn into it: it sits small beside the credit, opening the whole photograph credited to
 // its Source.
 //
 // Every act that needs fields is a panel whose open state is the address (`?panel=edit`,
@@ -170,7 +170,7 @@ export default async function LabelScreen({
               <Identity label={label} tastings={tastings.length} />
             </div>
           </div>
-          <SourceCredit label={label} today={today} here={here} className="hidden md:block" />
+          <SourceCredit label={label} today={today} here={here} className="hidden md:flex" />
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col gap-7">
@@ -577,38 +577,23 @@ function SourceCredit({
   here: string;
   className?: string;
 }) {
-  const photo = label.silhouette.imageUrl ? (
-    <Link
-      href={`${here}?panel=photo`}
-      scroll={false}
-      className="inline-flex min-h-11 items-center self-start font-medium text-wine underline-offset-4 hover:underline md:min-h-0"
-    >
-      See the photo
-    </Link>
-  ) : null;
-  if (label.sources.length === 0) {
-    return (
-      <div
-        className={`flex flex-col gap-1 text-[13px] leading-normal text-glass-quiet ${className ?? ""}`}
-      >
-        <p>
-          {label.unverified
-            ? "Written by the assistant from what it read. No catalogue knows this bottle yet."
-            : "Written by hand. No catalogue knows this bottle yet."}
-        </p>
-        {photo}
-      </div>
-    );
-  }
-  return (
-    <div
-      className={`flex flex-col gap-1 text-[13px] leading-normal text-glass-quiet ${className ?? ""}`}
-    >
-      {label.sources.map((source) => (
+  // The photo, when there is one, is the credit's own picture: small, whole, and the way to the
+  // full-size one — a photograph beside the words saying where it came from, never drawn into the
+  // bottle (ADR-0012).
+  const imageUrl = label.silhouette.imageUrl;
+  const words =
+    label.sources.length === 0 ? (
+      <p>
+        {label.unverified
+          ? "Written by the assistant from what it read. No catalogue knows this bottle yet."
+          : "Written by hand. No catalogue knows this bottle yet."}
+      </p>
+    ) : (
+      label.sources.map((source) => (
         <p key={source.id}>
-          Details{source.imageUrl ? " and image" : ""} from {SOURCE_NAMES[source.source]}, looked up
+          Details{source.imageUrl ? " and photo" : ""} from {SOURCE_NAMES[source.source]}, looked up
           on {dateAsWritten(new Date(source.lookedUpAt), today)}
-          {source.source === "openfoodfacts" && source.imageUrl ? ", image under CC BY-SA" : ""}.{" "}
+          {source.source === "openfoodfacts" && source.imageUrl ? ", photo under CC BY-SA" : ""}.{" "}
           {source.pageUrl ? (
             <a
               href={source.pageUrl}
@@ -620,8 +605,30 @@ function SourceCredit({
             </a>
           ) : null}
         </p>
-      ))}
-      {photo}
+      ))
+    );
+
+  return (
+    <div
+      className={`flex items-start gap-3.5 text-[13px] leading-normal text-glass-quiet ${className ?? ""}`}
+    >
+      {imageUrl ? (
+        <Link
+          href={`${here}?panel=photo`}
+          scroll={false}
+          aria-label="See the whole photo"
+          className="flex h-[72px] w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-paper-quiet outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          {/* biome-ignore lint/performance/noImgElement: hotlinked, never ours to resize (ADR-0011) */}
+          <img
+            src={imageUrl}
+            alt=""
+            referrerPolicy="no-referrer"
+            className="h-full w-full object-contain p-1"
+          />
+        </Link>
+      ) : null}
+      <div className="flex min-w-0 flex-col gap-1">{words}</div>
     </div>
   );
 }
