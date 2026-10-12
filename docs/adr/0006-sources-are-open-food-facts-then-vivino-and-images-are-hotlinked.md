@@ -1,5 +1,10 @@
 # Sources are Open Food Facts, then Vivino, and images are hotlinked
 
+Status: **superseded by [ADR-0011](0011-sources-are-asked-by-kind-propose-candidates-and-vivino-is-opt-in.md)** —
+the measurement found the order backwards for wine, Vivino's terms forbidding automated access
+outright, and the endpoint worth using to be Algolia's rather than vivino.com's
+([`docs/research/sources.md`](../research/sources.md)).
+
 Finding a Label and its bottle image goes through **one Source adapter** with two backends, in
 order: **Open Food Facts** (open data, an official API, searchable by barcode and by name) and
 then **Vivino** (best coverage of Italian wine and the best bottle shots, through the undocumented

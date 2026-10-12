@@ -20,7 +20,10 @@ forked the repo.
   environment — Google and GitHub to start — restricted to one address. Creating a Google OAuth
   client is the step most likely to make a non-developer give up, and GitHub's takes a minute.
 - **The Vivino fallback is opt-in.** It is off unless `SOURCES_VIVINO=true`
-  ([ADR-0006](0006-sources-are-open-food-facts-then-vivino-and-images-are-hotlinked.md)). Using
+  ([ADR-0006](0006-sources-are-open-food-facts-then-vivino-and-images-are-hotlinked.md)).
+  *Amended by [ADR-0011](0011-sources-are-asked-by-kind-propose-candidates-and-vivino-is-opt-in.md):
+  it is on when the copy's owner sets `VIVINO_ALGOLIA_APP_ID` and `VIVINO_ALGOLIA_KEY`, and
+  there is no separate switch.* Using
   an unofficial endpoint is a choice each person running a copy makes for themselves; the
   default copy talks only to Open Food Facts, whose terms invite it. The owner's own copy turns
   it on.
