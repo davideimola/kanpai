@@ -7,8 +7,8 @@ import type { SourceName } from "../verbs/source.ts";
 
 /**
  * How a Label is drawn (ADR-0012): its shape — its own, else its Kind's — the Kind's liquid,
- * and the image to crop into the label, when there is one: the owner's own, else the first
- * Source's that has one. Hotlinked, never ours (ADR-0011).
+ * and its photo, when there is one: the owner's own, else the first Source's that has one —
+ * shown whole on the Label page, never drawn into the bottle. Hotlinked, never ours (ADR-0011).
  */
 export type Silhouette = { shape: BottleShape; liquid: Liquid; imageUrl: string | null };
 

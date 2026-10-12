@@ -116,7 +116,6 @@ function Item({ item }: { item: ShelfItem }) {
           shape={item.label.silhouette.shape}
           liquid={item.label.silhouette.liquid}
           level={item.level}
-          imageUrl={item.label.silhouette.imageUrl}
           className="h-[82px] w-[27px] motion-safe:transition-transform motion-safe:group-hover:-translate-y-0.5 md:h-[126px] md:w-[42px]"
         />
       </span>

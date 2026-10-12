@@ -61,7 +61,6 @@ export default async function ToCheckPage({ searchParams }: { searchParams: Prom
                   <Silhouette
                     shape={label.silhouette.shape}
                     liquid={label.silhouette.liquid}
-                    imageUrl={label.silhouette.imageUrl}
                     className="h-[72px] w-6"
                   />
                   <span className="flex min-w-0 flex-col gap-0.5">

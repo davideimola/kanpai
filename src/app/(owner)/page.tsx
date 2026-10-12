@@ -110,7 +110,6 @@ export default async function DiaryPage({ searchParams }: { searchParams: Promis
                         shape={item.label.silhouette.shape}
                         liquid={item.label.silhouette.liquid}
                         level={item.level}
-                        imageUrl={item.label.silhouette.imageUrl}
                         className="h-[84px] w-7"
                       />
                     </span>
@@ -163,7 +162,6 @@ function Row({ entry }: { entry: TastingEntry }) {
         <Silhouette
           shape={entry.label.silhouette.shape}
           liquid={entry.label.silhouette.liquid}
-          imageUrl={entry.label.silhouette.imageUrl}
           className="h-[84px] w-7"
         />
       ) : (

@@ -70,7 +70,7 @@ describe("one Label, whole", () => {
 });
 
 // How a Label is drawn (ADR-0012): its Kind's shape unless it overrides it, its Kind's liquid,
-// and the image to crop into its label — the owner's own first, else its first Source's.
+// and its photo — the owner's own first, else its first Source's.
 describe("a Label's silhouette", () => {
   it("is its Kind's shape and liquid, with no image when nothing has one", async () => {
     const { labelId } = await aLabel({ kindId: "kind_sparkling", vintage: "nv" });
@@ -90,7 +90,7 @@ describe("a Label's silhouette", () => {
     });
   });
 
-  it("crops the first Source's image, and the owner's own over any Source's", async () => {
+  it("takes the first Source's image, and the owner's own over any Source's", async () => {
     const { labelId } = await aLabel();
     await recordSource(labelId, {
       source: "vivino",

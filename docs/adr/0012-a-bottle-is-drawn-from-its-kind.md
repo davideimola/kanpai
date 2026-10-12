@@ -26,17 +26,20 @@ database rather than drawn as nothing. Growing either is a migration and a drawi
 ## The label image
 
 A Label's image — its Source's (`label_sources.image_url`, hotlinked, ADR-0011) or the owner's
-own (`own_image_url`) — is a **recognition aid**, not the picture of record. It is cropped into
-the silhouette's label rectangle, roughly the lower middle of a whole-bottle photograph, where
-the label is. With no image the rectangle stays plain paper. The whole photograph is shown on
-the Label's page alone, behind a tap, credited to its Source (Open Food Facts' images are CC
-BY-SA: the Source's name and a link to its page).
+own (`own_image_url`) — is a **recognition aid**, not the picture of record, and it is **not
+drawn into the silhouette**: the label rectangle is always plain paper. Cropping the photograph
+into it was built first and dropped on 2026-10-12, once seen with real Labels: at the sizes a
+shelf draws, the crop read as a smudge, said little, and spoiled the drawing. The whole
+photograph is shown on the Label's page alone, behind a *See the photo* link beside the credit,
+credited to its Source (Open Food Facts' images are CC BY-SA: the Source's name and a link to
+its page). Where a photograph is what tells two bottles apart — choosing among a Source's
+candidates — it is shown whole and small beside each one (S6).
 
 ## Consequences
 
 - **The drawing is data the queries return.** The Cellar, the diary and the Label page read
-  each Label's shape (its own, else its Kind's), its Kind's liquid and its image, so a screen
-  draws without knowing any Kind.
+  each Label's shape (its own, else its Kind's), its Kind's liquid and its image (for the Label
+  page's photo link), so a screen draws without knowing any Kind.
 - **A Kind can also be hidden** (`kinds.hidden`). A Kind with Labels is never deleted — the
   foreign key refuses it — so retiring one the owner never uses is hiding it: it leaves every
   list a form or an assistant picks from (`list_kinds` included) and stays on every Label

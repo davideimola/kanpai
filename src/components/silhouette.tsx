@@ -1,5 +1,3 @@
-import { useId } from "react";
-
 import type { Level } from "@/core/verbs/bottle";
 import type { BottleShape, Liquid } from "@/core/verbs/kind";
 import { cn } from "@/lib/utils";
@@ -14,11 +12,11 @@ import { cn } from "@/lib/utils";
 // Every shape is drawn in the same 40 × 120 box with its base on y = 116, so a row of them
 // stands on one line whatever they are, and the shelf under them is a rule. Each knows four
 // numbers besides its outline: the inside walls (`left`, `right`) and the shoulder (`top`), which
-// a full Level reaches, and the rectangle where a label sits (`label`), which a Source's image is
-// cropped into.
+// a full Level reaches, and the rectangle where a label sits (`label`), left as plain paper: a
+// photograph cropped into it was tried and read as a smudge at this size, so the photograph lives
+// on the Label page instead (ADR-0012).
 //
-// A server component with no state. `useId` is the one hook in it, and only for the clip path's
-// id, which has to be unique on a page that draws thirty of these.
+// A server component with no state.
 
 type Geometry = {
   /** The outline, closed, as one path. */
@@ -107,7 +105,7 @@ const BASE = 116;
 
 /**
  * A bottle: closed (filled) unless it has a Level, in which case it is open and holds that
- * much. With an image, the image is cropped into the label; without, the label is paper.
+ * much. The label is always paper.
  *
  * Decorative unless `title` is given — beside a name, a picture of the bottle says nothing a
  * screen reader needs twice.
@@ -116,7 +114,6 @@ export function Silhouette({
   shape,
   liquid,
   level = null,
-  imageUrl = null,
   title,
   className,
 }: {
@@ -124,11 +121,9 @@ export function Silhouette({
   liquid: Liquid;
   /** An open Bottle's Level; `null` for a closed one, or for a Label drawn as itself. */
   level?: Level | null;
-  imageUrl?: string | null;
   title?: string;
   className?: string;
 }) {
-  const clip = `label-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
   const g = SHAPES[shape];
   const colour = LIQUID[liquid];
   const open = level !== null;
@@ -136,12 +131,6 @@ export function Silhouette({
 
   // The liquid's surface, for an open Bottle: a full one reaches the shoulder.
   const surface = open ? BASE - FILLED[level] * (BASE - g.top) : BASE;
-
-  // The image is laid over a box taller than the label, so the label shows roughly the lower
-  // middle of a whole-bottle photograph — which is where the label is on one — and clipped to
-  // the rectangle. `slice` covers the box whatever the photograph's proportions.
-  const imageHeight = lh / 0.3;
-  const imageWidth = lw * 1.4;
 
   return (
     <svg
@@ -163,24 +152,6 @@ export function Silhouette({
         />
       ) : null}
       <rect x={lx} y={ly} width={lw} height={lh} rx={1} fill="var(--bottle-label)" />
-      {imageUrl ? (
-        <>
-          <defs>
-            <clipPath id={clip}>
-              <rect x={lx} y={ly} width={lw} height={lh} rx={1} />
-            </clipPath>
-          </defs>
-          <image
-            href={imageUrl}
-            x={lx + lw / 2 - imageWidth / 2}
-            y={ly - 0.55 * imageHeight}
-            width={imageWidth}
-            height={imageHeight}
-            preserveAspectRatio="xMidYMid slice"
-            clipPath={`url(#${clip})`}
-          />
-        </>
-      ) : null}
       <path
         d={g.outline}
         fill="none"

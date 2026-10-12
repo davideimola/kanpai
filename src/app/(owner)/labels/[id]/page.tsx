@@ -42,8 +42,9 @@ import {
 // ONE LABEL (spec §4): what it is, its Vintages and their Bottles, its Tastings, where it was
 // found — and every correction the owner makes to what the assistant wrote (ADR-0004).
 //
-// The bottle is the hero, drawn from its Kind (ADR-0012), with the Source's image cropped into
-// its label as a recognition aid; the whole photograph is behind a tap, credited to its Source.
+// The bottle is the hero, drawn from its Kind (ADR-0012). A photograph, when the Label has one,
+// is not drawn into it: it is a link beside the credit, opening the whole photograph credited to
+// its Source.
 //
 // Every act that needs fields is a panel whose open state is the address (`?panel=edit`,
 // `merge`, `taste`, `bottles`, `photo`; `@/components/drawer`). The Bottle acts — open, set the
@@ -164,12 +165,12 @@ export default async function LabelScreen({
         {/* The bottle. */}
         <div className="flex flex-col gap-3 md:w-80 md:shrink-0">
           <div className="grid grid-cols-[104px_minmax(0,1fr)] items-end gap-5 md:block">
-            <Hero label={label} here={here} />
+            <Hero label={label} />
             <div className="flex flex-col gap-1.5 pb-1.5 md:hidden">
               <Identity label={label} tastings={tastings.length} />
             </div>
           </div>
-          <SourceCredit label={label} today={today} className="hidden md:block" />
+          <SourceCredit label={label} today={today} here={here} className="hidden md:block" />
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col gap-7">
@@ -215,7 +216,7 @@ export default async function LabelScreen({
           </div>
 
           <section className="flex flex-col gap-2 rounded-2xl bg-paper-raised p-4 md:hidden">
-            <SourceCredit label={label} today={today} />
+            <SourceCredit label={label} today={today} here={here} />
             <Link
               href={`${here}?panel=merge`}
               scroll={false}
@@ -279,30 +280,16 @@ async function kindsFor(label: LabelPage) {
   return (await listEveryKind()).filter((kind) => !kind.hidden || kind.id === label.kind.id);
 }
 
-function Hero({ label, here }: { label: LabelPage; here: string }) {
-  const drawing = (
-    <Silhouette
-      shape={label.silhouette.shape}
-      liquid={label.silhouette.liquid}
-      imageUrl={label.silhouette.imageUrl}
-      title={`A ${SHAPE_NAMES[label.silhouette.shape]?.toLowerCase() ?? "bottle"} of ${label.name}`}
-      className="h-[252px] w-[84px] md:h-[400px] md:w-[133px]"
-    />
-  );
-  const frame =
-    "flex h-[300px] items-end justify-center rounded-[20px] bg-paper-quiet pb-3.5 md:h-[480px] md:rounded-3xl md:pb-7";
-
-  return label.silhouette.imageUrl ? (
-    <Link
-      href={`${here}?panel=photo`}
-      scroll={false}
-      aria-label="See the whole photo"
-      className={`${frame} outline-none focus-visible:ring-2 focus-visible:ring-ring`}
-    >
-      {drawing}
-    </Link>
-  ) : (
-    <div className={frame}>{drawing}</div>
+function Hero({ label }: { label: LabelPage }) {
+  return (
+    <div className="flex h-[300px] items-end justify-center rounded-[20px] bg-paper-quiet pb-3.5 md:h-[480px] md:rounded-3xl md:pb-7">
+      <Silhouette
+        shape={label.silhouette.shape}
+        liquid={label.silhouette.liquid}
+        title={`A ${SHAPE_NAMES[label.silhouette.shape]?.toLowerCase() ?? "bottle"} of ${label.name}`}
+        className="h-[252px] w-[84px] md:h-[400px] md:w-[133px]"
+      />
+    </div>
   );
 }
 
@@ -582,19 +569,35 @@ function Tasting({
 function SourceCredit({
   label,
   today,
+  here,
   className,
 }: {
   label: LabelPage;
   today: string;
+  here: string;
   className?: string;
 }) {
+  const photo = label.silhouette.imageUrl ? (
+    <Link
+      href={`${here}?panel=photo`}
+      scroll={false}
+      className="inline-flex min-h-11 items-center self-start font-medium text-wine underline-offset-4 hover:underline md:min-h-0"
+    >
+      See the photo
+    </Link>
+  ) : null;
   if (label.sources.length === 0) {
     return (
-      <p className={`text-[13px] leading-normal text-glass-quiet ${className ?? ""}`}>
-        {label.unverified
-          ? "Written by the assistant from what it read. No catalogue knows this bottle yet."
-          : "Written by hand. No catalogue knows this bottle yet."}
-      </p>
+      <div
+        className={`flex flex-col gap-1 text-[13px] leading-normal text-glass-quiet ${className ?? ""}`}
+      >
+        <p>
+          {label.unverified
+            ? "Written by the assistant from what it read. No catalogue knows this bottle yet."
+            : "Written by hand. No catalogue knows this bottle yet."}
+        </p>
+        {photo}
+      </div>
     );
   }
   return (
@@ -618,6 +621,7 @@ function SourceCredit({
           ) : null}
         </p>
       ))}
+      {photo}
     </div>
   );
 }
@@ -770,7 +774,6 @@ async function MergePanel({
               <Silhouette
                 shape={other.silhouette.shape}
                 liquid={other.silhouette.liquid}
-                imageUrl={other.silhouette.imageUrl}
                 className="h-14 w-5"
               />
               <div className="flex min-w-0 flex-col">
