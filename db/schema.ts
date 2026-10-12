@@ -265,3 +265,62 @@ export const bottles = pgTable(
     check("bottles_bought_where_is_not_blank", absentOrSaid(table.boughtWhere)),
   ]
 );
+
+/**
+ * One occasion the owner drank something, and what they thought of it (`CONTEXT.md`,
+ * **Tasting**).
+ *
+ * It points at a Vintage **or** carries a free description — exactly one (ADR-0005): *a
+ * Primitivo by the glass* counts even when nobody wrote the producer down. Its Rating is
+ * optional and, when given, one to five in half steps (ADR-0003). Two Tastings of the same
+ * Vintage are two rows: nothing here is unique per Vintage, because the second may disagree
+ * with the first and that disagreement is information.
+ *
+ * `food` is both the occasion's food and the fourth guided answer (*with what food?*); the
+ * other three guided answers have a column each.
+ */
+export const tastings = pgTable(
+  "tastings",
+  {
+    id: text().primaryKey().default(sql`gen_prefixed_id('tst')`),
+    vintageId: text(),
+    description: text(),
+    tastedOn: date({ mode: "string" }).notNull().default(sql`current_date`),
+    place: text(),
+    food: text(),
+    company: text(),
+    rating: numeric({ precision: 2, scale: 1 }),
+    notes: text(),
+    likedIt: text(),
+    bodyAndFeel: text(),
+    remindedOf: text(),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    editedAt: timestamp({ withTimezone: true }),
+  },
+  (table) => [
+    foreignKey({
+      name: "tastings_vintage_exists",
+      columns: [table.vintageId],
+      foreignColumns: [vintages.id],
+    }),
+    index("tastings_vintage_id_idx").on(table.vintageId),
+    index("tastings_tasted_on_idx").on(table.tastedOn),
+    check("tastings_id_is_prefixed", prefixed(table.id, "tst")),
+    check(
+      "tastings_on_a_vintage_or_described",
+      sql`(${table.vintageId} is null) <> (${table.description} is null)`
+    ),
+    check(
+      "tastings_rating_is_one_to_five_in_halves",
+      sql`${table.rating} is null or (${table.rating} between 1 and 5 and ${table.rating} * 2 = round(${table.rating} * 2))`
+    ),
+    check("tastings_description_is_not_blank", absentOrWritten(table.description)),
+    check("tastings_place_is_not_blank", absentOrSaid(table.place)),
+    check("tastings_food_is_not_blank", absentOrSaid(table.food)),
+    check("tastings_company_is_not_blank", absentOrSaid(table.company)),
+    check("tastings_notes_are_not_blank", absentOrWritten(table.notes)),
+    check("tastings_liked_it_is_not_blank", absentOrWritten(table.likedIt)),
+    check("tastings_body_and_feel_is_not_blank", absentOrWritten(table.bodyAndFeel)),
+    check("tastings_reminded_of_is_not_blank", absentOrWritten(table.remindedOf)),
+  ]
+);

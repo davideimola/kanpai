@@ -36,6 +36,13 @@
       "when": 1791807364631,
       "tag": "0004_a_bottle_has_a_state",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791807386243,
+      "tag": "0005_a_tasting_is_an_occasion",
+      "breakpoints": true
     }
   ]
 }
