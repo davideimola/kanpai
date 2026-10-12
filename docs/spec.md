@@ -32,8 +32,8 @@ Tables: `kinds` · `labels` · `vintages` · `label_sources` · `bottles` · `ta
 - `labels`: producer, name, kind, country, region, appellation, grapes/base, age statement,
   strength, `unverified`, `own_image_url`.
 - `vintages`: label, and a **year, NV or unknown** — at most one NV and one unknown per Label;
-  a spirit Label has exactly one, NV ([ADR-0010](adr/0010-a-vintage-is-a-year-nv-or-unknown.md);
-  ([ADR-0002](adr/0002-one-model-for-wine-and-spirits-and-kind-is-data.md),
+  a spirit Label has exactly one, NV ([ADR-0010](adr/0010-a-vintage-is-a-year-nv-or-unknown.md),
+  [ADR-0002](adr/0002-one-model-for-wine-and-spirits-and-kind-is-data.md),
   [ADR-0003](adr/0003-a-label-has-vintages-and-the-rating-belongs-to-the-tasting.md)).
 - `label_sources`: source (`openfoodfacts` | `vivino`), the source's id, image URL, page URL,
   looked-up-at ([ADR-0006](adr/0006-sources-are-open-food-facts-then-vivino-and-images-are-hotlinked.md)).
