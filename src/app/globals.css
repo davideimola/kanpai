@@ -42,6 +42,21 @@
   /* The refusal. */
   --refusal: #a33a2c;
 
+  /* The mark's own two values, brighter than the text accents and kept off text
+   * (docs/brand/README.md): the rings beside the word, and nothing else. */
+  --mark-wine: #5e1b2d;
+  --mark-spirit: #c27c1e;
+
+  /* What is in a bottle, as the silhouettes draw it (ADR-0012): one per `kinds.liquid`. They
+   * fill shapes and never carry text. Clear is a tint of the ink, so a gin still reads as
+   * full on paper. */
+  --liquid-red: #5e1b2d;
+  --liquid-white: #d2bc6c;
+  --liquid-rose: #d9908f;
+  --liquid-orange: #cf8a4a;
+  --liquid-amber: #c27c1e;
+  --liquid-clear: rgb(31 42 39 / 0.1);
+
   /* shadcn's vocabulary, mapped onto the primitives and carrying no value of its own. */
   --background: var(--paper);
   --foreground: var(--glass);
@@ -101,6 +116,16 @@
   --on-wine: #e6e8e1;
 
   --refusal: #e8836f;
+
+  --mark-wine: #b04a63;
+  --mark-spirit: #d69238;
+
+  --liquid-red: #8e2f4a;
+  --liquid-white: #c9b25e;
+  --liquid-rose: #c9807f;
+  --liquid-orange: #c27e45;
+  --liquid-amber: #d69238;
+  --liquid-clear: rgb(230 232 225 / 0.14);
 }
 
 @theme inline {
@@ -109,6 +134,18 @@
   --font-mono: var(--font-mono);
   --color-wine: var(--wine);
   --color-spirit: var(--spirit);
+  /* The brand's own names, beside shadcn's, so a screen can say `bg-paper-raised` for the plate
+   * it means rather than translate it into `bg-card`. */
+  --color-paper: var(--paper);
+  --color-paper-raised: var(--paper-raised);
+  --color-paper-quiet: var(--paper-quiet);
+  --color-glass: var(--glass);
+  --color-glass-quiet: var(--glass-quiet);
+  --color-rule: var(--rule);
+  --color-rule-field: var(--rule-field);
+  --color-wine-fill: var(--wine-fill);
+  --color-on-wine: var(--on-wine);
+  --color-refusal: var(--refusal);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
