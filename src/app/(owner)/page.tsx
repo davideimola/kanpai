@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { QUIET } from "@/components/controls";
 import { RatingRing } from "@/components/rating-ring";
 import { GlassOutline, Silhouette } from "@/components/silhouette";
 import { readCellar } from "@/core/queries/cellar";
@@ -197,8 +198,13 @@ function Empty({ filtered }: { filtered: boolean }) {
       <p className="text-[15px] leading-relaxed text-glass-quiet">
         {filtered
           ? "Choose Everything to see every Tasting."
-          : "Tastings arrive from the assistant: send it a photo of the label and say what you thought, and it records the Tasting here. You can also record one from a Label's page."}
+          : "Tastings arrive from the assistant: send it a photo of the label and say what you thought, and it records the Tasting here. You can also record one yourself: find the bottle on Add."}
       </p>
+      {filtered ? null : (
+        <Link href="/add" className={cn(QUIET, "mt-2 self-start")}>
+          Record a tasting
+        </Link>
+      )}
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { QUIET } from "@/components/controls";
 import { Silhouette } from "@/components/silhouette";
 import { readCellar } from "@/core/queries/cellar";
 import { listKinds } from "@/core/queries/kind";
@@ -33,13 +34,19 @@ export default async function CellarPage({ searchParams }: { searchParams: Promi
 
   return (
     <main className="flex max-w-6xl flex-col gap-5 px-4 pt-5 pb-10 sm:px-6 md:px-10 md:pt-9">
-      <header className="flex flex-col gap-1">
-        <h1 className="font-serif text-[32px] font-bold leading-tight md:text-[40px]">Cellar</h1>
-        <p className="text-[15px] text-glass-quiet">
-          {bottles === 0
-            ? "Nothing in the house yet."
-            : `${counted(bottles, "bottle")}, ${open === 0 ? "none" : open} of them open`}
-        </p>
+      <header className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <h1 className="font-serif text-[32px] font-bold leading-tight md:text-[40px]">Cellar</h1>
+          <p className="text-[15px] text-glass-quiet">
+            {bottles === 0
+              ? "Nothing in the house yet."
+              : `${counted(bottles, "bottle")}, ${open === 0 ? "none" : open} of them open`}
+          </p>
+        </div>
+        {/* Bottles come home from a shop: find the Label on Add, then Add bottles on it. */}
+        <Link href="/add" className={cn(QUIET, "mt-1 md:mt-2")}>
+          Add bottles
+        </Link>
       </header>
 
       <nav aria-label="Show" className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
@@ -146,9 +153,14 @@ function Empty({ bottles }: { bottles: number }) {
       </p>
       <p className="text-[15px] leading-relaxed text-glass-quiet">
         {bottles === 0
-          ? "Bottles arrive when you tell the assistant you bought some, or with Add bottles on a Label's page. Finished ones leave the Cellar and stay on their Label as history."
+          ? "Bottles arrive when you tell the assistant you bought some, or when you add them yourself: search for the bottle on Add, by its name or its barcode. Finished ones leave the Cellar and stay on their Label as history."
           : "No Bottle in the house matches this. Choose Everything to see the whole Cellar."}
       </p>
+      {bottles === 0 ? (
+        <Link href="/add" className={cn(QUIET, "mt-2 self-start")}>
+          Add a bottle
+        </Link>
+      ) : null}
     </div>
   );
 }
