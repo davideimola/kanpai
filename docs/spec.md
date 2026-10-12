@@ -146,6 +146,13 @@ storing third-party images · a cellar map with racks and positions.
   there, not a second tunnel. To check at S5: the deployment is configured today with a single
   `MCP_SERVER_URL`, so adding a channel may change how it is configured. For other people's
   copies, the self-host kit (S9) documents the tunnel as the ChatGPT path.
+- **The owner's own photos.** `labels.own_image_url` is in the schema and nothing writes it
+  yet. Hosting the owner's photos — a bottle no Source knows, a craft gin, the label as it
+  really looked — is the one image kanpai would store rather than hotlink (ADR-0006). Open:
+  where the bytes live (a volume beside the app, S3-compatible storage on the cluster, or
+  Postgres), how a photo reaches it (the web view's `/add`; over MCP an assistant holds the
+  photo but cannot hand over a file, so probably not from there), and whether a self-hosted
+  copy needs it on day one. Not before S6.
 - **The Vivino import (S8).** The official export is thin (no ratings, no reviews); the owner's
   public profile may be the better source. To be measured.
 - **Domain.** Proposed `kanpai.davideimola.dev`.
