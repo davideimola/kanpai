@@ -17,10 +17,10 @@ src/lib/mcp/
 ├── rate-limit.ts        what stands in front of the gate, and the only thing that remembers
 ├── protocol.ts          JSON-RPC and the four methods, and the instructions an assistant reads first
 ├── tool.ts              what one tool is, and how an argument is read
-├── prose.ts             what several tools must say the same way: search first, the Vintage, the Rating
+├── prose.ts             what several tools must say the same way: search first, the Vintage, the Rating, a candidate
 ├── tools.ts             the directory *is* the tool list — see below
 └── tools/               one file per area
-    ├── catalogue.ts     search_catalogue
+    ├── catalogue.ts     search_catalogue — our Labels, then the Sources' candidates (ADR-0011)
     ├── label.ts         get_label, create_label
     ├── kind.ts          list_kinds
     ├── tasting.ts       record_tasting, read_tastings
@@ -72,9 +72,10 @@ Five rules, and they are the review surface:
    it. A tool described as "list bottles" gets called for the wrong question.
 5. **All three hints, always.** `readOnly` means it; a write that takes away something that
    cannot be put back also says `destructive: true` — `update_palate`, which replaces prose
-   the owner wrote. `protocol.ts` states `readOnlyHint`, `destructiveHint` and
-   `openWorldHint` on every tool, because the protocol reads a missing one as the worst case
-   and OpenAI refuses a connector without them.
+   the owner wrote. A tool that may ask a Source over the network says `openWorld: true` —
+   `search_catalogue` and `create_label`, and nothing else. `protocol.ts` states
+   `readOnlyHint`, `destructiveHint` and `openWorldHint` on every tool, because the protocol
+   reads a missing one as the worst case and OpenAI refuses a connector without them.
 
 ## The write boundary
 
@@ -93,6 +94,15 @@ each wording it its own way — tsundoku had every read tool needed to avoid a d
 assistants made them anyway until the instruction was one sentence spent everywhere. Likewise
 `VINTAGE` — *unknown, never NV, when the year isn't known; NV only when the producer blends
 years* (ADR-0010) — is in every tool that names a Vintage, and `tools.test.ts` holds both.
+
+The Sources add a third, `CANDIDATES` (ADR-0011): **a candidate from Open Food Facts or Vivino
+is a proposal, never a match**, the first one is not to be trusted, and a craft bottle no
+Source knows is created from what the owner says. `search_catalogue` and `create_label` both
+spend it. A Label made from a candidate names it by `source` and `id_at_source` only; the core
+reads the record again from the Source rather than trusting the fields an assistant relayed,
+and records the Source with the Label in one transaction. Which Sources a copy asks is read
+from its environment by `src/core/sources/configured.ts`, in the tool, and handed to the core
+as an argument — the test run turns them all off, so no test reaches a third party.
 
 Everything else here acts on what exists: a Tasting on a Vintage or loose, Bottles into the
 Cellar, a Bottle opened or finished, a year learned, a Wish added or closed, the Palate

@@ -63,6 +63,12 @@ export type McpTool = {
    */
   readonly destructive?: boolean;
   /**
+   * Whether calling it may reach outside this app's own database — a Source, over the
+   * network (ADR-0011). **Omitted means it does not**, the truth for every tool but the two
+   * that ask Open Food Facts or Vivino: `search_catalogue` and `create_label`.
+   */
+  readonly openWorld?: boolean;
+  /**
    * Answer the call. Returns plain data; the framing turns it into MCP content.
    *
    * `input` has been through no validation beyond the transport's own JSON parse and the

@@ -63,7 +63,9 @@ before you recommend.
 
 Search before you create: \`search_catalogue\` first, always. A Label you create is marked
 unverified until the owner looks at it, and nothing waits for their approval — so a duplicate is a
-real record they will have to find and merge by hand. After every Tasting, ask the four guided
+real record they will have to find and merge by hand. What the search finds in Open Food Facts or
+Vivino is a candidate to confirm with the owner, never a match: a small producer's bottle is often
+on neither, and is then created from what the owner says. After every Tasting, ask the four guided
 questions if they have not answered them: did you like it, how did it feel in the mouth, what did it
 remind you of, with what food.`;
 
@@ -193,10 +195,9 @@ function initialize(params: unknown) {
 // It is also what one client requires outright rather than prefers: OpenAI refuses a connector
 // whose tools do not set `readOnlyHint`, `openWorldHint` and `destructiveHint` to true or false.
 //
-// `openWorldHint` is `false` for everything, and is true only for as long as no tool asks a
-// Source: every tool here reaches exactly one Postgres and the record it holds. When
-// `search_catalogue` asks Open Food Facts and Vivino (S3, ADR-0006), this stops being a
-// constant and becomes the tool's to declare.
+// `openWorldHint` is the tool's to declare, and `false` unless it does: every tool here
+// reaches exactly one Postgres and the record it holds, except the two that ask a Source —
+// `search_catalogue` and `create_label` (ADR-0011).
 function listed(tools: McpTool[]) {
   return tools.map((tool) => ({
     name: tool.name,
@@ -209,7 +210,7 @@ function listed(tools: McpTool[]) {
       // A read tool destroys nothing by construction, so this is not a second thing to
       // remember on every tool that only asks a question.
       destructiveHint: tool.readOnly ? false : (tool.destructive ?? false),
-      openWorldHint: false,
+      openWorldHint: tool.openWorld ?? false,
     },
   }));
 }

@@ -40,3 +40,19 @@ exactly one Vintage, NV, and refuses a year.`;
 export const RATING = `A **Rating** is the owner's, of this one occasion: 1 to 5 in half steps (\`3.5\`), or left out
 when they gave none. Never invent one from their words, and never average it in yourself: a
 Label's score is derived from its Tastings.`;
+
+/**
+ * What a Source's candidate is, and what it is not (ADR-0011).
+ *
+ * Every Source measured answers a bottle it does not know with confident, plausible, wrong
+ * records — asked for the owner's craft *Hedonya Gin*, both proposed Hendrick's. So the two
+ * tools that touch candidates say the same thing about them: a candidate is a proposal to
+ * confirm, and a bottle no Source knows is created from what the owner says.
+ */
+export const CANDIDATES = `**A candidate is a proposal, never a match.** Open Food Facts and Vivino answer a bottle they do not
+know with a plausible wrong one — a famous gin for a small one, a sibling wine for the one asked — and
+the first candidate is wrong often enough. **Never take the first candidate on trust**: compare the
+producer, the name and the image with what the owner has in front of them, and ask when it is not
+plain. A candidate whose \`label\` is set is already in this catalogue: use that Label. **For a craft
+bottle no Source knows, create the Label from what the owner says**, with no Source — that is the
+right record, not a lesser one.`;

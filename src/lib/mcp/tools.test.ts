@@ -2,7 +2,7 @@ import { readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { beforeEach, describe, expect, it } from "vitest";
 import { emptyTheCatalogue } from "@/test/catalogue";
-import { SEARCH_FIRST, VINTAGE } from "./prose.ts";
+import { CANDIDATES, SEARCH_FIRST, VINTAGE } from "./prose.ts";
 import { answer } from "./protocol.ts";
 import type { McpTool } from "./tool.ts";
 
@@ -46,7 +46,7 @@ function byName(name: string): McpTool {
 }
 
 describe("the tool list", () => {
-  // Spec §3, minus the Sources, plus the two reads the assistant cannot work without:
+  // Spec §3, plus the two reads the assistant cannot work without:
   // `list_kinds` (a Label is created against a Kind's id) and `read_wishes` (a Wish is closed
   // by its id). A tool arriving or leaving shows up here, which is the point: a client that
   // photographed the list does not notice either (`./README.md`).
@@ -92,8 +92,16 @@ describe("the tool list", () => {
       expect(tool.annotations, tool.name).toMatchObject({
         readOnlyHint: expect.any(Boolean),
         destructiveHint: expect.any(Boolean),
-        openWorldHint: false,
+        // Only the two tools that ask a Source reach past this app's own database (ADR-0011).
+        openWorldHint: ["search_catalogue", "create_label"].includes(tool.name),
       });
+    }
+  });
+
+  // ADR-0011: a candidate is a proposal, said the same way wherever one is handled.
+  it("says what a candidate is wherever one is returned or chosen", () => {
+    for (const name of ["search_catalogue", "create_label"]) {
+      expect(byName(name).description, name).toContain(CANDIDATES);
     }
   });
 

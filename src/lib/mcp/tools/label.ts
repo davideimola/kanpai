@@ -1,7 +1,9 @@
 import { getLabel } from "@/core/queries/label";
 import { Refusal } from "@/core/refusal";
+import { configuredSources } from "@/core/sources/configured";
+import { createLabelFromSource } from "@/core/verbs/catalogue";
 import { createLabel } from "@/core/verbs/label";
-import { SEARCH_FIRST, VINTAGE } from "../prose.ts";
+import { CANDIDATES, SEARCH_FIRST, VINTAGE } from "../prose.ts";
 import {
   datingArgument,
   type McpTool,
@@ -61,18 +63,36 @@ independent of the year — with its first **Vintage**, and return both ids.
 
 ${SEARCH_FIRST}
 
-Fill in only what was read off the label or the owner told you; leave the rest out rather than
-guessing. The Label is marked **unverified** for the owner to check from their screen; it is usable
+**From a candidate** \`search_catalogue\` returned and the owner confirmed: pass its \`source\` and
+\`id_at_source\`, and the Kind. The record is read again from that Source — so the facts are the
+Source's own, not a copy — and kept with the Label, with its bottle image and page. Anything else you
+pass is the owner's and wins over the Source's: send only what they corrected or read off the bottle.
+
+**From what was read or said**, with no Source: fill in only what was read off the label or the owner
+told you; leave the rest out rather than guessing.
+
+${CANDIDATES}
+
+Either way the Label is marked **unverified** for the owner to check from their screen; it is usable
 at once, so carry on and \`record_tasting\` or \`add_bottles\` on the Vintage id this returns.
 
 ${VINTAGE}`,
   inputSchema: {
     type: "object",
     properties: {
+      source: {
+        type: "string",
+        enum: ["openfoodfacts", "vivino"],
+        description: "The Source of the chosen candidate, from `search_catalogue`.",
+      },
+      id_at_source: {
+        type: "string",
+        description: "The chosen candidate's `idAtSource`: a barcode, a Vivino wine id.",
+      },
       name: {
         type: "string",
         description: `The Label's name without the producer or the year: "Barolo Castiglione", "Lagavulin 16",
-"Franciacorta Brut".`,
+"Franciacorta Brut". Required without a candidate; with one, the Source's name is used when left out.`,
       },
       kind: { type: "string", description: "A Kind's id from `list_kinds`, e.g. `kind_red`." },
       producer: {
@@ -102,13 +122,25 @@ ${VINTAGE}`,
 vintages and "nv" for one without.`,
       },
     },
-    required: ["name", "kind"],
+    required: ["kind"],
     additionalProperties: false,
   },
   readOnly: false,
+  openWorld: true,
   async run(input) {
-    const { labelId, vintageId } = await createLabel({
-      name: stringArgument(input, "name") ?? "",
+    const source = stringArgument(input, "source");
+    const idAtSource = stringArgument(input, "id_at_source");
+    if ((source === undefined) !== (idAtSource === undefined)) {
+      throw new Refusal(
+        "invalid",
+        "Name the chosen candidate with both `source` and `id_at_source`, as `search_catalogue` returned them."
+      );
+    }
+    if (source !== undefined && source !== "openfoodfacts" && source !== "vivino") {
+      throw new Refusal("invalid", 'A Source is "openfoodfacts" or "vivino".');
+    }
+
+    const facts = {
       kindId: stringArgument(input, "kind") ?? "",
       producer: stringArgument(input, "producer"),
       country: stringArgument(input, "country"),
@@ -121,7 +153,17 @@ vintages and "nv" for one without.`,
       // The assistant's door: always unverified (ADR-0004). Only the owner's own screen
       // creates a Label already looked at.
       unverified: true,
-    });
+    };
+    const name = stringArgument(input, "name");
+
+    const { labelId, vintageId } =
+      source !== undefined && idAtSource !== undefined
+        ? await createLabelFromSource(
+            configuredSources(),
+            { source, idAtSource },
+            { ...facts, name }
+          )
+        : await createLabel({ ...facts, name: name ?? "" });
     return { label: labelId, vintage: vintageId, unverified: true };
   },
 };
