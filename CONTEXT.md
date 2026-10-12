@@ -27,7 +27,11 @@ orange, sparkling, sweet, fortified, vermouth), *Spirits* (whisky, rum, gin, vod
 mezcal, grappa, brandy, liqueur and amaro), *Sake, beer and more* (sake, beer, cider, mead). Two
 levels and no deeper: anything more specific — Champagne, Barolo, an Islay malt — is the
 Label's appellation, region or grapes. It is **stored as data, not as an enum in code**, so a
-copy's owner adds or renames one without a migration (ADR-0002).
+copy's owner adds or renames one without a migration (ADR-0002). A Kind the owner no longer
+wants offered is **hidden**, never deleted while a Label is of it.
+A Kind also says how its bottles are drawn — its **bottle shape** (a Bordeaux, a flute, a
+spirit bottle…) and the colour of what is in it — and a Label may take another shape
+(ADR-0012).
 _Avoid_: type, category.
 
 **Vintage**:

@@ -17,7 +17,7 @@ src/core/
 │   ├── kind.ts  label.ts  tasting.ts  cellar.ts  wish.ts  palate.ts  access-token.ts
 │       catalogue.ts
 └── verbs/           one file per area of writing
-    └── label.ts  vintage.ts  source.ts  bottle.ts  tasting.ts  wish.ts  palate.ts
+    └── label.ts  vintage.ts  source.ts  bottle.ts  tasting.ts  wish.ts  palate.ts  kind.ts
         access-token.ts  catalogue.ts
 ```
 

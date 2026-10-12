@@ -1,6 +1,7 @@
 import { readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { beforeEach, describe, expect, it } from "vitest";
+import { setKindHidden } from "@/core/verbs/kind";
 import { emptyTheCatalogue } from "@/test/catalogue";
 import { CANDIDATES, SEARCH_FIRST, VINTAGE } from "./prose.ts";
 import { answer } from "./protocol.ts";
@@ -229,5 +230,21 @@ describe("the S2 flow, through the door's own framing", () => {
     expect(await call("record_tasting", { vintage: "N.V." })).toMatchObject({ code: "invalid" });
     expect(await call("record_tasting", { label: "lbl_x" })).toMatchObject({ code: "invalid" });
     expect(await call("update_palate", {})).toMatchObject({ code: "invalid" });
+  });
+
+  // A Kind the owner hid from `/settings` is retired: the assistant is not offered it to
+  // create against (ADR-0012), and it comes back when it is shown again.
+  it("lists the Kinds without the hidden ones", async () => {
+    const ids = async () =>
+      ((await call("list_kinds")).kinds as { id: string }[]).map((kind) => kind.id);
+    expect(await ids()).toContain("kind_mead");
+
+    await setKindHidden("kind_mead", true);
+    try {
+      expect(await ids()).not.toContain("kind_mead");
+    } finally {
+      await setKindHidden("kind_mead", false);
+    }
+    expect(await ids()).toContain("kind_mead");
   });
 });

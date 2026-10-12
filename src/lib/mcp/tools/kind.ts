@@ -13,7 +13,8 @@ const kinds: McpTool = {
 section it is listed under (Wine, Spirits) and \`hasVintages\`.
 
 \`create_label\` needs a Kind's id: take it from here, never guess one. The list is data and grows (a
-beer is a new row), so read it rather than remembering it.
+beer is a new row), so read it rather than remembering it. A Kind the owner retired is not listed:
+do not create against it.
 
 \`hasVintages: false\` means a Label of that Kind has exactly one Vintage, NV — spirits, beer, sake —
 and refuses a year. \`true\` means it has years, and a year nobody wrote down is "unknown".`,

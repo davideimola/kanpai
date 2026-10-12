@@ -35,11 +35,17 @@ Postgres, not by `src/core`: the constraint or trigger named beside each is what
 
 - `kinds`: name, section, `has_vintages`, sort order, `first_source` — the Source a search by
   name asks first (`vivino` for wine, grappa and sake; `openfoodfacts`, the default, for the
-  rest). Rows, not an enum ([ADR-0002](adr/0002-one-model-for-wine-and-spirits-and-kind-is-data.md),
-  [ADR-0011](adr/0011-sources-are-asked-by-kind-propose-candidates-and-vivino-is-opt-in.md)).
+  rest), `bottle_shape` and `liquid` — how a Label of it is drawn (`bordeaux` | `burgundy` |
+  `flute` | `spirit` | `sake` | `beer`; `red` | `white` | `rose` | `orange` | `amber` | `clear`) —
+  and `hidden`, which leaves it out of every list a form or an assistant picks from; a Kind with
+  Labels is hidden, never deleted (the foreign key refuses it). Rows, not an enum
+  ([ADR-0002](adr/0002-one-model-for-wine-and-spirits-and-kind-is-data.md),
+  [ADR-0011](adr/0011-sources-are-asked-by-kind-propose-candidates-and-vivino-is-opt-in.md),
+  [ADR-0012](adr/0012-a-bottle-is-drawn-from-its-kind.md)).
 - `labels`: producer (nullable: a Label read off a photo may not have one), name, kind, country,
   region, appellation, `grapes` (an array: the grapes of a wine or the base of a spirit), age
-  statement, strength (% ABV), `unverified`, `own_image_url`, created at. A Label always has a
+  statement, strength (% ABV), `unverified`, `own_image_url`, `bottle_shape` (the Kind's
+  silhouette overridden for this Label, `null` for the Kind's), created at. A Label always has a
   Vintage (`labels_have_a_vintage`, checked at commit); it cannot move to a Kind without
   vintages while it has a year or an unknown (`labels_kind_without_vintages_keeps_only_nv`).
 - `vintages`: label, `dating` (`year` | `nv` | `unknown`) and `year`, present exactly when

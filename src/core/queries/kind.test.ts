@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { query } from "../db.ts";
-import { listKinds } from "./kind.ts";
+import { listEveryKind, listKinds } from "./kind.ts";
 
 // They are `CONTEXT.md`'s, read off the glossary rather than off the migration: if this test
 // and the seed ever disagree, the glossary is the one that is right. The list grows by an
@@ -71,5 +71,45 @@ describe("the Kinds", () => {
         "insert into kinds (name, section, has_vintages, sort_order) values ('Kombucha', ' ', false, 99)"
       )
     ).rejects.toThrow(/kinds_section_is_not_blank/);
+  });
+});
+
+// How each seeded Kind is drawn (ADR-0012, `0012`): a migration invariant, read back as the
+// settings read it. Every copy starts from these until its owner redraws one.
+describe("every Kind, as the settings keep them", () => {
+  it("draws each seeded Kind in a shape and a liquid of its own, none hidden", async () => {
+    const drawn = Object.fromEntries(
+      (await listEveryKind()).map((kind) => [kind.id, `${kind.bottleShape} ${kind.liquid}`])
+    );
+
+    expect(drawn).toEqual({
+      kind_red: "bordeaux red",
+      kind_white: "burgundy white",
+      kind_rose: "bordeaux rose",
+      kind_orange: "burgundy orange",
+      kind_sparkling: "flute white",
+      kind_sweet: "burgundy white",
+      kind_fortified: "bordeaux amber",
+      kind_vermouth: "bordeaux amber",
+      kind_whisky: "spirit amber",
+      kind_rum: "spirit amber",
+      kind_gin: "spirit clear",
+      kind_vodka: "spirit clear",
+      kind_tequila_mezcal: "spirit clear",
+      kind_grappa: "spirit clear",
+      kind_brandy: "spirit amber",
+      kind_liqueur_amaro: "spirit amber",
+      kind_other_spirit: "spirit amber",
+      kind_sake: "sake clear",
+      kind_beer: "beer amber",
+      kind_cider: "beer white",
+      kind_mead: "burgundy white",
+    });
+    expect((await listEveryKind()).filter((kind) => kind.hidden)).toEqual([]);
+  });
+
+  it("counts the Labels of each, so the settings know which may be deleted", async () => {
+    await query("truncate wishes, tastings, bottles, label_sources, vintages, labels");
+    expect((await listEveryKind()).every((kind) => kind.labels === 0)).toBe(true);
   });
 });

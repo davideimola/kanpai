@@ -48,6 +48,14 @@ export const kinds = pgTable(
     // wine, grappa and sake, Open Food Facts for everything else. A row's, like `has_vintages`,
     // so a Kind a copy's owner adds is routed by its row and never by a list in code.
     firstSource: text().notNull().default("openfoodfacts"),
+    // How a Label of this Kind is drawn (ADR-0012): the silhouette's shape and the colour of
+    // what is in it. A row's, like the two above, so a Kind a copy's owner adds is drawn by
+    // its own row; a Label may override the shape and never the liquid.
+    bottleShape: text().notNull().default("bordeaux"),
+    liquid: text().notNull().default("clear"),
+    // Hidden from every list a form or an assistant picks from, and kept: a Kind that has
+    // Labels is never deleted, so retiring one is hiding it (spec §4, `/settings`).
+    hidden: boolean().notNull().default(false),
   },
   (table) => [
     unique("kinds_name_key").on(table.name),
@@ -63,10 +71,24 @@ export const kinds = pgTable(
     ),
     check("kinds_sort_order_is_positive", sql`${table.sortOrder} > 0`),
     check("kinds_first_source_is_known", sql`${table.firstSource} in ('openfoodfacts', 'vivino')`),
+    check("kinds_bottle_shape_is_known", bottleShapeIsKnown(table.bottleShape)),
+    check(
+      "kinds_liquid_is_known",
+      sql`${table.liquid} in ('red', 'white', 'rose', 'orange', 'amber', 'clear')`
+    ),
   ]
 );
 
 // ── Helpers for the checks every table repeats ─────────────────────────────────────────────
+
+/**
+ * The silhouettes a bottle is drawn as (ADR-0012). A closed set, like a Bottle's Level: each
+ * one is a drawing in `src/components/silhouette.tsx`, and a shape with no drawing is refused
+ * here rather than drawn as nothing.
+ */
+function bottleShapeIsKnown(column: AnyPgColumn) {
+  return sql`${column} in ('bordeaux', 'burgundy', 'flute', 'spirit', 'sake', 'beer')`;
+}
 
 /** A prefixed id, as `gen_prefixed_id()` mints it — or a readable slug a fixture wrote. */
 function prefixed(column: AnyPgColumn, prefix: string) {
@@ -113,6 +135,9 @@ export const labels = pgTable(
     strength: numeric({ precision: 4, scale: 1 }),
     unverified: boolean().notNull().default(false),
     ownImageUrl: text(),
+    // The Kind's silhouette, overridden for this Label — a Riesling in a flute, a gin in a
+    // squat decanter-like bottle. `null` is the Kind's (ADR-0012).
+    bottleShape: text(),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
@@ -134,6 +159,10 @@ export const labels = pgTable(
       sql`${table.strength} is null or (${table.strength} > 0 and ${table.strength} <= 100)`
     ),
     check("labels_own_image_url_is_a_web_address", absentOrWebAddress(table.ownImageUrl)),
+    check(
+      "labels_bottle_shape_is_known",
+      sql`${table.bottleShape} is null or ${bottleShapeIsKnown(table.bottleShape)}`
+    ),
   ]
 );
 
