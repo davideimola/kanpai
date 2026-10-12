@@ -8,11 +8,14 @@ rule to break last.
 ```
 src/core/
 ├── db.ts            the pool, and the only file that knows what a pool is
-└── queries/         one file per question the app answers
-    └── kind.ts
+├── transaction.ts   how a verb that is several writes stays one
+├── refusal.ts       what a verb throws when the database says no
+├── typed.ts         what was typed, on its way to a column: trimmed, a day, a price
+├── queries/         one file per question the app answers
+│   ├── kind.ts  label.ts  tasting.ts  cellar.ts  wish.ts  palate.ts
+└── verbs/           one file per area of writing
+    └── label.ts  vintage.ts  source.ts  bottle.ts  tasting.ts  wish.ts  palate.ts
 ```
-
-Verbs — the writes — arrive in S1, in `verbs/`, one file per area of writing.
 
 ## There is no index
 
@@ -76,6 +79,24 @@ has to think about.
 **A Kind is data, so no type here enumerates them** (ADR-0002). `Kind` carries a `name` that
 is a `string`, never a union of eleven literals: a twelfth Kind is an insert, and a union
 would quietly make it a deployment.
+
+## Writes
+
+**Every write is a named verb**, in the owner's words: `createLabel`, `mergeLabels`,
+`setVintageYear`, `recordTasting`, `strikeTasting`, `openBottle`, `closeWish`. There is no
+generic update and no `save()`. One file per area in `verbs/`, one exported `async function`
+per verb, and the consequences named in its doc comment.
+
+**One verb is one transaction.** A verb that is several statements runs them through
+`transaction()`, and a verb another verb composes — `ensureVintage` — takes where to run as its
+last argument. Composing two verbs in a caller invents a transaction that does not exist.
+
+**When the database says no**, the verb wraps the statement in `refusing()` and writes the prose
+the owner reads; what comes out is a `Refusal` with a stable code — `already-exists`,
+`not-found`, `not-allowed`, `invalid` — and the name of the rule that refused. It is mapped from
+the SQLSTATE, never from a message, and a trigger names its rule with `using constraint = …`
+exactly as a check does, so the two reach a door the same way. Nothing above `src/core` sees a
+`pg` error; anything that is not a `Refusal` is a bug and stays one.
 
 ## Tests
 
