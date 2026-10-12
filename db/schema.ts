@@ -44,6 +44,10 @@ export const kinds = pgTable(
     section: text().notNull(),
     hasVintages: boolean().notNull(),
     sortOrder: integer().notNull(),
+    // Which Source a search by name asks first for a Label of this Kind (ADR-0011): Vivino for
+    // wine, grappa and sake, Open Food Facts for everything else. A row's, like `has_vintages`,
+    // so a Kind a copy's owner adds is routed by its row and never by a list in code.
+    firstSource: text().notNull().default("openfoodfacts"),
   },
   (table) => [
     unique("kinds_name_key").on(table.name),
@@ -58,6 +62,7 @@ export const kinds = pgTable(
       sql`${table.section} = btrim(${table.section}) and ${table.section} <> ''`
     ),
     check("kinds_sort_order_is_positive", sql`${table.sortOrder} > 0`),
+    check("kinds_first_source_is_known", sql`${table.firstSource} in ('openfoodfacts', 'vivino')`),
   ]
 );
 
@@ -177,7 +182,7 @@ export const vintages = pgTable(
 
 /**
  * Where a Label was found: an external catalogue, that catalogue's own id for it, and the
- * image and page it showed (`CONTEXT.md`, **Source**; ADR-0006).
+ * image and page it showed (`CONTEXT.md`, **Source**; ADR-0011).
  *
  * The image is **hotlinked**: its address is stored, never its bytes. One record in a Source
  * names one Label of ours, which is why `(source, id_at_source)` is unique across the table

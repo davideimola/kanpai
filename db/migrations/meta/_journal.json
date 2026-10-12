@@ -78,6 +78,13 @@
       "when": 1791823294288,
       "tag": "0010_the_kinds_grow",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791824269265,
+      "tag": "0011_a_kind_names_the_source_asked_first",
+      "breakpoints": true
     }
   ]
 }
