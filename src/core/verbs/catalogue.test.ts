@@ -30,7 +30,7 @@ describe("creating a Label from a candidate", () => {
     const { labelId } = await createLabelFromSource(
       { openfoodfacts: null, vivino: vivino(ACCESS, fetcher) },
       { source: "vivino", idAtSource: "21929" },
-      { kindId: "kind_red", vintage: 2015, unverified: true }
+      { kindId: "kind_red", vintage: 2015 }
     );
 
     expect(fetcher.asked[0]?.body).toMatchObject({ filters: "id=21929" });
@@ -43,7 +43,8 @@ describe("creating a Label from a candidate", () => {
       region: "Veneto",
       appellation: "Amarone della Valpolicella Classico",
       strength: 15,
-      unverified: true,
+      // Born checked: a Source's facts are not what the to-check list is for (ADR-0004).
+      unverified: false,
       vintages: [{ dating: "year", year: 2015 }],
       sources: [
         {
@@ -65,7 +66,6 @@ describe("creating a Label from a candidate", () => {
         name: "Costasera",
         appellation: "Amarone della Valpolicella",
         grapes: ["Corvina", "Rondinella", "Oseleta"],
-        unverified: true,
       }
     );
 
@@ -85,7 +85,7 @@ describe("creating a Label from a candidate", () => {
         vivino: null,
       },
       { source: "openfoodfacts", idAtSource: "5010327755014" },
-      { kindId: "kind_gin", unverified: true }
+      { kindId: "kind_gin" }
     );
 
     expect(await getLabel(labelId)).toMatchObject({
@@ -109,7 +109,7 @@ describe("a candidate that cannot be made a Label", () => {
       createLabelFromSource(
         { openfoodfacts: null, vivino: null },
         { source: "vivino", idAtSource: "21929" },
-        { kindId: "kind_red", unverified: true }
+        { kindId: "kind_red" }
       )
     ).rejects.toMatchObject({ code: "not-allowed" });
     expect(await labelCount()).toBe(0);
@@ -126,7 +126,7 @@ describe("a candidate that cannot be made a Label", () => {
           ),
         },
         { source: "vivino", idAtSource: "1" },
-        { kindId: "kind_red", unverified: true }
+        { kindId: "kind_red" }
       )
     ).rejects.toMatchObject({ code: "not-found" });
   });
@@ -142,7 +142,7 @@ describe("a candidate that cannot be made a Label", () => {
           ),
         },
         { source: "vivino", idAtSource: "21929" },
-        { kindId: "kind_red", unverified: true }
+        { kindId: "kind_red" }
       )
     ).rejects.toMatchObject({ code: "unavailable" });
     expect(await labelCount()).toBe(0);
@@ -151,10 +151,10 @@ describe("a candidate that cannot be made a Label", () => {
   it("refuses a record that is already a Label's, and leaves no second Label behind", async () => {
     const sources = { openfoodfacts: null, vivino: COSTASERA };
     const chosen = { source: "vivino", idAtSource: "21929" } as const;
-    await createLabelFromSource(sources, chosen, { kindId: "kind_red", unverified: true });
+    await createLabelFromSource(sources, chosen, { kindId: "kind_red" });
 
     await expect(
-      createLabelFromSource(sources, chosen, { kindId: "kind_red", unverified: true })
+      createLabelFromSource(sources, chosen, { kindId: "kind_red" })
     ).rejects.toMatchObject({ code: "already-exists" });
     expect(await labelCount()).toBe(1);
   });

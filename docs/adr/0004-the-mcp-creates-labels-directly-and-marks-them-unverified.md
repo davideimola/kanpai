@@ -19,3 +19,16 @@ which is the friction the owner rejected every alternative app for.
   Labels before external Sources), so duplicates are the exception, not the rule.
 - A Label found in a Source arrives with that Source's identifying facts and image; one the
   assistant typed in from a photograph arrives with what it read, and nothing else.
+
+## Amended 2026-10-12: only what the assistant wrote itself is unverified
+
+Decided with the owner while building `/add` (S6). **A Label made from a Source's candidate is
+born checked**, whichever door made it — `create_label` given `source` and `id_at_source`, or
+*Choose* on `/add` — because the Source's identifying facts are already right, and putting them
+on the to-check list only made the list noise. **A Label the owner writes in by hand on `/add`
+is born checked too**: the owner has looked at it by writing it. Only a Label **the assistant
+writes from what it read off a photo or was told in a conversation** — a craft gin no Source
+knows — is born unverified, and that is what the to-check list is for.
+
+`createLabelFromSource` holds the rule, so no door can pass it otherwise; `createLabel` still
+takes `unverified` from its caller, the door that knows who is writing.

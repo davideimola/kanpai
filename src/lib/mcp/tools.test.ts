@@ -114,6 +114,16 @@ describe("the tool list", () => {
     }
   });
 
+  // ADR-0004 as amended on 2026-10-12: a Label from a candidate is born checked, and only one
+  // written from what was read or said goes on the to-check list. The assistant is told which.
+  it("says which Labels it creates are unverified, and that a candidate's is not", () => {
+    const description = byName("create_label").description;
+    expect(description).toContain("A Label from a candidate is born checked");
+    expect(description).toContain(
+      "One written from what\nwas read or said is marked **unverified**"
+    );
+  });
+
   // ADR-0010: unknown, never NV, when the year is not known — said wherever a Vintage is named.
   it("says what a Vintage is wherever one is named by its dating", () => {
     for (const tool of everyTool) {

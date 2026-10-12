@@ -81,14 +81,14 @@ Postgres, not by `src/core`: the constraint or trigger named beside each is what
 ## 3. The MCP tools
 
 Thin adapters over `src/core`. The assistant **searches before it creates**, and creates
-directly, marking new Labels unverified
+directly, marking the Labels it writes from what it read unverified
 ([ADR-0004](adr/0004-the-mcp-creates-labels-directly-and-marks-them-unverified.md)).
 
 | tool | does |
 | --- | --- |
 | `search_catalogue` | our Labels first, then the Sources' **candidates** with images, in the order the Kind names (Vivino first for wine, grappa and sake; Open Food Facts first for the rest; interleaved without a Kind); by text, with an optional `producer` and `kind`, or by `barcode` (Open Food Facts alone, and our Labels holding it). Candidates sharing no word with the producer are discarded; the answer says which Sources were consulted, off or unavailable, and that a candidate is to be confirmed (S3) |
 | `get_label` | one Label with its Vintages, Bottles, Tastings and derived scores |
-| `create_label` | from a chosen candidate (`source` + `id_at_source`, re-read from the Source by id and recorded with its image and page; what the caller states wins over the Source) or from what was read off a photo; born unverified |
+| `create_label` | from a chosen candidate (`source` + `id_at_source`, re-read from the Source by id and recorded with its image and page; what the caller states wins over the Source), born checked; or from what was read off a photo or said, born unverified |
 | `list_kinds` | the Kinds, with their ids — what `create_label` is created against (added in S2) |
 | `record_tasting` | on a Vintage, or loose with a description |
 | `add_bottles` | n Bottles of a Vintage into the Cellar |

@@ -15,6 +15,10 @@ import type { SourceName } from "./source.ts";
 // candidate beside it, and what is stored as *from Vivino* should be what Vivino says. Vivino
 // re-reads by `filters=id=`, Open Food Facts by the barcode.
 //
+// **It is born checked** (`unverified: false`, ADR-0004 as amended on 2026-10-12), whichever door
+// calls it: the Source's identifying facts are already right, and the to-check list is for what an
+// assistant read off a photo or a conversation, not for a record someone chose.
+//
 // **What the caller says wins.** A fact passed alongside the choice is the owner's — read off
 // the bottle, or said aloud — and a Source never overwrites what the owner said (`CONTEXT.md`,
 // **Source**). The Source fills only what was left out.
@@ -24,7 +28,8 @@ export type Chosen = { source: SourceName; idAtSource: string };
 
 /**
  * Re-read `chosen` from its Source and create the Label from it, with its first Vintage and
- * the Source recorded — image and page included — in one transaction.
+ * the Source recorded — image and page included — in one transaction. The Label is born
+ * checked, never unverified.
  *
  * `facts` are the caller's and win over the Source's; `facts.kindId` is required, because the
  * Kind a Source suggests is a hint (Vivino types some spirits as red wine).
@@ -32,7 +37,7 @@ export type Chosen = { source: SourceName; idAtSource: string };
 export async function createLabelFromSource(
   sources: Sources,
   chosen: Chosen,
-  facts: Omit<NewLabel, "name" | "source"> & { name?: string }
+  facts: Omit<NewLabel, "name" | "source" | "unverified"> & { name?: string }
 ): Promise<{ labelId: string; vintageId: string }> {
   const title = SOURCE_TITLE[chosen.source];
   const source = sources[chosen.source];
@@ -66,6 +71,7 @@ export async function createLabelFromSource(
     appellation: facts.appellation ?? candidate.appellation,
     grapes: facts.grapes ?? (candidate.grapes.length > 0 ? candidate.grapes : undefined),
     strength: facts.strength ?? candidate.strength,
+    unverified: false,
     source: {
       source: candidate.source,
       idAtSource: candidate.idAtSource,

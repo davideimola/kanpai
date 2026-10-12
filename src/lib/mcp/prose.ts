@@ -23,7 +23,7 @@ because the Label is often already there written another way (*Fattoria le Corti
 Corsini* are one estate). An absence you did not look for is not an absence.
 
 **What a duplicate costs.** A Label you create is real at once: nothing waits for the owner's approval,
-it is only marked unverified until they look at it. So a second Label for a wine they already have
+and one you write from what you read is only marked unverified until they look at it. So a second Label for a wine they already have
 splits its Tastings, its Bottles and its score across two records, the sommelier — you — reads half
 of the history, and the owner has to notice it and merge the two by hand.`;
 

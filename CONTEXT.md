@@ -18,7 +18,8 @@ the name, the **Kind**, the region and appellation, the grapes or the base, and 
 the age statement and the strength, because those do not change from one bottling year to
 the next.
 A Label is created the moment the owner (or the assistant) names one the catalogue does not
-know yet, and it is born **unverified** when the assistant created it (ADR-0004).
+know yet, and it is born **unverified** when the assistant wrote it from what it read or was
+told; one made from a Source's candidate, or written in by the owner, is born checked (ADR-0004).
 _Avoid_: wine (it names one Kind, and a spirit is a Label too), product, item, reference.
 
 **Kind**:
@@ -101,7 +102,9 @@ Tastings accumulate; the owner can edit it directly.
 _Avoid_: profile, preferences, taste profile.
 
 **Unverified**:
-A mark on a Label the assistant created and the owner has not looked at yet. It does not hide
+A mark on a Label the assistant wrote from what it read off a photo or was told in a conversation —
+not one made from a Source's candidate, whose facts are the Source's — and the owner has not
+looked at yet. It does not hide
 the Label or block anything — a Tasting on it is recorded in full — it only lists it on the
 owner's to-check page.
 _Avoid_: draft, pending, proposed (nothing is waiting for approval: ADR-0004).

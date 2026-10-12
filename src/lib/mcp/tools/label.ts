@@ -17,10 +17,11 @@ import {
 // **The assistant creates Labels directly** (ADR-0004), which is where this door parts from
 // tsundoku's Inbox: the flow that matters is a photo at a restaurant table of a bottle nobody
 // has catalogued, and a Tasting left waiting for the owner to get home is the friction they
-// rejected every other app for. What stands in for the Inbox is two things: the Label is born
-// **unverified**, which lists it on the owner's to-check page, and the description below says
-// *search first* and what a duplicate costs, in the words every tool that creates spends
-// (`../prose.ts`).
+// rejected every other app for. What stands in for the Inbox is two things: a Label written from
+// what was read or said is born **unverified**, which lists it on the owner's to-check page, and
+// the description below says *search first* and what a duplicate costs, in the words every tool
+// that creates spends (`../prose.ts`). A Label made from a candidate the owner confirmed is born
+// checked: its Source's facts are not what the to-check list is for (ADR-0004, amended).
 
 const get: McpTool = {
   name: "get_label",
@@ -34,8 +35,8 @@ Scores are **derived from the Tastings**, never stored: \`latest\` is the most r
 disappointed three years later is information, not noise. The Label's score counts every Vintage;
 each Vintage has its own.
 
-\`unverified: true\` means an assistant created it and the owner has not looked at it yet. It is a
-Label like any other: record on it freely.
+\`unverified: true\` means an assistant wrote it from what was read or said and the owner has not
+looked at it yet. It is a Label like any other: record on it freely.
 
 Use it to confirm a \`search_catalogue\` match is the bottle in front of the owner, and to find the
 Vintage id \`record_tasting\` and \`add_bottles\` take.`,
@@ -73,8 +74,9 @@ told you; leave the rest out rather than guessing.
 
 ${CANDIDATES}
 
-Either way the Label is marked **unverified** for the owner to check from their screen; it is usable
-at once, so carry on and \`record_tasting\` or \`add_bottles\` on the Vintage id this returns.
+A Label from a candidate is born checked, because its facts are the Source's. One written from what
+was read or said is marked **unverified** for the owner to check from their screen. Either way it is
+usable at once, so carry on and \`record_tasting\` or \`add_bottles\` on the Vintage id this returns.
 
 ${VINTAGE}`,
   inputSchema: {
@@ -150,20 +152,25 @@ vintages and "nv" for one without.`,
       ageStatement: stringArgument(input, "age_statement"),
       strength: numberArgument(input, "strength"),
       vintage: datingArgument(input, "vintage"),
-      // The assistant's door: always unverified (ADR-0004). Only the owner's own screen
-      // creates a Label already looked at.
-      unverified: true,
     };
     const name = stringArgument(input, "name");
 
-    const { labelId, vintageId } =
-      source !== undefined && idAtSource !== undefined
-        ? await createLabelFromSource(
-            configuredSources(),
-            { source, idAtSource },
-            { ...facts, name }
-          )
-        : await createLabel({ ...facts, name: name ?? "" });
+    // From a candidate, born checked — `createLabelFromSource` says so whichever door calls it.
+    // From what the assistant read or was told, born unverified for the owner to look over
+    // (ADR-0004).
+    if (source !== undefined && idAtSource !== undefined) {
+      const { labelId, vintageId } = await createLabelFromSource(
+        configuredSources(),
+        { source, idAtSource },
+        { ...facts, name }
+      );
+      return { label: labelId, vintage: vintageId, unverified: false };
+    }
+    const { labelId, vintageId } = await createLabel({
+      ...facts,
+      name: name ?? "",
+      unverified: true,
+    });
     return { label: labelId, vintage: vintageId, unverified: true };
   },
 };

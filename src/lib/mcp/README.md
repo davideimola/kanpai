@@ -79,13 +79,16 @@ Five rules, and they are the review surface:
 
 ## The write boundary
 
-**The assistant creates Labels directly, and they are born unverified** (ADR-0004). This is
+**The assistant creates Labels directly, and the ones it writes are born unverified** (ADR-0004). This is
 where the door parts from tsundoku's, which only *proposes* through an Inbox: here the flow
 that matters is a photo at a restaurant table of a bottle nobody has catalogued, and a
 Tasting left dangling until the owner got home is the friction they rejected every other app
-for. There is no Inbox and nothing waits for approval. `create_label` always passes
-`unverified: true`; the owner's to-check page (S4) is where a wrong one is found, corrected
-or merged.
+for. There is no Inbox and nothing waits for approval. `create_label` passes
+`unverified: true` for a Label written from what was read or said; the owner's to-check page
+(S4) is where a wrong one is found, corrected or merged. A Label made from a candidate
+(`source` + `id_at_source`) is born checked, as it is from any door: its facts are the
+Source's, and putting them on the to-check list only made it noise (ADR-0004, amended
+2026-10-12).
 
 What stands in for the Inbox is prose, and it is said once. **A tool that may lead to a new
 Label says *search first* and what a duplicate costs**, in `SEARCH_FIRST` from `prose.ts`:

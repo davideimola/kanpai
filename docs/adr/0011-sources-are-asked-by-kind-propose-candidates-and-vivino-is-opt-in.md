@@ -50,7 +50,10 @@ says, with no Source, and that is the right record rather than a lesser one.
 Facts by the barcode — rather than from what the assistant passes back, and the Label is created
 with its Source in one transaction. What the owner (or the assistant, from the bottle) states
 alongside wins over what the Source says; a Source never overwrites the owner (`CONTEXT.md`,
-**Source**). The Label is born unverified, as every Label the assistant creates (ADR-0004).
+**Source**). ~~The Label is born unverified, as every Label the assistant creates (ADR-0004).~~
+*Amended 2026-10-12:* the Label is born **checked**, whichever door made it — the Source's
+identifying facts are already right, and the to-check list is for what the assistant read off a
+photo or a conversation (ADR-0004, amended).
 
 **Vivino is opt-in and off by default.** It is turned on by its copy's owner, by setting
 `VIVINO_ALGOLIA_APP_ID` and `VIVINO_ALGOLIA_KEY` in the environment; with either missing it is
