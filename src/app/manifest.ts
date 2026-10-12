@@ -27,8 +27,8 @@ export default function manifest(): MetadataRoute.Manifest {
       "A single-owner record of wine and spirits: what was drunk, what is in the house, what is worth trying.",
     start_url: "/",
     display: "standalone",
-    background_color: "#f5f5f5",
-    theme_color: "#f5f5f5",
+    background_color: "#edefe8",
+    theme_color: "#edefe8",
     icons: [
       // The drawn file, which scales: the solid mark, on whichever ground the system has.
       { src: "/icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any" },

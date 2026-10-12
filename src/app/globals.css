@@ -5,62 +5,75 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * A NEUTRAL PALETTE, AND A PLACEHOLDER ONE.
+ * THE BRAND'S PALETTE, AS PRIMITIVES.
  *
- * kanpai has no visual direction yet: the screens that need one arrive from S4. Until then
- * the page is ink on paper in seven greys and one hue, so nothing here has to be undone when
- * the direction is chosen. The shape is tsundoku's — a handful of primitives, and shadcn's
- * vocabulary as aliases over them — so that a colour exists in exactly one place and the
- * dark theme is a redeclaration of the primitives and nothing else.
+ * Paper, glass, wine and spirit — `docs/brand/README.md` says what each one is and where the
+ * hexes come from. The shape is tsundoku's: a handful of primitives, and shadcn's vocabulary
+ * as aliases over them, so that a colour exists in exactly one place and the dark theme is a
+ * redeclaration of the primitives and nothing else.
  *
- * The one hue is `--refusal`, which marks a refusal and is spent on nothing else.
+ * Wine is the one action colour. Spirit marks what is distilled and nothing else, and the
+ * refusal is a third hue spent only on a refusal: it leans orange so that it is never read
+ * as a wine.
  */
 :root {
   /* The ground, and its two depths: a plate raised off it, a recess sunk into it. */
-  --paper: oklch(0.97 0 0);
-  --paper-raised: oklch(0.995 0 0);
-  --paper-quiet: oklch(0.93 0 0);
+  --paper: #edefe8;
+  --paper-raised: #f7f8f4;
+  --paper-quiet: #e2e5dc;
 
   /* What is printed on it, at two volumes. */
-  --ink: oklch(0.21 0 0);
-  --ink-quiet: oklch(0.5 0 0);
+  --glass: #1f2a27;
+  --glass-quiet: #56625e;
 
-  /* A hairline between rows, and the edge of something you type in. */
-  --rule: oklch(0.88 0 0);
-  --rule-field: oklch(0.62 0 0);
+  /* A hairline between rows, and the edge of something you type in (3:1, as a control). */
+  --rule: #d5d9cf;
+  --rule-field: #7e8883;
 
-  /* The one hue. */
-  --refusal: oklch(0.5 0.12 25);
+  /* The two accents, at the value that clears 4.5:1 as text on paper. */
+  --wine: #5e1b2d;
+  --spirit: #9a5f12;
+
+  /* Wine as a surface — a button — and what is printed on it. One value on paper; in the
+   * dark the text wine is too light to carry light text, so the surface is deeper. */
+  --wine-fill: #5e1b2d;
+  --on-wine: #edefe8;
+
+  /* The refusal. */
+  --refusal: #a33a2c;
 
   /* shadcn's vocabulary, mapped onto the primitives and carrying no value of its own. */
   --background: var(--paper);
-  --foreground: var(--ink);
+  --foreground: var(--glass);
   --card: var(--paper-raised);
-  --card-foreground: var(--ink);
+  --card-foreground: var(--glass);
   --popover: var(--paper-raised);
-  --popover-foreground: var(--ink);
-  --primary: var(--ink);
-  --primary-foreground: var(--paper);
+  --popover-foreground: var(--glass);
+  --primary: var(--wine-fill);
+  --primary-foreground: var(--on-wine);
   --secondary: var(--paper-quiet);
-  --secondary-foreground: var(--ink);
+  --secondary-foreground: var(--glass);
   --muted: var(--paper-quiet);
-  --muted-foreground: var(--ink-quiet);
+  --muted-foreground: var(--glass-quiet);
   --accent: var(--paper-quiet);
-  --accent-foreground: var(--ink);
+  --accent-foreground: var(--glass);
   --destructive: var(--refusal);
   --border: var(--rule);
   --input: var(--rule-field);
-  --ring: var(--ink-quiet);
+  --ring: var(--wine);
 
   --radius: 0.5rem;
 
   /*
-   * The system's own faces, deliberately. A web font is a decision about the visual
-   * direction, which has not been taken, and it would make the image build reach the
-   * network for nothing.
+   * The two faces (docs/brand/README.md): the Mincho for names and headings, its Gothic
+   * sibling for everything read to be used. `next/font` in `./layout.tsx` defines the two
+   * variables these fall back from; it self-hosts the files, so a running copy never reaches
+   * Google for them.
    */
+  --font-serif: var(--font-zen-old-mincho), "Hiragino Mincho ProN", "Noto Serif JP", Georgia, serif;
   --font-sans:
-    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    var(--font-zen-kaku-gothic-new), "Hiragino Sans", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", sans-serif;
   --font-mono:
     ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
 }
@@ -71,22 +84,31 @@
  * `.dark` from the operating system's preference before first paint.
  */
 .dark {
-  --paper: oklch(0.17 0 0);
-  --paper-raised: oklch(0.22 0 0);
-  --paper-quiet: oklch(0.26 0 0);
+  --paper: #17201e;
+  --paper-raised: #1e2926;
+  --paper-quiet: #25312e;
 
-  --ink: oklch(0.93 0 0);
-  --ink-quiet: oklch(0.66 0 0);
+  --glass: #e6e8e1;
+  --glass-quiet: #a3ada8;
 
-  --rule: oklch(0.32 0 0);
-  --rule-field: oklch(0.5 0 0);
+  --rule: #2f3b38;
+  --rule-field: #68756f;
 
-  --refusal: oklch(0.72 0.1 25);
+  --wine: #cf6e88;
+  --spirit: #d69238;
+
+  --wine-fill: #9a3b57;
+  --on-wine: #e6e8e1;
+
+  --refusal: #e8836f;
 }
 
 @theme inline {
+  --font-serif: var(--font-serif);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
+  --color-wine: var(--wine);
+  --color-spirit: var(--spirit);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);

@@ -1,5 +1,22 @@
 import type { Metadata, Viewport } from "next";
+import { Zen_Kaku_Gothic_New, Zen_Old_Mincho } from "next/font/google";
 import "./globals.css";
+
+// The brand's two faces (docs/brand/README.md), self-hosted by `next/font` at build time. Latin
+// only: the Japanese glyphs are megabytes, and the one place they appear — 乾杯 beside the
+// word — falls back to the system's Mincho.
+const mincho = Zen_Old_Mincho({
+  weight: ["500", "700"],
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-zen-old-mincho",
+});
+const gothic = Zen_Kaku_Gothic_New({
+  weight: ["400", "500", "700"],
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-zen-kaku-gothic-new",
+});
 
 export const metadata: Metadata = {
   title: "kanpai",
@@ -17,10 +34,10 @@ export const viewport: Viewport = {
   initialScale: 1,
   // The phone's own chrome, told which ground it is on. These two are the only colours
   // named outside `globals.css`, because a status bar is outside the cascade and cannot be
-  // handed a `var()`: they are `--paper`, light and dark, in sRGB.
+  // handed a `var()`: they are `--paper`, light and dark.
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f5f5f5" },
-    { media: "(prefers-color-scheme: dark)", color: "#0f0f0f" },
+    { media: "(prefers-color-scheme: light)", color: "#edefe8" },
+    { media: "(prefers-color-scheme: dark)", color: "#17201e" },
   ],
 };
 
@@ -32,7 +49,7 @@ const theme =
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={`${mincho.variable} ${gothic.variable}`} suppressHydrationWarning>
       <head>
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: the no-flash theme setter */}
         <script dangerouslySetInnerHTML={{ __html: theme }} />
