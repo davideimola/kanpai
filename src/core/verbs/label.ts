@@ -215,6 +215,17 @@ export async function markLabelVerified(labelId: string): Promise<void> {
 }
 
 /**
+ * Put a Label back on the to-check page: the owner marked it checked by mistake, or looked
+ * again and wants to come back to it (ADR-0004).
+ */
+export async function markLabelToCheck(labelId: string): Promise<void> {
+  const updated = await query("update labels set unverified = true where id = $1 returning id", [
+    labelId,
+  ]);
+  if (updated.length === 0) throw new Refusal("not-found", NO_SUCH_LABEL);
+}
+
+/**
  * Two Labels turn out to be the same one: fold `absorbedId` into `survivorId` (ADR-0004).
  *
  * Everything on the absorbed Label moves onto the survivor — its Vintages with their Bottles,

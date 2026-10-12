@@ -3,7 +3,13 @@ import { aLabel, emptyTheCatalogue } from "@/test/catalogue";
 import { query } from "../db.ts";
 import { getLabel } from "../queries/label.ts";
 import { addBottles } from "./bottle.ts";
-import { amendLabel, createLabel, markLabelVerified, mergeLabels } from "./label.ts";
+import {
+  amendLabel,
+  createLabel,
+  markLabelToCheck,
+  markLabelVerified,
+  mergeLabels,
+} from "./label.ts";
 import { recordSource } from "./source.ts";
 import { recordTasting } from "./tasting.ts";
 import { ensureVintage } from "./vintage.ts";
@@ -238,6 +244,18 @@ describe("marking a Label verified", () => {
 
   it("refuses a Label that does not exist", async () => {
     await expect(markLabelVerified("lbl_missing")).rejects.toMatchObject({ code: "not-found" });
+  });
+
+  it("puts a checked Label back to check, as an undo", async () => {
+    const { labelId } = await createLabel({
+      name: "Hedonya Gin",
+      kindId: "kind_gin",
+      unverified: true,
+    });
+    await markLabelVerified(labelId);
+    await markLabelToCheck(labelId);
+    expect((await getLabel(labelId))?.unverified).toBe(true);
+    await expect(markLabelToCheck("lbl_missing")).rejects.toMatchObject({ code: "not-found" });
   });
 });
 

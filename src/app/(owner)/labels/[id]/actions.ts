@@ -12,7 +12,7 @@ import {
   setBottleLevel,
 } from "@/core/verbs/bottle";
 import { BOTTLE_SHAPES, type BottleShape } from "@/core/verbs/kind";
-import { amendLabel, markLabelVerified, mergeLabels } from "@/core/verbs/label";
+import { amendLabel, markLabelToCheck, markLabelVerified, mergeLabels } from "@/core/verbs/label";
 import { recordTasting } from "@/core/verbs/tasting";
 import { setVintageYear, type VintageOf } from "@/core/verbs/vintage";
 import { requireOwner } from "@/lib/auth/owner";
@@ -120,12 +120,32 @@ export async function markChecked(form: FormData): Promise<void> {
   let to: string;
   try {
     await markLabelVerified(text(form, "labelId") ?? "");
-    to = at(back, { said: "checked", name: text(form, "name") ?? undefined });
+    to = at(back, {
+      said: "checked",
+      name: text(form, "name") ?? undefined,
+      label: text(form, "labelId") ?? undefined,
+    });
   } catch (error) {
     if (!isRefusal(error)) throw error;
     to = at(back, { refused: error.message });
   }
   revalidatePath(back);
+  revalidatePath("/", "layout");
+  redirect(to);
+}
+
+/** Undo a *Mark as checked*: the Label goes back on the to-check page (ADR-0004). */
+export async function undoChecked(form: FormData): Promise<void> {
+  await requireOwner();
+  let to: string;
+  try {
+    await markLabelToCheck(text(form, "labelId") ?? "");
+    to = at("/to-check", { said: "unchecked", name: text(form, "name") ?? undefined });
+  } catch (error) {
+    if (!isRefusal(error)) throw error;
+    to = at("/to-check", { refused: error.message });
+  }
+  revalidatePath("/to-check");
   revalidatePath("/", "layout");
   redirect(to);
 }

@@ -4,7 +4,7 @@ import { Refused, Said } from "@/components/drawer";
 import { Silhouette } from "@/components/silhouette";
 import { listUnverifiedLabels } from "@/core/queries/label";
 import { requireOwner } from "@/lib/auth/owner";
-import { markChecked } from "../labels/[id]/actions";
+import { markChecked, undoChecked } from "../labels/[id]/actions";
 import { dateAsWritten, todayAsADay } from "../words";
 
 // TO CHECK (spec §4): the Labels the assistant created that the owner has not looked at yet
@@ -22,7 +22,10 @@ export default async function ToCheckPage({ searchParams }: { searchParams: Prom
 
   const [labels, asked] = await Promise.all([listUnverifiedLabels(), searchParams]);
   const today = todayAsADay();
-  const checked = asked.said === "checked" && typeof asked.name === "string" ? asked.name : null;
+  const name = typeof asked.name === "string" ? asked.name : null;
+  const checkedId =
+    asked.said === "checked" && typeof asked.label === "string" ? asked.label : null;
+  const unchecked = asked.said === "unchecked" ? name : null;
   const refused = typeof asked.refused === "string" ? asked.refused : null;
 
   return (
@@ -36,7 +39,29 @@ export default async function ToCheckPage({ searchParams }: { searchParams: Prom
       </header>
 
       {refused ? <Refused>{refused}</Refused> : null}
-      {checked ? <Said>{checked} is checked.</Said> : null}
+      {checkedId && name ? (
+        // What a press did, said where it can be undone: the Label left this list, and it is
+        // still in the catalogue, one link away (ADR-0004).
+        <Said className="flex flex-wrap items-center gap-x-4 gap-y-1">
+          <span className="flex-1">
+            <Link
+              href={`/labels/${encodeURIComponent(checkedId)}`}
+              className="font-medium underline-offset-4 hover:underline"
+            >
+              {name}
+            </Link>{" "}
+            is checked. It stays in your catalogue.
+          </span>
+          <form action={undoChecked}>
+            <input type="hidden" name="labelId" value={checkedId} />
+            <input type="hidden" name="name" value={name} />
+            <button type="submit" className={QUIET}>
+              Undo
+            </button>
+          </form>
+        </Said>
+      ) : null}
+      {unchecked ? <Said>{unchecked} is back on the list.</Said> : null}
 
       {labels.length === 0 ? (
         <div className="flex flex-col gap-2 border-t border-rule pt-6">
