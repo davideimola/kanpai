@@ -29,6 +29,13 @@
       "when": 1791807346466,
       "tag": "0003_a_label_names_its_sources",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791807364631,
+      "tag": "0004_a_bottle_has_a_state",
+      "breakpoints": true
     }
   ]
 }

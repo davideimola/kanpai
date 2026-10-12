@@ -212,3 +212,56 @@ export const labelSources = pgTable(
     check("label_sources_page_url_is_a_web_address", absentOrWebAddress(table.pageUrl)),
   ]
 );
+
+/**
+ * One physical bottle the owner has had in the house (`CONTEXT.md`, **Bottle**; ADR-0007).
+ *
+ * Its State is `closed`, `open` or `finished`, and only an open one has a Level. The dates
+ * follow the State: a closed Bottle was never opened, an open one has been and is not
+ * finished, a finished one has both. A finished Bottle is kept — history, not stock — and a
+ * trigger in the migration refuses deleting it.
+ */
+export const bottles = pgTable(
+  "bottles",
+  {
+    id: text().primaryKey().default(sql`gen_prefixed_id('btl')`),
+    vintageId: text().notNull(),
+    state: text().notNull().default("closed"),
+    level: text(),
+    boughtOn: date({ mode: "string" }),
+    price: numeric({ precision: 10, scale: 2 }),
+    boughtWhere: text(),
+    openedAt: timestamp({ withTimezone: true }),
+    finishedAt: timestamp({ withTimezone: true }),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    foreignKey({
+      name: "bottles_vintage_exists",
+      columns: [table.vintageId],
+      foreignColumns: [vintages.id],
+    }),
+    index("bottles_vintage_id_idx").on(table.vintageId),
+    check("bottles_id_is_prefixed", prefixed(table.id, "btl")),
+    check("bottles_state_is_known", sql`${table.state} in ('closed', 'open', 'finished')`),
+    check("bottles_level_is_known", sql`${table.level} in ('full', '3/4', '1/2', '1/4')`),
+    check(
+      "bottles_level_only_when_open",
+      sql`(${table.state} = 'open') = (${table.level} is not null)`
+    ),
+    check(
+      "bottles_dates_follow_the_state",
+      sql`case ${table.state}
+            when 'closed' then ${table.openedAt} is null and ${table.finishedAt} is null
+            when 'open' then ${table.openedAt} is not null and ${table.finishedAt} is null
+            else ${table.openedAt} is not null and ${table.finishedAt} is not null
+          end`
+    ),
+    check(
+      "bottles_finished_after_opened",
+      sql`${table.finishedAt} is null or ${table.finishedAt} >= ${table.openedAt}`
+    ),
+    check("bottles_price_is_not_negative", sql`${table.price} is null or ${table.price} >= 0`),
+    check("bottles_bought_where_is_not_blank", absentOrSaid(table.boughtWhere)),
+  ]
+);
