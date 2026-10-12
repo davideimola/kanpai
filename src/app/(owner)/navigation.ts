@@ -11,12 +11,11 @@
  * go so much as chores, *To check* (with how many wait) and *Settings*.
  *
  * **A destination is here only once its screen exists** (`./shell.test.ts` fails otherwise).
- * Add is S6 and the Wishlist and the Palate are S7 (spec §5); until then a line for them would
- * be a link to a 404. Each of those slices adds its line here, in its place in the order —
- * `{ href: "/add", label: "Add", phone: "act" }` between Cellar and To check, then
+ * Add came with S6; the Wishlist and the Palate are S7 (spec §5), and until then a line for them
+ * would be a link to a 404. S7 adds its two lines after Add, in their place in the order —
  * `{ href: "/wishlist", label: "Wishlist", phone: "bar" }` and
  * `{ href: "/palate", label: "Palate", phone: "bar" }` — and the shell needs no edit: the
- * glyphs are drawn already (`src/components/glyphs.tsx`), and the bar puts an act in its middle.
+ * glyphs are drawn already (`src/components/glyphs.tsx`), and the bar puts the act in its middle.
  */
 
 export type Destination = {
@@ -36,6 +35,7 @@ export type Destination = {
 export const DESTINATIONS: readonly Destination[] = [
   { href: "/", label: "Diary", phone: "bar" },
   { href: "/cellar", label: "Cellar", phone: "bar" },
+  { href: "/add", label: "Add", phone: "act" },
   { href: "/to-check", label: "To check", phone: "header", counted: true },
   { href: "/settings", label: "Settings", phone: "header" },
 ];

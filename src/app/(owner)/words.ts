@@ -64,6 +64,37 @@ export function bottlesInWords(bottles: readonly { state: string; level: Level |
   return sentences.join(" ");
 }
 
+/**
+ * What the Cellar holds of a Label, in one sentence: `Two bottles of 2019.`, `One bottle of 2016,
+ * open. Two bottles with no year.` — what `/add` writes under a Label the owner already has, so
+ * a bottle is seen to be in the house before it is added again.
+ */
+export function heldInWords(
+  held: readonly { dating: Dating; year: number | null; bottles: number; open: number }[]
+): string {
+  if (held.length === 0) return "None in the Cellar.";
+  return held
+    .map((vintage) => {
+      const what = `${capitalised(numberAsWritten(vintage.bottles))} ${vintage.bottles === 1 ? "bottle" : "bottles"}`;
+      const of =
+        vintage.dating === "year" && vintage.year !== null
+          ? ` of ${vintage.year}`
+          : vintage.dating === "nv"
+            ? ""
+            : ", year unknown";
+      const open =
+        vintage.open === 0
+          ? ""
+          : vintage.open === vintage.bottles
+            ? vintage.bottles === 1
+              ? ", open"
+              : ", all open"
+            : `, ${numberAsWritten(vintage.open)} open`;
+      return `${what}${of}${open}.`;
+    })
+    .join(" ");
+}
+
 const SMALL = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
 
 /** A small number in words, a large one in figures, as prose writes them. */

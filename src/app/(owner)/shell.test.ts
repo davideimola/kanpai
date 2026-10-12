@@ -95,6 +95,7 @@ describe("where the owner is", () => {
     ["/", "/"],
     ["/cellar", "/cellar"],
     ["/cellar/", "/cellar"],
+    ["/add", "/add"],
     ["/to-check", "/to-check"],
     ["/settings", "/settings"],
   ])("reads %s as %s", (pathname, expected) => {

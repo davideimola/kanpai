@@ -5,6 +5,7 @@ import {
   counted,
   dateAsWritten,
   dayAsWritten,
+  heldInWords,
   levelAsWritten,
   openAsWritten,
   tastedTimes,
@@ -49,6 +50,33 @@ describe("a Vintage's Bottles, in a sentence", () => {
     ).toBe("Two closed.");
     expect(bottlesInWords([{ state: "finished", level: null }])).toBe("None left in the house.");
     expect(bottlesInWords([])).toBe("No bottles in the house.");
+  });
+});
+
+describe("what the Cellar holds of a Label, in a sentence", () => {
+  it("says the bottles of each year, and which are open", () => {
+    expect(heldInWords([{ dating: "year", year: 2019, bottles: 2, open: 0 }])).toBe(
+      "Two bottles of 2019."
+    );
+    expect(
+      heldInWords([
+        { dating: "year", year: 2019, bottles: 3, open: 1 },
+        { dating: "year", year: 2016, bottles: 1, open: 1 },
+      ])
+    ).toBe("Three bottles of 2019, one open. One bottle of 2016, open.");
+  });
+
+  it("names no year for NV, and says when the year is unknown (ADR-0010)", () => {
+    expect(heldInWords([{ dating: "nv", year: null, bottles: 2, open: 2 }])).toBe(
+      "Two bottles, all open."
+    );
+    expect(heldInWords([{ dating: "unknown", year: null, bottles: 1, open: 0 }])).toBe(
+      "One bottle, year unknown."
+    );
+  });
+
+  it("says so when none is in the house", () => {
+    expect(heldInWords([])).toBe("None in the Cellar.");
   });
 });
 
