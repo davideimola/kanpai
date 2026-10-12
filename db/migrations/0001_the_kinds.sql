@@ -12,18 +12,18 @@
 -- `gen_prefixed_id()` so that every copy of kanpai agrees on them: a Kind named in a fixture,
 -- a prompt or an import means the same row everywhere.
 
-insert into kinds (id, name, family, sort_order) values
-  ('kind_red',             'Red',             'wine',    1),
-  ('kind_white',           'White',           'wine',    2),
-  ('kind_rose',            'Rosé',            'wine',    3),
-  ('kind_sparkling',       'Sparkling',       'wine',    4),
-  ('kind_sweet_fortified', 'Sweet/fortified', 'wine',    5),
-  ('kind_whisky',          'Whisky',          'spirit',  6),
-  ('kind_rum',             'Rum',             'spirit',  7),
-  ('kind_gin',             'Gin',             'spirit',  8),
-  ('kind_grappa',          'Grappa',          'spirit',  9),
-  ('kind_brandy',          'Brandy',          'spirit', 10),
+insert into kinds (id, name, section, has_vintages, sort_order) values
+  ('kind_red',             'Red',             'Wine',    true,   1),
+  ('kind_white',           'White',           'Wine',    true,   2),
+  ('kind_rose',            'Rosé',            'Wine',    true,   3),
+  ('kind_sparkling',       'Sparkling',       'Wine',    true,   4),
+  ('kind_sweet_fortified', 'Sweet/fortified', 'Wine',    true,   5),
+  ('kind_whisky',          'Whisky',          'Spirits', false,  6),
+  ('kind_rum',             'Rum',             'Spirits', false,  7),
+  ('kind_gin',             'Gin',             'Spirits', false,  8),
+  ('kind_grappa',          'Grappa',          'Spirits', false,  9),
+  ('kind_brandy',          'Brandy',          'Spirits', false, 10),
   -- The catch-all, last. A spirit that fits none of the five above is still a spirit, so it
   -- is recorded under this rather than refused; when several Labels gather here, the
   -- answer is a new row for what they share, not a wider meaning for this one.
-  ('kind_other_spirit',    'Other spirit',    'spirit', 11);
+  ('kind_other_spirit',    'Other spirit',    'Spirits', false, 11);

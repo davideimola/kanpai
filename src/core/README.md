@@ -51,8 +51,8 @@ and both doors call it, so neither can reach a record the other cannot.
   no test calls a third party and nothing on a page render calls one either.
 - **Not here either**: invariants that Postgres can enforce. The database refuses what must
   never be true rather than trusting this module to remember, so a rule that can be a
-  constraint should be a constraint in a migration, not an `if`. *A Kind's family is wine or
-  spirit* is `kinds_family_is_wine_or_spirit`, not a check in `kind.ts`.
+  constraint should be a constraint in a migration, not an `if`. *A Kind's section is never
+  blank* is `kinds_section_is_not_blank`, not a check in `kind.ts`.
 
 Everything in here is `server-only`. `DATABASE_URL` must never reach a browser bundle, and
 the import makes an accidental client import a build error.

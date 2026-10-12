@@ -1,6 +1,6 @@
 {
-  "id": "c5fbdb45-0d30-4eb3-9184-98fc8e781caf",
-  "prevId": "4b82c735-09f6-46ad-a7ce-3a2c12166808",
+  "id": "e5dfdad8-9259-40a1-b2bd-0fc73262124e",
+  "prevId": "372a8e44-481d-4d54-925b-8a6d380def2b",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -21,9 +21,15 @@
           "primaryKey": false,
           "notNull": true
         },
-        "family": {
-          "name": "family",
+        "section": {
+          "name": "section",
           "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "has_vintages": {
+          "name": "has_vintages",
+          "type": "boolean",
           "primaryKey": false,
           "notNull": true
         },
@@ -63,9 +69,9 @@
           "name": "kinds_name_is_not_blank",
           "value": "\"kinds\".\"name\" = btrim(\"kinds\".\"name\") and \"kinds\".\"name\" <> ''"
         },
-        "kinds_family_is_wine_or_spirit": {
-          "name": "kinds_family_is_wine_or_spirit",
-          "value": "\"kinds\".\"family\" in ('wine', 'spirit')"
+        "kinds_section_is_not_blank": {
+          "name": "kinds_section_is_not_blank",
+          "value": "\"kinds\".\"section\" = btrim(\"kinds\".\"section\") and \"kinds\".\"section\" <> ''"
         },
         "kinds_sort_order_is_positive": {
           "name": "kinds_sort_order_is_positive",

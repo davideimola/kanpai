@@ -17,13 +17,14 @@ $$;
 CREATE TABLE "kinds" (
 	"id" text PRIMARY KEY DEFAULT gen_prefixed_id('kind') NOT NULL,
 	"name" text NOT NULL,
-	"family" text NOT NULL,
+	"section" text NOT NULL,
+	"has_vintages" boolean NOT NULL,
 	"sort_order" integer NOT NULL,
 	CONSTRAINT "kinds_name_key" UNIQUE("name"),
 	CONSTRAINT "kinds_sort_order_key" UNIQUE("sort_order"),
 	CONSTRAINT "kinds_id_is_prefixed" CHECK ("kinds"."id" ~ '^kind_[a-z0-9]+(_[a-z0-9]+)*$'),
 	CONSTRAINT "kinds_name_is_not_blank" CHECK ("kinds"."name" = btrim("kinds"."name") and "kinds"."name" <> ''),
-	CONSTRAINT "kinds_family_is_wine_or_spirit" CHECK ("kinds"."family" in ('wine', 'spirit')),
+	CONSTRAINT "kinds_section_is_not_blank" CHECK ("kinds"."section" = btrim("kinds"."section") and "kinds"."section" <> ''),
 	CONSTRAINT "kinds_sort_order_is_positive" CHECK ("kinds"."sort_order" > 0)
 );
 
@@ -31,8 +32,11 @@ CREATE TABLE "kinds" (
 comment on table kinds is
   'What a Label is: a red, a sparkling, a whisky. A row and never an enum in code (ADR-0002), so a beer or a sake is an insert.';
 --> statement-breakpoint
-comment on column kinds.family is
-  'wine or spirit. Closed, because the model turns on it: a spirit Label has exactly one Vintage, NV (ADR-0002, ADR-0010).';
+comment on column kinds.section is
+  'The heading the Kind is listed under: Wine, Spirits, and whatever a later row brings. Free text, so a beer is an insert.';
+--> statement-breakpoint
+comment on column kinds.has_vintages is
+  'Whether a Label of this Kind has years. When false it has exactly one Vintage, NV (ADR-0002, ADR-0010): spirits, beer, sake.';
 --> statement-breakpoint
 comment on column kinds.sort_order is
-  'The order the Kinds are offered and listed in. Wine before spirit, and within each the order CONTEXT.md names them.';
+  'The order the Kinds are offered and listed in. Wines before spirits, and within each the order CONTEXT.md names them.';

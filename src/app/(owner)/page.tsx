@@ -1,4 +1,4 @@
-import { type Family, listKinds } from "@/core/queries/kind";
+import { listKinds } from "@/core/queries/kind";
 import { signOutOwner } from "@/lib/auth/actions";
 import { requireOwner } from "@/lib/auth/owner";
 
@@ -8,16 +8,15 @@ import { requireOwner } from "@/lib/auth/owner";
 // end — and nothing more. The diary of Tastings replaces it in S4 (spec §4); until then this
 // is the one screen, and seeing eleven Kinds on it means the path works.
 
-/** What each family is called over its list. The screen's own words, not the core's. */
-const FAMILY_HEADING: Record<Family, string> = { wine: "Wine", spirit: "Spirits" };
-
 export default async function HomePage() {
   const owner = await requireOwner();
   const kinds = await listKinds();
 
-  const families = (["wine", "spirit"] as const).map((family) => ({
-    family,
-    kinds: kinds.filter((kind) => kind.family === family),
+  // The sections in the order their first Kind is offered in, so a new section (a beer)
+  // appears where its rows sort, with no list of sections written down here.
+  const sections = [...new Set(kinds.map((kind) => kind.section))].map((section) => ({
+    section,
+    kinds: kinds.filter((kind) => kind.section === section),
   }));
 
   return (
@@ -44,13 +43,13 @@ export default async function HomePage() {
         The Kinds a Label can be. Nothing has been recorded yet.
       </p>
 
-      {families.map(({ family, kinds: ofFamily }) => (
-        <section key={family} aria-labelledby={`family-${family}`}>
-          <h2 id={`family-${family}`} className="text-sm font-medium">
-            {FAMILY_HEADING[family]}
+      {sections.map(({ section, kinds: inSection }, index) => (
+        <section key={section} aria-labelledby={`section-${index}`}>
+          <h2 id={`section-${index}`} className="text-sm font-medium">
+            {section}
           </h2>
           <ul className="mt-2 divide-y divide-border border-y border-border">
-            {ofFamily.map((kind) => (
+            {inSection.map((kind) => (
               <li key={kind.id} className="py-2 text-sm">
                 {kind.name}
               </li>

@@ -38,9 +38,9 @@ excluded as a whole.
 
 **In a migration, as a row** (ADR-0002). A beer, a sake or a vermouth is a new file written
 with `pnpm db:generate --custom --name=…` that inserts into `kinds`; it is never a union of
-names in TypeScript, an `if` on a Kind's id, or an edit to `0001_the_kinds.sql`. What *is*
-closed is a Kind's `family`, wine or spirit, because the model turns on it (a spirit Label has
-exactly one Vintage, NV — ADR-0010), and the database holds that with a check constraint.
+names in TypeScript, an `if` on a Kind's id, or an edit to `0001_the_kinds.sql`. Nothing about
+a Kind is closed: the one fact the model turns on — whether a Label of it has years, or exactly
+one Vintage, NV (ADR-0010) — is the row's own `has_vintages`, and its heading is its `section`.
 
 ### Where an id comes from
 
