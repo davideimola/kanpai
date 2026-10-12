@@ -370,3 +370,20 @@ export const wishes = pgTable(
     check("wishes_came_from_is_not_blank", absentOrSaid(table.cameFrom)),
   ]
 );
+
+/**
+ * The owner's taste, in prose (`CONTEXT.md`, **Palate**): an instruction to the external
+ * sommelier, not a note to self.
+ *
+ * There is exactly one. Its id can only be `palate`, which makes a second row impossible;
+ * the migration inserts the one, empty, and a trigger refuses taking it away.
+ */
+export const palate = pgTable(
+  "palate",
+  {
+    id: text().primaryKey().default("palate"),
+    prose: text().notNull().default(""),
+    updatedAt: timestamp({ withTimezone: true }),
+  },
+  (table) => [check("palate_is_the_only_one", sql`${table.id} = 'palate'`)]
+);

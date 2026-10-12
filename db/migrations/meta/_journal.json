@@ -50,6 +50,13 @@
       "when": 1791807397196,
       "tag": "0006_a_wish_names_a_label_or_a_vintage",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791807410288,
+      "tag": "0007_there_is_one_palate",
+      "breakpoints": true
     }
   ]
 }
