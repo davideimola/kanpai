@@ -19,6 +19,7 @@
     "db:down": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON db/cli.ts down",
     "db:psql": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON db/cli.ts psql",
     "db:migrate": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON db/cli.ts migrate",
+    "db:seed": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON db/seed.ts",
     "db:generate": "drizzle-kit generate",
     "token:issue": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON db/token.ts issue",
     "token:list": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON db/token.ts list",

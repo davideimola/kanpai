@@ -72,6 +72,7 @@ pnpm dev          # http://localhost:3000
 pnpm build        # production build (needs no database: the page is per-request)
 pnpm db:up        # bring the container up and apply every pending migration
 pnpm db:reset     # drop the database and apply the whole schema from scratch
+pnpm db:seed      # fill an empty local database with a cellar to look at
 pnpm db:down      # delete the container, and its data with it
 pnpm db:psql      # a psql shell inside the container
 pnpm db:migrate   # apply pending migrations to whatever DATABASE_URL names
