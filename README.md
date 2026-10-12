@@ -15,10 +15,11 @@ Read [`CONTEXT.md`](CONTEXT.md) for the vocabulary and [`docs/spec.md`](docs/spe
 is built and in what order. Every decision lives in exactly one place, its ADR in
 [`docs/adr/`](docs/adr/).
 
-> Status: S1, the schema and the core. The tables of [`docs/spec.md`](docs/spec.md) §2 migrate
-> from scratch, and the verbs and queries the MCP tools will be thin adapters over are in
-> [`src/core`](src/core/README.md), tested against a real Postgres. Nothing reaches them from
-> outside yet: the MCP door is S2 and the web view S4. §5 has the build order.
+> Status: S2, the MCP door. The tables of [`docs/spec.md`](docs/spec.md) §2 migrate from
+> scratch, the verbs and queries are in [`src/core`](src/core/README.md), tested against a real
+> Postgres, and `/mcp` exposes them to Claude behind tokens the owner issues — create a Label,
+> record a Tasting, read the Cellar, from a conversation. The web view is S4. §5 has the build
+> order.
 
 ## The local loop
 
@@ -75,10 +76,65 @@ pnpm db:down      # delete the container, and its data with it
 pnpm db:psql      # a psql shell inside the container
 pnpm db:migrate   # apply pending migrations to whatever DATABASE_URL names
 pnpm db:generate  # write the next migration from db/schema.ts
+pnpm token:issue <name>   # issue an MCP access token, and print its secret once
+pnpm token:list           # every token: name, issued, last used, revoked
+pnpm token:revoke <id>    # refuse that token at /mcp from now on
 pnpm test         # vitest against a real Postgres, node environment
 pnpm typecheck    # tsc --noEmit
 pnpm lint         # biome check (lint + format), lint:fix to fix
 ```
+
+### The MCP door
+
+`/mcp` is how Claude reads and writes the record, as the owner's sommelier. It takes **access
+tokens the owner issues** — named after where they go, shown once, stored as a hash, revoked
+one by one ([ADR-0009](docs/adr/0009-the-mcp-door-takes-tokens-the-owner-issues-and-oauth-comes-later.md)) —
+and it **fails closed**: until a token is issued, every request is a 401. There is no
+development opt-in: issuing one is a command.
+
+```sh
+pnpm token:issue "Claude Code"   # prints kanpai_… once; it is stored only as a hash
+pnpm token:list                  # names, last used, revoked
+pnpm token:revoke tok_…          # refused from the next request on
+```
+
+The web view will issue them from `/settings` (S4); this command calls the same verbs.
+
+**Claude Code**, against the local loop:
+
+```sh
+claude mcp add --transport http kanpai http://localhost:3000/mcp \
+  --header "Authorization: Bearer kanpai_…"
+```
+
+Then `/mcp` in Claude Code lists the tools. *"Had a Barolo Castiglione 2019 by Vietti last
+night with a steak, a 4"* searches the catalogue, creates the Label — marked unverified, for
+the owner to check — and records the Tasting on its 2019; *"what's in my cellar?"* reads it.
+
+**Claude Desktop** reads local servers from `claude_desktop_config.json` (Settings →
+Developer → Edit Config), and its *custom connectors* are reached from Anthropic's side, so a
+`localhost` URL is not one of them. Bridge it with
+[`mcp-remote`](https://www.npmjs.com/package/mcp-remote), which needs node on the machine:
+
+```json
+{
+  "mcpServers": {
+    "kanpai": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "http://localhost:3000/mcp", "--header", "Authorization:${KANPAI_AUTH}"],
+      "env": { "KANPAI_AUTH": "Bearer kanpai_…" }
+    }
+  }
+}
+```
+
+The header goes through the environment because some clients split an argument at its space.
+Restart Claude Desktop after editing. A copy deployed behind HTTPS is a custom connector on
+claude.ai or in the apps instead, with the same header; ChatGPT reaches it through OpenAI's
+Secure MCP Tunnel, which presents a token issued for it (S5).
+
+What the tools are, how one is added, and why the assistant creates Labels directly rather than
+proposing them, is [`src/lib/mcp/README.md`](src/lib/mcp/README.md).
 
 ### Where a page goes
 
@@ -146,6 +202,16 @@ the owner included — lands on the sign-in screen. They are documented in
 copy behind a TLS terminator of your own: the container serves plain HTTP on 3000. A
 step-by-step for someone who has never made an OAuth client, and GitHub as a second sign-in
 provider, arrive with the self-host kit (S9).
+
+**The MCP door needs a token, and a fresh copy has none**, so it refuses every assistant until
+its owner issues one. Until the web view can, issue it from inside the running copy:
+
+```sh
+docker compose exec app node --experimental-strip-types \
+  --disable-warning=MODULE_TYPELESS_PACKAGE_JSON db/token.ts issue Claude
+```
+
+`db/token.ts list` and `db/token.ts revoke <id>` work the same way.
 
 **Backups are your job.** The `data` volume is where the record lives, not where it is safe:
 `compose.yaml` deliberately has no backup, and a copy worth keeping needs one somewhere else —

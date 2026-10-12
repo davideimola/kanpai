@@ -14,8 +14,10 @@ import { defineConfig } from "vitest/config";
 // its Tastings — and they are SQL. Testing them without a database means not testing them.
 //
 // **Seam 2**, deliberately thin: the gates at the HTTP edge. It is protocol behaviour
-// rather than the model — the owner gate in both directions — so it reaches no database
-// and shares nothing with Seam 1 but this config. The gate is a **pure predicate** with a
+// rather than the model — the owner gate in both directions, and the MCP door's. The owner
+// gate reaches no database; the MCP door's does, because the tokens it takes are records the
+// owner issues (ADR-0009), so `src/app/mcp/route.test.ts` asks the real gate against real
+// rows rather than a stand-in for them. The gate is a **pure predicate** with a
 // thin adapter over it, and the predicate is tested beside itself
 // (`src/lib/auth/gate.test.ts`): environment in, verdict out, a function the gate would
 // still have if HTTP were replaced.
@@ -23,7 +25,9 @@ import { defineConfig } from "vitest/config";
 // **Two files are neither seam, and they are walls**: `src/app/gated.test.ts` and
 // `db/migrations/journal.test.ts`. Each is a grep over the source, each catches a failure
 // that is silent — a page served ungated, a migration that will never run — and neither
-// renders anything.
+// renders anything. `src/lib/mcp/tools.test.ts` is a third of the same kind over the tool
+// list — a schema left open, a tool wording *search first* its own way — and it also drives
+// the MCP door's definition of done through the framing, against Seam 1's database.
 export default defineConfig({
   resolve: {
     alias: {

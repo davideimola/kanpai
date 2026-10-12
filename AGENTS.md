@@ -22,6 +22,15 @@ Every door — the web view, and from S2 the MCP route handler — is a thin ada
 `src/core`, and none of them holds domain logic. Read `src/core/README.md` before adding a
 verb or a query: it says which file yours goes in, and why there is no barrel index to edit.
 
+### Where an MCP tool goes
+
+**In `src/lib/mcp/tools/<area>.ts`, default-exported; the route and `tools.ts` are never
+edited.** A tool is a thin adapter over one verb or query, named as spec §3 names it, with a
+closed schema and all three hints. A tool that may lead to a new Label spends `SEARCH_FIRST`,
+and one that names a Vintage spends `VINTAGE`, from `src/lib/mcp/prose.ts` — never its own
+wording of them (ADR-0004, ADR-0010). `src/lib/mcp/tools.test.ts` is the wall, and
+`src/lib/mcp/README.md` has the rest.
+
 ### Where a page goes
 
 **`src/app/(owner)/`, and it calls `requireOwner()` before it reads anything.** The route

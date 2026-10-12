@@ -5,7 +5,7 @@ in [`docs/adr/`](adr/), and the vocabulary lives in [`CONTEXT.md`](../CONTEXT.md
 document is the inventory and the build order.
 
 > **Status: draft.** Written from the first design conversation (2026-10-12). Section 7 lists
-> what is still open.
+> what is still open. Built so far: S0, S1, S2.
 
 ---
 
@@ -27,10 +27,10 @@ Single-owner **per copy**, and anyone can run a copy from the published image wi
 ## 2. The data
 
 Tables: `kinds` · `labels` · `vintages` · `label_sources` · `bottles` · `tastings` · `wishes` ·
-`palate` (one row) · `access_tokens` ([ADR-0009](adr/0009-the-mcp-door-takes-tokens-the-owner-issues-and-oauth-comes-later.md): name, hash, created, last used, revoked). Prefixed text ids, as in the siblings.
+`palate` (one row) · `access_tokens`. Prefixed text ids, as in the siblings.
 
 Every id is `gen_prefixed_id('<prefix>')` — `kind_`, `lbl_`, `vtg_`, `src_`, `btl_`, `tst_`,
-`wish_` — except the Palate's, which is the constant `palate`. The invariants are held by
+`wish_`, `tok_` — except the Palate's, which is the constant `palate`. The invariants are held by
 Postgres, not by `src/core`: the constraint or trigger named beside each is what refuses it.
 
 - `kinds`: name, section, `has_vintages`, sort order. Rows, not an enum
@@ -61,6 +61,13 @@ Postgres, not by `src/core`: the constraint or trigger named beside each is what
   (`bought` | `tasted` | `dropped`) and closed-at, which go together.
 - `palate`: one row, id `palate`, prose (empty until written), updated at. A second row is
   refused by its id's check, and removing the one by a trigger.
+- `access_tokens`: the credentials `/mcp` accepts ([ADR-0009](adr/0009-the-mcp-door-takes-tokens-the-owner-issues-and-oauth-comes-later.md)) —
+  name (not blank, unique among the live ones: `access_tokens_name_is_unique_while_live`),
+  `secret_hash` (the SHA-256 of the secret in hex, never the secret; unique), created at,
+  last used at (touched at most once a minute), revoked at. A revocation is final and a
+  token keeps its secret (`access_tokens_revoked_is_final`, `access_tokens_secret_is_final`);
+  a row is revoked, never deleted. The secret is `kanpai_` + 32 random bytes in base64url,
+  shown once. Meant to hold OAuth's access tokens too (S10), which add their columns then.
 
 ## 3. The MCP tools
 
@@ -70,17 +77,22 @@ directly, marking new Labels unverified
 
 | tool | does |
 | --- | --- |
-| `search_catalogue` | our Labels first, then Open Food Facts, then Vivino; returns candidates with images |
+| `search_catalogue` | our Labels first, then Open Food Facts, then Vivino; returns candidates with images. **Built (S2): our Labels only**, and it says so; the Sources are S3 |
 | `get_label` | one Label with its Vintages, Bottles, Tastings and derived scores |
 | `create_label` | from a Source candidate or from what was read off a photo; born unverified |
+| `list_kinds` | the Kinds, with their ids — what `create_label` is created against (added in S2) |
 | `record_tasting` | on a Vintage, or loose with a description |
 | `add_bottles` | n Bottles of a Vintage into the Cellar |
 | `update_bottle` | open, set level, finish |
 | `set_vintage_year` | move Bottles and Tastings from the unknown Vintage to a year |
 | `read_cellar` | what is in the house, with levels |
 | `read_tastings` | filtered by Kind, region, grape, rating, date |
-| `add_wish` / `close_wish` | the wishlist |
+| `add_wish` / `read_wishes` / `close_wish` | the wishlist (`read_wishes` added in S2: a Wish is closed by its id) |
 | `read_palate` / `update_palate` | the prose Palate |
+
+`record_tasting` and `add_bottles` name their Vintage by id, or by a Label and a dating — a
+year, `nv` or `unknown` — which finds that Vintage or creates it in the same transaction. The
+door, its gate and its rules are [`src/lib/mcp/README.md`](../src/lib/mcp/README.md).
 
 ## 4. The surfaces
 
