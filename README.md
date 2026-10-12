@@ -15,9 +15,10 @@ Read [`CONTEXT.md`](CONTEXT.md) for the vocabulary and [`docs/spec.md`](docs/spe
 is built and in what order. Every decision lives in exactly one place, its ADR in
 [`docs/adr/`](docs/adr/).
 
-> Status: S0, the scaffold. The stack runs end to end — Postgres, migrations, the owner gate,
-> one page listing the Kinds — and nothing is recorded yet. [`docs/spec.md`](docs/spec.md) §5
-> has the build order.
+> Status: S1, the schema and the core. The tables of [`docs/spec.md`](docs/spec.md) §2 migrate
+> from scratch, and the verbs and queries the MCP tools will be thin adapters over are in
+> [`src/core`](src/core/README.md), tested against a real Postgres. Nothing reaches them from
+> outside yet: the MCP door is S2 and the web view S4. §5 has the build order.
 
 ## The local loop
 

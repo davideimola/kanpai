@@ -29,20 +29,38 @@ Single-owner **per copy**, and anyone can run a copy from the published image wi
 Tables: `kinds` · `labels` · `vintages` · `label_sources` · `bottles` · `tastings` · `wishes` ·
 `palate` (one row) · `access_tokens` ([ADR-0009](adr/0009-the-mcp-door-takes-tokens-the-owner-issues-and-oauth-comes-later.md): name, hash, created, last used, revoked). Prefixed text ids, as in the siblings.
 
-- `labels`: producer, name, kind, country, region, appellation, grapes/base, age statement,
-  strength, `unverified`, `own_image_url`.
-- `vintages`: label, and a **year, NV or unknown** — at most one NV and one unknown per Label;
-  a spirit Label has exactly one, NV ([ADR-0010](adr/0010-a-vintage-is-a-year-nv-or-unknown.md),
+Every id is `gen_prefixed_id('<prefix>')` — `kind_`, `lbl_`, `vtg_`, `src_`, `btl_`, `tst_`,
+`wish_` — except the Palate's, which is the constant `palate`. The invariants are held by
+Postgres, not by `src/core`: the constraint or trigger named beside each is what refuses it.
+
+- `kinds`: name, section, `has_vintages`, sort order. Rows, not an enum
+  ([ADR-0002](adr/0002-one-model-for-wine-and-spirits-and-kind-is-data.md)).
+- `labels`: producer (nullable: a Label read off a photo may not have one), name, kind, country,
+  region, appellation, `grapes` (an array: the grapes of a wine or the base of a spirit), age
+  statement, strength (% ABV), `unverified`, `own_image_url`, created at. A Label always has a
+  Vintage (`labels_have_a_vintage`, checked at commit); it cannot move to a Kind without
+  vintages while it has a year or an unknown (`labels_kind_without_vintages_keeps_only_nv`).
+- `vintages`: label, `dating` (`year` | `nv` | `unknown`) and `year`, present exactly when
+  dated by year — one year per Label, at most one NV and one unknown per Label; a Label whose
+  Kind has no vintages (`kinds.has_vintages = false`: spirits, beer, sake) has exactly one, NV
+  (`vintages_of_a_kind_without_vintages_are_nv`) ([ADR-0010](adr/0010-a-vintage-is-a-year-nv-or-unknown.md),
   [ADR-0002](adr/0002-one-model-for-wine-and-spirits-and-kind-is-data.md),
   [ADR-0003](adr/0003-a-label-has-vintages-and-the-rating-belongs-to-the-tasting.md)).
-- `label_sources`: source (`openfoodfacts` | `vivino`), the source's id, image URL, page URL,
-  looked-up-at ([ADR-0006](adr/0006-sources-are-open-food-facts-then-vivino-and-images-are-hotlinked.md)).
+- `label_sources`: label, source (`openfoodfacts` | `vivino`), `id_at_source` (the source's id,
+  unique per source across all Labels), image URL, page URL, looked-up-at
+  ([ADR-0006](adr/0006-sources-are-open-food-facts-then-vivino-and-images-are-hotlinked.md)).
 - `bottles`: vintage, state (`closed` | `open` | `finished`), level (`full` | `3/4` | `1/2` |
-  `1/4`, open only), bought at, price, where bought, opened at, finished at
-  ([ADR-0007](adr/0007-a-bottle-has-a-state-and-an-open-one-has-a-level.md)).
-- `tastings`: vintage **or** a free description ([ADR-0005](adr/0005-a-tasting-may-have-no-label.md)),
-  date, place, food, company, rating (1–5 in halves), notes, the four guided answers.
-- `wishes`: label or vintage, why, from whom, closed-as (`bought` | `tasted` | `dropped`).
+  `1/4`, present exactly when open), bought on (a date), price, where bought, opened at,
+  finished at — the dates follow the state, and a finished Bottle cannot be deleted
+  (`bottles_finished_is_kept`) ([ADR-0007](adr/0007-a-bottle-has-a-state-and-an-open-one-has-a-level.md)).
+- `tastings`: vintage **or** a free description, exactly one ([ADR-0005](adr/0005-a-tasting-may-have-no-label.md)),
+  tasted on (a date), place, food, company, rating (1–5 in halves, optional), notes, the guided
+  answers `liked_it`, `body_and_feel`, `reminded_of` — the fourth, *with what food*, is `food` —
+  created at, edited at.
+- `wishes`: label **or** vintage, exactly one, why, `came_from`, created at, closed-as
+  (`bought` | `tasted` | `dropped`) and closed-at, which go together.
+- `palate`: one row, id `palate`, prose (empty until written), updated at. A second row is
+  refused by its id's check, and removing the one by a trigger.
 
 ## 3. The MCP tools
 

@@ -21,4 +21,5 @@ Vivino draws the same line, as N.V. against U.V.
 - **The assistant records unknown rather than guessing.** A year read off a photograph is a
   year; a year inferred from "it was a few years ago" is not, and the `record_tasting` tool
   says so in its description.
-- A spirit Label still has exactly one Vintage, NV (ADR-0002). *Unknown* is for wine.
+- A Label whose Kind has no vintages — spirits, beer, sake; the Kind's `has_vintages` says so —
+  still has exactly one Vintage, NV (ADR-0002). *Unknown* is for a Kind with vintages.
