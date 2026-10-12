@@ -57,6 +57,13 @@
       "when": 1791807410288,
       "tag": "0007_there_is_one_palate",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791807410690,
+      "tag": "0008_the_search_folds_accents",
+      "breakpoints": true
     }
   ]
 }

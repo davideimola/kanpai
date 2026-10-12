@@ -1,0 +1,21 @@
+-- The search folds accents, so `Rose` finds *Rosé* and `rose` finds *Rosé* too.
+--
+-- The catalogue is Italian and French wine typed on a phone: *Rosé*, *Cuvée*, *Château*,
+-- *Bätzing*. An owner — or an assistant reading a label off a photograph — types `rose`, and
+-- a search that answered *nothing* would be answering a question about diacritics rather
+-- than about the catalogue, and the assistant would then create a duplicate Label
+-- (ADR-0004 asks it to search before it creates).
+--
+-- `unaccent` is that fold, as in tsundoku's `0003_the_finder_folds_accents.sql`, and for the
+-- same two reasons rather than a `translate()` of the characters somebody thought of: the
+-- list is not ours to guess, and the extension is contrib, present in `postgres:18-alpine`
+-- and trusted since Postgres 13, so the owner of the database may create it — which is what
+-- lets a self-hosted copy's migration step apply this file with no superuser (ADR-0008).
+--
+-- Hand-written, and it will stay so: an extension is not something `drizzle-kit generate`
+-- writes. The file was prepared by `drizzle-kit generate --custom`, which keeps the number
+-- and the journal the generator's own. `if not exists`, and no `comment on`, because a
+-- database given the extension by another hand must not make this file fail — commenting an
+-- extension takes ownership of it. `src/core/queries/label.ts` is what uses it.
+
+create extension if not exists unaccent;

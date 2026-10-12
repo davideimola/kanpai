@@ -1,0 +1,1009 @@
+{
+  "id": "ab96e272-c987-4e62-b396-7677b2378482",
+  "prevId": "b70038f3-b293-4f6e-9d08-ca1e2a7ea3a4",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.bottles": {
+      "name": "bottles",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_prefixed_id('btl')"
+        },
+        "vintage_id": {
+          "name": "vintage_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'closed'"
+        },
+        "level": {
+          "name": "level",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bought_on": {
+          "name": "bought_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "price": {
+          "name": "price",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bought_where": {
+          "name": "bought_where",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "opened_at": {
+          "name": "opened_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "finished_at": {
+          "name": "finished_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "bottles_vintage_id_idx": {
+          "name": "bottles_vintage_id_idx",
+          "columns": [
+            {
+              "expression": "vintage_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "bottles_vintage_exists": {
+          "name": "bottles_vintage_exists",
+          "tableFrom": "bottles",
+          "columnsFrom": [
+            "vintage_id"
+          ],
+          "tableTo": "vintages",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "bottles_id_is_prefixed": {
+          "name": "bottles_id_is_prefixed",
+          "value": "\"bottles\".\"id\" ~ '^btl_[a-z0-9]+(_[a-z0-9]+)*$'"
+        },
+        "bottles_state_is_known": {
+          "name": "bottles_state_is_known",
+          "value": "\"bottles\".\"state\" in ('closed', 'open', 'finished')"
+        },
+        "bottles_level_is_known": {
+          "name": "bottles_level_is_known",
+          "value": "\"bottles\".\"level\" in ('full', '3/4', '1/2', '1/4')"
+        },
+        "bottles_level_only_when_open": {
+          "name": "bottles_level_only_when_open",
+          "value": "(\"bottles\".\"state\" = 'open') = (\"bottles\".\"level\" is not null)"
+        },
+        "bottles_dates_follow_the_state": {
+          "name": "bottles_dates_follow_the_state",
+          "value": "case \"bottles\".\"state\"\n            when 'closed' then \"bottles\".\"opened_at\" is null and \"bottles\".\"finished_at\" is null\n            when 'open' then \"bottles\".\"opened_at\" is not null and \"bottles\".\"finished_at\" is null\n            else \"bottles\".\"opened_at\" is not null and \"bottles\".\"finished_at\" is not null\n          end"
+        },
+        "bottles_finished_after_opened": {
+          "name": "bottles_finished_after_opened",
+          "value": "\"bottles\".\"finished_at\" is null or \"bottles\".\"finished_at\" >= \"bottles\".\"opened_at\""
+        },
+        "bottles_price_is_not_negative": {
+          "name": "bottles_price_is_not_negative",
+          "value": "\"bottles\".\"price\" is null or \"bottles\".\"price\" >= 0"
+        },
+        "bottles_bought_where_is_not_blank": {
+          "name": "bottles_bought_where_is_not_blank",
+          "value": "\"bottles\".\"bought_where\" is null or (\"bottles\".\"bought_where\" = btrim(\"bottles\".\"bought_where\") and \"bottles\".\"bought_where\" <> '')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.kinds": {
+      "name": "kinds",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_prefixed_id('kind')"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "section": {
+          "name": "section",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "has_vintages": {
+          "name": "has_vintages",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "kinds_name_key": {
+          "name": "kinds_name_key",
+          "columns": [
+            "name"
+          ],
+          "nullsNotDistinct": false
+        },
+        "kinds_sort_order_key": {
+          "name": "kinds_sort_order_key",
+          "columns": [
+            "sort_order"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "kinds_id_is_prefixed": {
+          "name": "kinds_id_is_prefixed",
+          "value": "\"kinds\".\"id\" ~ '^kind_[a-z0-9]+(_[a-z0-9]+)*$'"
+        },
+        "kinds_name_is_not_blank": {
+          "name": "kinds_name_is_not_blank",
+          "value": "\"kinds\".\"name\" = btrim(\"kinds\".\"name\") and \"kinds\".\"name\" <> ''"
+        },
+        "kinds_section_is_not_blank": {
+          "name": "kinds_section_is_not_blank",
+          "value": "\"kinds\".\"section\" = btrim(\"kinds\".\"section\") and \"kinds\".\"section\" <> ''"
+        },
+        "kinds_sort_order_is_positive": {
+          "name": "kinds_sort_order_is_positive",
+          "value": "\"kinds\".\"sort_order\" > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.label_sources": {
+      "name": "label_sources",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_prefixed_id('src')"
+        },
+        "label_id": {
+          "name": "label_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source": {
+          "name": "source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id_at_source": {
+          "name": "id_at_source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "image_url": {
+          "name": "image_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "page_url": {
+          "name": "page_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "looked_up_at": {
+          "name": "looked_up_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "label_sources_label_id_idx": {
+          "name": "label_sources_label_id_idx",
+          "columns": [
+            {
+              "expression": "label_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "label_sources_label_exists": {
+          "name": "label_sources_label_exists",
+          "tableFrom": "label_sources",
+          "columnsFrom": [
+            "label_id"
+          ],
+          "tableTo": "labels",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "label_sources_one_label_per_record": {
+          "name": "label_sources_one_label_per_record",
+          "columns": [
+            "source",
+            "id_at_source"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "label_sources_id_is_prefixed": {
+          "name": "label_sources_id_is_prefixed",
+          "value": "\"label_sources\".\"id\" ~ '^src_[a-z0-9]+(_[a-z0-9]+)*$'"
+        },
+        "label_sources_source_is_known": {
+          "name": "label_sources_source_is_known",
+          "value": "\"label_sources\".\"source\" in ('openfoodfacts', 'vivino')"
+        },
+        "label_sources_id_at_source_is_not_blank": {
+          "name": "label_sources_id_at_source_is_not_blank",
+          "value": "\"label_sources\".\"id_at_source\" = btrim(\"label_sources\".\"id_at_source\") and \"label_sources\".\"id_at_source\" <> ''"
+        },
+        "label_sources_image_url_is_a_web_address": {
+          "name": "label_sources_image_url_is_a_web_address",
+          "value": "\"label_sources\".\"image_url\" is null or \"label_sources\".\"image_url\" ~ '^https?://[^[:space:]]+$'"
+        },
+        "label_sources_page_url_is_a_web_address": {
+          "name": "label_sources_page_url_is_a_web_address",
+          "value": "\"label_sources\".\"page_url\" is null or \"label_sources\".\"page_url\" ~ '^https?://[^[:space:]]+$'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.labels": {
+      "name": "labels",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_prefixed_id('lbl')"
+        },
+        "producer": {
+          "name": "producer",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind_id": {
+          "name": "kind_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "country": {
+          "name": "country",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "region": {
+          "name": "region",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "appellation": {
+          "name": "appellation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "grapes": {
+          "name": "grapes",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::text[]"
+        },
+        "age_statement": {
+          "name": "age_statement",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "strength": {
+          "name": "strength",
+          "type": "numeric(4, 1)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "unverified": {
+          "name": "unverified",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "own_image_url": {
+          "name": "own_image_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "labels_kind_id_idx": {
+          "name": "labels_kind_id_idx",
+          "columns": [
+            {
+              "expression": "kind_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "labels_kind_exists": {
+          "name": "labels_kind_exists",
+          "tableFrom": "labels",
+          "columnsFrom": [
+            "kind_id"
+          ],
+          "tableTo": "kinds",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "labels_id_is_prefixed": {
+          "name": "labels_id_is_prefixed",
+          "value": "\"labels\".\"id\" ~ '^lbl_[a-z0-9]+(_[a-z0-9]+)*$'"
+        },
+        "labels_name_is_not_blank": {
+          "name": "labels_name_is_not_blank",
+          "value": "\"labels\".\"name\" = btrim(\"labels\".\"name\") and \"labels\".\"name\" <> ''"
+        },
+        "labels_producer_is_not_blank": {
+          "name": "labels_producer_is_not_blank",
+          "value": "\"labels\".\"producer\" is null or (\"labels\".\"producer\" = btrim(\"labels\".\"producer\") and \"labels\".\"producer\" <> '')"
+        },
+        "labels_country_is_not_blank": {
+          "name": "labels_country_is_not_blank",
+          "value": "\"labels\".\"country\" is null or (\"labels\".\"country\" = btrim(\"labels\".\"country\") and \"labels\".\"country\" <> '')"
+        },
+        "labels_region_is_not_blank": {
+          "name": "labels_region_is_not_blank",
+          "value": "\"labels\".\"region\" is null or (\"labels\".\"region\" = btrim(\"labels\".\"region\") and \"labels\".\"region\" <> '')"
+        },
+        "labels_appellation_is_not_blank": {
+          "name": "labels_appellation_is_not_blank",
+          "value": "\"labels\".\"appellation\" is null or (\"labels\".\"appellation\" = btrim(\"labels\".\"appellation\") and \"labels\".\"appellation\" <> '')"
+        },
+        "labels_age_statement_is_not_blank": {
+          "name": "labels_age_statement_is_not_blank",
+          "value": "\"labels\".\"age_statement\" is null or (\"labels\".\"age_statement\" = btrim(\"labels\".\"age_statement\") and \"labels\".\"age_statement\" <> '')"
+        },
+        "labels_grapes_are_not_blank": {
+          "name": "labels_grapes_are_not_blank",
+          "value": "every_one_is_said(\"labels\".\"grapes\")"
+        },
+        "labels_strength_is_a_percentage": {
+          "name": "labels_strength_is_a_percentage",
+          "value": "\"labels\".\"strength\" is null or (\"labels\".\"strength\" > 0 and \"labels\".\"strength\" <= 100)"
+        },
+        "labels_own_image_url_is_a_web_address": {
+          "name": "labels_own_image_url_is_a_web_address",
+          "value": "\"labels\".\"own_image_url\" is null or \"labels\".\"own_image_url\" ~ '^https?://[^[:space:]]+$'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.palate": {
+      "name": "palate",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "'palate'"
+        },
+        "prose": {
+          "name": "prose",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "palate_is_the_only_one": {
+          "name": "palate_is_the_only_one",
+          "value": "\"palate\".\"id\" = 'palate'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.tastings": {
+      "name": "tastings",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_prefixed_id('tst')"
+        },
+        "vintage_id": {
+          "name": "vintage_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tasted_on": {
+          "name": "tasted_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "current_date"
+        },
+        "place": {
+          "name": "place",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "food": {
+          "name": "food",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "company": {
+          "name": "company",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rating": {
+          "name": "rating",
+          "type": "numeric(2, 1)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "liked_it": {
+          "name": "liked_it",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "body_and_feel": {
+          "name": "body_and_feel",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reminded_of": {
+          "name": "reminded_of",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "edited_at": {
+          "name": "edited_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "tastings_vintage_id_idx": {
+          "name": "tastings_vintage_id_idx",
+          "columns": [
+            {
+              "expression": "vintage_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "tastings_tasted_on_idx": {
+          "name": "tastings_tasted_on_idx",
+          "columns": [
+            {
+              "expression": "tasted_on",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "tastings_vintage_exists": {
+          "name": "tastings_vintage_exists",
+          "tableFrom": "tastings",
+          "columnsFrom": [
+            "vintage_id"
+          ],
+          "tableTo": "vintages",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "tastings_id_is_prefixed": {
+          "name": "tastings_id_is_prefixed",
+          "value": "\"tastings\".\"id\" ~ '^tst_[a-z0-9]+(_[a-z0-9]+)*$'"
+        },
+        "tastings_on_a_vintage_or_described": {
+          "name": "tastings_on_a_vintage_or_described",
+          "value": "(\"tastings\".\"vintage_id\" is null) <> (\"tastings\".\"description\" is null)"
+        },
+        "tastings_rating_is_one_to_five_in_halves": {
+          "name": "tastings_rating_is_one_to_five_in_halves",
+          "value": "\"tastings\".\"rating\" is null or (\"tastings\".\"rating\" between 1 and 5 and \"tastings\".\"rating\" * 2 = round(\"tastings\".\"rating\" * 2))"
+        },
+        "tastings_description_is_not_blank": {
+          "name": "tastings_description_is_not_blank",
+          "value": "\"tastings\".\"description\" is null or btrim(\"tastings\".\"description\") <> ''"
+        },
+        "tastings_place_is_not_blank": {
+          "name": "tastings_place_is_not_blank",
+          "value": "\"tastings\".\"place\" is null or (\"tastings\".\"place\" = btrim(\"tastings\".\"place\") and \"tastings\".\"place\" <> '')"
+        },
+        "tastings_food_is_not_blank": {
+          "name": "tastings_food_is_not_blank",
+          "value": "\"tastings\".\"food\" is null or (\"tastings\".\"food\" = btrim(\"tastings\".\"food\") and \"tastings\".\"food\" <> '')"
+        },
+        "tastings_company_is_not_blank": {
+          "name": "tastings_company_is_not_blank",
+          "value": "\"tastings\".\"company\" is null or (\"tastings\".\"company\" = btrim(\"tastings\".\"company\") and \"tastings\".\"company\" <> '')"
+        },
+        "tastings_notes_are_not_blank": {
+          "name": "tastings_notes_are_not_blank",
+          "value": "\"tastings\".\"notes\" is null or btrim(\"tastings\".\"notes\") <> ''"
+        },
+        "tastings_liked_it_is_not_blank": {
+          "name": "tastings_liked_it_is_not_blank",
+          "value": "\"tastings\".\"liked_it\" is null or btrim(\"tastings\".\"liked_it\") <> ''"
+        },
+        "tastings_body_and_feel_is_not_blank": {
+          "name": "tastings_body_and_feel_is_not_blank",
+          "value": "\"tastings\".\"body_and_feel\" is null or btrim(\"tastings\".\"body_and_feel\") <> ''"
+        },
+        "tastings_reminded_of_is_not_blank": {
+          "name": "tastings_reminded_of_is_not_blank",
+          "value": "\"tastings\".\"reminded_of\" is null or btrim(\"tastings\".\"reminded_of\") <> ''"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.vintages": {
+      "name": "vintages",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_prefixed_id('vtg')"
+        },
+        "label_id": {
+          "name": "label_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dating": {
+          "name": "dating",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "year": {
+          "name": "year",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "vintages_one_nv_per_label": {
+          "name": "vintages_one_nv_per_label",
+          "columns": [
+            {
+              "expression": "label_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "where": "\"vintages\".\"dating\" = 'nv'",
+          "concurrently": false
+        },
+        "vintages_one_unknown_per_label": {
+          "name": "vintages_one_unknown_per_label",
+          "columns": [
+            {
+              "expression": "label_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "where": "\"vintages\".\"dating\" = 'unknown'",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "vintages_label_exists": {
+          "name": "vintages_label_exists",
+          "tableFrom": "vintages",
+          "columnsFrom": [
+            "label_id"
+          ],
+          "tableTo": "labels",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "vintages_one_per_year_per_label": {
+          "name": "vintages_one_per_year_per_label",
+          "columns": [
+            "label_id",
+            "year"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "vintages_id_is_prefixed": {
+          "name": "vintages_id_is_prefixed",
+          "value": "\"vintages\".\"id\" ~ '^vtg_[a-z0-9]+(_[a-z0-9]+)*$'"
+        },
+        "vintages_dating_is_a_year_nv_or_unknown": {
+          "name": "vintages_dating_is_a_year_nv_or_unknown",
+          "value": "\"vintages\".\"dating\" in ('year', 'nv', 'unknown')"
+        },
+        "vintages_year_is_there_exactly_when_dated_by_year": {
+          "name": "vintages_year_is_there_exactly_when_dated_by_year",
+          "value": "(\"vintages\".\"dating\" = 'year') = (\"vintages\".\"year\" is not null)"
+        },
+        "vintages_year_is_plausible": {
+          "name": "vintages_year_is_plausible",
+          "value": "\"vintages\".\"year\" is null or \"vintages\".\"year\" between 1800 and 2200"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.wishes": {
+      "name": "wishes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_prefixed_id('wish')"
+        },
+        "label_id": {
+          "name": "label_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "vintage_id": {
+          "name": "vintage_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "why": {
+          "name": "why",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "came_from": {
+          "name": "came_from",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "closed_as": {
+          "name": "closed_as",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "closed_at": {
+          "name": "closed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "wishes_label_id_idx": {
+          "name": "wishes_label_id_idx",
+          "columns": [
+            {
+              "expression": "label_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "wishes_vintage_id_idx": {
+          "name": "wishes_vintage_id_idx",
+          "columns": [
+            {
+              "expression": "vintage_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "wishes_label_exists": {
+          "name": "wishes_label_exists",
+          "tableFrom": "wishes",
+          "columnsFrom": [
+            "label_id"
+          ],
+          "tableTo": "labels",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "wishes_vintage_exists": {
+          "name": "wishes_vintage_exists",
+          "tableFrom": "wishes",
+          "columnsFrom": [
+            "vintage_id"
+          ],
+          "tableTo": "vintages",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "wishes_id_is_prefixed": {
+          "name": "wishes_id_is_prefixed",
+          "value": "\"wishes\".\"id\" ~ '^wish_[a-z0-9]+(_[a-z0-9]+)*$'"
+        },
+        "wishes_name_a_label_or_a_vintage": {
+          "name": "wishes_name_a_label_or_a_vintage",
+          "value": "(\"wishes\".\"label_id\" is null) <> (\"wishes\".\"vintage_id\" is null)"
+        },
+        "wishes_closed_as_is_known": {
+          "name": "wishes_closed_as_is_known",
+          "value": "\"wishes\".\"closed_as\" in ('bought', 'tasted', 'dropped')"
+        },
+        "wishes_closed_as_and_closed_at_go_together": {
+          "name": "wishes_closed_as_and_closed_at_go_together",
+          "value": "(\"wishes\".\"closed_as\" is null) = (\"wishes\".\"closed_at\" is null)"
+        },
+        "wishes_why_is_not_blank": {
+          "name": "wishes_why_is_not_blank",
+          "value": "\"wishes\".\"why\" is null or btrim(\"wishes\".\"why\") <> ''"
+        },
+        "wishes_came_from_is_not_blank": {
+          "name": "wishes_came_from_is_not_blank",
+          "value": "\"wishes\".\"came_from\" is null or (\"wishes\".\"came_from\" = btrim(\"wishes\".\"came_from\") and \"wishes\".\"came_from\" <> '')"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "views": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
