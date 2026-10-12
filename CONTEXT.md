@@ -43,10 +43,12 @@ spell them out.
 
 **Source**:
 An external catalogue a Label was found in, recorded with that source's own id and page:
-**Open Food Facts** first, **Vivino** as fallback (ADR-0006). A Source is where the bottle image
-and the identifying facts came from; it is never the owner of the record — the catalogue is
-ours, and a Source may not overwrite what the owner corrected.
-_Avoid_: supplier, provider, API.
+**Open Food Facts**, and **Vivino** where the copy's owner turned it on — asked in the order the
+Label's Kind names, Vivino first for wine (ADR-0011). A Source is where the bottle image and the
+identifying facts came from; it is never the owner of the record — the catalogue is ours, and a
+Source may not overwrite what the owner corrected. What a Source returns to a search is a
+**candidate**: a proposal the owner or the assistant confirms, never a match picked for them.
+_Avoid_: supplier, provider, API; *match* or *result* for a candidate.
 
 **Tasting**:
 One occasion the owner drank something: when, where, with what food, with whom, and **what they

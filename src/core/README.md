@@ -11,11 +11,14 @@ src/core/
 ├── transaction.ts   how a verb that is several writes stays one
 ├── refusal.ts       what a verb throws when the database says no
 ├── typed.ts         what was typed, on its way to a column: trimmed, a day, a price
+├── sources/         the outside catalogues the app asks: Open Food Facts, Vivino (ADR-0011)
+│   ├── candidate.ts  http.ts  openfoodfacts.ts  vivino.ts  configured.ts  fixtures/
 ├── queries/         one file per question the app answers
 │   ├── kind.ts  label.ts  tasting.ts  cellar.ts  wish.ts  palate.ts  access-token.ts
+│       catalogue.ts
 └── verbs/           one file per area of writing
     └── label.ts  vintage.ts  source.ts  bottle.ts  tasting.ts  wish.ts  palate.ts
-        access-token.ts
+        access-token.ts  catalogue.ts
 ```
 
 ## There is no index
@@ -51,11 +54,16 @@ and both doors call it, so neither can reach a record the other cannot.
   they are records the owner issues, names and revokes (ADR-0009) and both doors reach them —
   `/mcp` to check one, `/settings` to issue one. Reading one out of an `Authorization` header
   is not: that is `src/lib/mcp/bearer.ts`.
-- **One expected exception, and it is outbound.** That rule is about the door a request
+- **One exception, and it is outbound: `sources/`.** That rule is about the door a request
   arrives through. A Source the app *asks a question of* — Open Food Facts, Vivino
-  (ADR-0006) — is the other direction, a dependency of the model like the pool, and when it
-  arrives (S3) it sits beside `db.ts` and is taken as an argument by everything above it, so
-  no test calls a third party and nothing on a page render calls one either.
+  (ADR-0011) — is the other direction, a dependency of the model like the pool. So it sits
+  beside `db.ts`, as HTTP adapters that know nothing of Postgres, and **it is taken as an
+  argument** by every query and verb that asks one (`searchCatalogue(sources, …)`,
+  `createLabelFromSource(sources, …)`). `sources/configured.ts` is the one place that builds
+  them from the environment, and only a door calls it: a test hands in Sources that answer
+  from `sources/fixtures/`, so no test calls a third party, and nothing on a page render
+  calls one either — a Source is asked on an explicit search and nowhere else.
+  `sources/candidate.ts` says what every Source returns: **candidates**, never a match.
 - **Not here either**: invariants that Postgres can enforce. The database refuses what must
   never be true rather than trusting this module to remember, so a rule that can be a
   constraint should be a constraint in a migration, not an `if`. *A Kind's section is never

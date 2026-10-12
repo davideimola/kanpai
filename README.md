@@ -213,6 +213,19 @@ docker compose exec app node --experimental-strip-types \
 
 `db/token.ts list` and `db/token.ts revoke <id>` work the same way.
 
+**The Sources are Open Food Facts, and Vivino if you turn it on.** A search for a bottle the
+catalogue does not have asks Open Food Facts — open data, on by default, `SOURCES_OPENFOODFACTS=false`
+turns it off — and, only when you set `VIVINO_ALGOLIA_APP_ID` and `VIVINO_ALGOLIA_KEY`, Vivino's
+search index. **Vivino's terms forbid automated access**, so that is your decision for your copy;
+the key is not in this repository, may rotate, and kanpai keeps working without it
+([ADR-0011](docs/adr/0011-sources-are-asked-by-kind-propose-candidates-and-vivino-is-opt-in.md),
+[`.env.example`](.env.example)).
+
+| variable | default | what it does |
+|---|---|---|
+| `SOURCES_OPENFOODFACTS` | on | `false` makes the copy ask no Source at all |
+| `VIVINO_ALGOLIA_APP_ID`, `VIVINO_ALGOLIA_KEY` | unset: Vivino off | both set: Vivino is asked, first for wine, grappa and sake |
+
 **Backups are your job.** The `data` volume is where the record lives, not where it is safe:
 `compose.yaml` deliberately has no backup, and a copy worth keeping needs one somewhere else —
 `docker compose exec postgres pg_dump -U kanpai kanpai` is the start of one. A backup that has
