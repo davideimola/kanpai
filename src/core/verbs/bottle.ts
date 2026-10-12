@@ -144,6 +144,20 @@ export async function finishBottle(bottleId: string, options: { at?: Date } = {}
   if (updated.length === 0) await refuseFor(bottleId, "That Bottle is already finished.");
 }
 
+/**
+ * Take a Bottle out of the record altogether — one the assistant added by mistake, or added
+ * twice. Not how a Bottle leaves the Cellar: that is finishing it. **A finished Bottle is never
+ * deleted** — it is history (ADR-0007) — and the database refuses it
+ * (`bottles_finished_is_kept`).
+ */
+export async function deleteBottle(bottleId: string): Promise<void> {
+  const deleted = await refusing(
+    () => query("delete from bottles where id = $1 returning id", [bottleId]),
+    bottleRefusal
+  );
+  if (deleted.length === 0) throw new Refusal("not-found", NO_SUCH_BOTTLE);
+}
+
 // Nothing was updated: either there is no such Bottle, or it is in the wrong State.
 async function refuseFor(bottleId: string, wrongState: string): Promise<never> {
   const found = await query("select 1 from bottles where id = $1", [bottleId]);

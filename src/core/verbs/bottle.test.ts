@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { aLabel, emptyTheCatalogue } from "@/test/catalogue";
 import { query } from "../db.ts";
 import { getLabel } from "../queries/label.ts";
-import { addBottles, finishBottle, openBottle, setBottleLevel } from "./bottle.ts";
+import { addBottles, deleteBottle, finishBottle, openBottle, setBottleLevel } from "./bottle.ts";
 
 // Seam 1, against the real Postgres. A Bottle is closed, open or finished; only an open one
 // has a Level; its dates follow its State; a finished one is kept (ADR-0007).
@@ -220,5 +220,35 @@ describe("the database, whoever writes to bottles", () => {
     const mistaken = await aBottle();
     await query("delete from bottles where id = $1", [mistaken]);
     expect(await query("select id from bottles")).toEqual([{ id: finished }]);
+  });
+});
+
+// The owner correcting what the assistant wrote: a Bottle added twice, or by mistake.
+describe("deleting a Bottle", () => {
+  it("takes a closed or an open Bottle out of the record", async () => {
+    const { labelId, vintageId } = await aLabel();
+    const [closed, open, kept] = (await addBottles(vintageId, 3)) as [string, string, string];
+    await openBottle(open, { level: "1/2" });
+
+    await deleteBottle(closed);
+    await deleteBottle(open);
+
+    expect((await bottlesOf(labelId)).map((bottle) => bottle.id)).toEqual([kept]);
+  });
+
+  it("refuses a finished Bottle, which is history", async () => {
+    const { vintageId } = await aLabel();
+    const [bottle] = (await addBottles(vintageId, 1)) as [string];
+    await finishBottle(bottle);
+
+    await expect(deleteBottle(bottle)).rejects.toMatchObject({
+      code: "not-allowed",
+      constraint: "bottles_finished_is_kept",
+      message: "A finished Bottle is kept: it is history.",
+    });
+  });
+
+  it("refuses a Bottle that does not exist", async () => {
+    await expect(deleteBottle("btl_nothing")).rejects.toMatchObject({ code: "not-found" });
   });
 });
