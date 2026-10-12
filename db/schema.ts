@@ -324,3 +324,49 @@ export const tastings = pgTable(
     check("tastings_reminded_of_is_not_blank", absentOrWritten(table.remindedOf)),
   ]
 );
+
+/**
+ * A Label or a Vintage the owner wants to try or buy (`CONTEXT.md`, **Wish**).
+ *
+ * It names exactly one of the two. It is open until closed as `bought`, `tasted` or
+ * `dropped`, and the word and the moment it was closed go together.
+ */
+export const wishes = pgTable(
+  "wishes",
+  {
+    id: text().primaryKey().default(sql`gen_prefixed_id('wish')`),
+    labelId: text(),
+    vintageId: text(),
+    why: text(),
+    cameFrom: text(),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    closedAs: text(),
+    closedAt: timestamp({ withTimezone: true }),
+  },
+  (table) => [
+    foreignKey({
+      name: "wishes_label_exists",
+      columns: [table.labelId],
+      foreignColumns: [labels.id],
+    }),
+    foreignKey({
+      name: "wishes_vintage_exists",
+      columns: [table.vintageId],
+      foreignColumns: [vintages.id],
+    }),
+    index("wishes_label_id_idx").on(table.labelId),
+    index("wishes_vintage_id_idx").on(table.vintageId),
+    check("wishes_id_is_prefixed", prefixed(table.id, "wish")),
+    check(
+      "wishes_name_a_label_or_a_vintage",
+      sql`(${table.labelId} is null) <> (${table.vintageId} is null)`
+    ),
+    check("wishes_closed_as_is_known", sql`${table.closedAs} in ('bought', 'tasted', 'dropped')`),
+    check(
+      "wishes_closed_as_and_closed_at_go_together",
+      sql`(${table.closedAs} is null) = (${table.closedAt} is null)`
+    ),
+    check("wishes_why_is_not_blank", absentOrWritten(table.why)),
+    check("wishes_came_from_is_not_blank", absentOrSaid(table.cameFrom)),
+  ]
+);

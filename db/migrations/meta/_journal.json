@@ -43,6 +43,13 @@
       "when": 1791807386243,
       "tag": "0005_a_tasting_is_an_occasion",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791807397196,
+      "tag": "0006_a_wish_names_a_label_or_a_vintage",
+      "breakpoints": true
     }
   ]
 }
