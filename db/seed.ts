@@ -94,15 +94,15 @@ async function main(): Promise<void> {
       rating: 4.5,
       likedIt: "Dried cherries, and warm all the way down. Better after an hour open.",
       bodyAndFeel: "Full, soft, a little sweet at first but dry at the end",
-      food: "Braised beef",
-      place: "At home",
+      food: "braised beef",
+      place: "home",
     });
     await recordTasting({
       vintageId: costasera2016,
       tastedOn: daysAgo(80),
       rating: 4,
       likedIt: "Smells sweet, like raisins, but it is dry. Strong.",
-      place: "A restaurant in Verona",
+      place: "a restaurant in Verona",
       company: "Giulia",
     });
 
@@ -126,7 +126,7 @@ async function main(): Promise<void> {
       likedIt: "Cherries and violets, and it dries the mouth.",
       bodyAndFeel: "Light in colour but not in the mouth",
       remindedOf: "Dried roses",
-      food: "Tajarin with butter and sage",
+      food: "tajarin with butter and sage",
     });
 
     const ama = await createLabel({
@@ -147,8 +147,8 @@ async function main(): Promise<void> {
       tastedOn: daysAgo(30),
       rating: 3.5,
       likedIt: "Fresh, sour cherries. Easy.",
-      food: "Pizza",
-      company: "Friends",
+      food: "pizza",
+      company: "friends",
     });
 
     const soave = await createLabel({
@@ -169,7 +169,7 @@ async function main(): Promise<void> {
       tastedOn: daysAgo(15),
       rating: 4,
       likedIt: "Almonds and a bit of lemon. Clean.",
-      food: "Risotto with peas",
+      food: "risotto with peas",
     });
 
     const terlano = await createLabel({
@@ -212,7 +212,7 @@ async function main(): Promise<void> {
       tastedOn: daysAgo(9),
       rating: 4,
       likedIt: "Fine bubbles, bread crust, very dry.",
-      place: "Before dinner",
+      place: "the aperitivo",
     });
 
     const miraval = await createLabel({
@@ -232,7 +232,7 @@ async function main(): Promise<void> {
       tastedOn: daysAgo(70),
       rating: 3,
       likedIt: "Pale and light. Strawberries, not much else.",
-      place: "On a terrace",
+      place: "a beach bar",
     });
 
     const moscato = await createLabel({
@@ -252,7 +252,7 @@ async function main(): Promise<void> {
       tastedOn: daysAgo(45),
       rating: 4,
       likedIt: "Peaches and grapes, sweet and fizzy, almost no alcohol.",
-      food: "Panettone",
+      food: "panettone",
     });
 
     const port = await createLabel({
@@ -341,7 +341,7 @@ async function main(): Promise<void> {
       tastedOn: daysAgo(2),
       rating: 4,
       likedIt: "Citrus first, then something green, like rosemary.",
-      food: "In a tonic, lots of ice",
+      food: "tonic and lots of ice",
     });
 
     const diplomatico = await createLabel({
@@ -392,7 +392,7 @@ async function main(): Promise<void> {
       tastedOn: daysAgo(12),
       rating: 3.5,
       likedIt: "Smoke, then something sweet like roasted pepper.",
-      place: "Cocktail bar",
+      place: "a cocktail bar",
     });
 
     // ── Sake, beer and more ─────────────────────────────────────────────────────
@@ -411,7 +411,7 @@ async function main(): Promise<void> {
       tastedOn: daysAgo(9),
       rating: 5,
       likedIt: "Like a pear, and almost no burn. Cold was best.",
-      food: "Sushi",
+      food: "sushi",
       place: "Kenji",
     });
 
@@ -432,8 +432,8 @@ async function main(): Promise<void> {
       tastedOn: daysAgo(4),
       rating: 3.5,
       likedIt: "Jammy and soft. A bit too sweet for me.",
-      place: "A wine bar",
-      company: "Friends",
+      place: "a wine bar",
+      company: "friends",
     });
     await recordTasting({
       description: "A house white, nobody knew the producer",
