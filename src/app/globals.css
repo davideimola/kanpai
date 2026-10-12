@@ -56,6 +56,8 @@
   --liquid-orange: #cf8a4a;
   --liquid-amber: #c27c1e;
   --liquid-clear: rgb(31 42 39 / 0.1);
+  /* The paper a bottle's label is printed on: light on both grounds, because a label is. */
+  --bottle-label: #f7f8f4;
 
   /* shadcn's vocabulary, mapped onto the primitives and carrying no value of its own. */
   --background: var(--paper);
@@ -126,6 +128,7 @@
   --liquid-orange: #c27e45;
   --liquid-amber: #d69238;
   --liquid-clear: rgb(230 232 225 / 0.14);
+  --bottle-label: #c9cdc4;
 }
 
 @theme inline {

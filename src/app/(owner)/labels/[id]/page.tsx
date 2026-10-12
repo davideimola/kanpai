@@ -813,7 +813,7 @@ async function MergePanel({
 function VintageChoice({ label }: { label: LabelPage }) {
   return (
     <fieldset className="flex flex-col gap-2">
-      <legend className="mb-1.5 text-sm font-medium">Which bottle</legend>
+      <legend className="mb-1.5 text-sm font-medium">Which year</legend>
       <select
         name="vintage"
         defaultValue={label.vintages[0]?.id}

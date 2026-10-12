@@ -162,7 +162,7 @@ export function Silhouette({
           fill={colour}
         />
       ) : null}
-      <rect x={lx} y={ly} width={lw} height={lh} rx={1} fill="var(--paper-raised)" />
+      <rect x={lx} y={ly} width={lw} height={lh} rx={1} fill="var(--bottle-label)" />
       {imageUrl ? (
         <>
           <defs>
