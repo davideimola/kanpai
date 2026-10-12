@@ -5,7 +5,7 @@ import { getLabel } from "../queries/label.ts";
 import { recordSource } from "./source.ts";
 
 // Seam 1, against the real Postgres. A Source is where a Label was found, and the image is
-// hotlinked — an address, never bytes (ADR-0006).
+// hotlinked — an address, never bytes (ADR-0011).
 beforeEach(emptyTheCatalogue);
 
 describe("recording a Source", () => {

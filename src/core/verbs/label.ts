@@ -4,6 +4,7 @@ import { query } from "../db.ts";
 import { Refusal, refusing } from "../refusal.ts";
 import { type Executor, transaction } from "../transaction.ts";
 import { changing, said } from "../typed.ts";
+import { recordSource, type SourceRecord } from "./source.ts";
 import { asColumns, type Dating, vintageRefusal } from "./vintage.ts";
 
 /**
@@ -43,6 +44,11 @@ export type NewLabel = LabelFacts & {
    * records unknown rather than guessing (ADR-0010) — and **NV** for one without.
    */
   vintage?: Dating;
+  /**
+   * The Source it was found in, recorded with it in the same transaction: a Label is never
+   * left behind without the record it came from, nor a record without its Label (ADR-0011).
+   */
+  source?: SourceRecord;
 };
 
 const COLUMNS: Record<keyof LabelFacts, string> = {
@@ -101,7 +107,8 @@ function asStored(facts: Partial<LabelFacts>): Partial<Record<keyof LabelFacts, 
 }
 
 /**
- * Create a Label and its first Vintage, together (ADR-0003, ADR-0004).
+ * Create a Label and its first Vintage, together (ADR-0003, ADR-0004) — and the Source it was
+ * found in, when it was found in one (ADR-0011).
  *
  * The Vintage comes in the same transaction because a Label always has one — the database
  * checks that at commit. A Kind without vintages gets its NV and nothing else: a year or an
@@ -137,6 +144,7 @@ export async function createLabel(
         if (!label) throw new Error("insert into labels returned no row");
 
         const vintageId = await firstVintage(run, label.id, input.vintage);
+        if (input.source) await recordSource(label.id, input.source, run);
         return { labelId: label.id, vintageId };
       }),
     labelRefusal

@@ -21,7 +21,8 @@ import "server-only";
 // purpose: the adapter turns it into a 500 and nobody dresses it up as advice to the owner.
 
 /**
- * Why the database said no, in four cases an adapter can act on.
+ * Why the database said no, in four cases an adapter can act on — and a fifth that is not the
+ * database's: a Source that was asked and did not answer.
  *
  * Machine-readable and stable — the MCP door hands these to an assistant, which reads
  * `already-exists` and tries something else, where prose would only be re-guessed.
@@ -34,7 +35,12 @@ export type RefusalCode =
   /** It exists, and the model forbids this of it — deleting a finished Bottle. */
   | "not-allowed"
   /** The value itself is wrong: a Rating of 4.3, a blank name, a year on a whisky. */
-  | "invalid";
+  | "invalid"
+  /**
+   * A Source had to be asked and did not answer (ADR-0011). Not the owner's mistake and not
+   * the model's: trying again later may work, and so does going on without it.
+   */
+  | "unavailable";
 
 /**
  * A refusal the owner (or an assistant) is meant to read.

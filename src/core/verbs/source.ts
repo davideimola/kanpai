@@ -2,9 +2,10 @@ import "server-only";
 
 import { query } from "../db.ts";
 import { refusing } from "../refusal.ts";
+import type { Executor } from "../transaction.ts";
 import { said } from "../typed.ts";
 
-/** The catalogues a Label may be found in, in the order they are asked (ADR-0006). */
+/** The catalogues a Label may be found in (ADR-0011). Which is asked first is the Kind's. */
 export type SourceName = "openfoodfacts" | "vivino";
 
 /** What a Source said about a Label: its own id for it, and where its image and page are. */
@@ -12,7 +13,7 @@ export type SourceRecord = {
   source: SourceName;
   /** The Source's id: an Open Food Facts barcode, a Vivino wine id. */
   idAtSource: string;
-  /** Hotlinked: the address is kept, the bytes never are (ADR-0006). */
+  /** Hotlinked: the address is kept, the bytes never are (ADR-0011). */
   imageUrl?: string | null;
   pageUrl?: string | null;
   /** When the Source was asked. Now, unless the record is older than the call. */
@@ -24,11 +25,18 @@ export type SourceRecord = {
  *
  * One record in a Source names one Label of ours: the same Vivino wine on a second Label is
  * refused as `already-exists`, because it means the two are one and want merging.
+ *
+ * `createLabel` composes it, to record the Source a Label was created from in the same
+ * transaction — hence `run`, where to run, last.
  */
-export async function recordSource(labelId: string, record: SourceRecord): Promise<string> {
+export async function recordSource(
+  labelId: string,
+  record: SourceRecord,
+  run: Executor = query
+): Promise<string> {
   const [row] = await refusing(
     () =>
-      query<{ id: string }>(
+      run<{ id: string }>(
         `insert into label_sources (label_id, source, id_at_source, image_url, page_url, looked_up_at)
          values ($1, $2, $3, $4, $5, coalesce($6, now()))
          returning id`,
@@ -46,7 +54,7 @@ export async function recordSource(labelId: string, record: SourceRecord): Promi
         case "label_sources_label_exists":
           return "No Label has that id.";
         case "label_sources_one_label_per_record":
-          return "That Source record already belongs to a Label. If it is this one, merge the two.";
+          return "That Source record already belongs to a Label: search the catalogue for it and use that Label. If it is this one, merge the two.";
         case "label_sources_source_is_known":
           return "A Source is Open Food Facts or Vivino.";
         case "label_sources_image_url_is_a_web_address":
