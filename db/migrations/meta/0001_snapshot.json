@@ -1,0 +1,89 @@
+{
+  "id": "c5fbdb45-0d30-4eb3-9184-98fc8e781caf",
+  "prevId": "4b82c735-09f6-46ad-a7ce-3a2c12166808",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.kinds": {
+      "name": "kinds",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_prefixed_id('kind')"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "family": {
+          "name": "family",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "kinds_name_key": {
+          "name": "kinds_name_key",
+          "columns": [
+            "name"
+          ],
+          "nullsNotDistinct": false
+        },
+        "kinds_sort_order_key": {
+          "name": "kinds_sort_order_key",
+          "columns": [
+            "sort_order"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "kinds_id_is_prefixed": {
+          "name": "kinds_id_is_prefixed",
+          "value": "\"kinds\".\"id\" ~ '^kind_[a-z0-9]+(_[a-z0-9]+)*$'"
+        },
+        "kinds_name_is_not_blank": {
+          "name": "kinds_name_is_not_blank",
+          "value": "\"kinds\".\"name\" = btrim(\"kinds\".\"name\") and \"kinds\".\"name\" <> ''"
+        },
+        "kinds_family_is_wine_or_spirit": {
+          "name": "kinds_family_is_wine_or_spirit",
+          "value": "\"kinds\".\"family\" in ('wine', 'spirit')"
+        },
+        "kinds_sort_order_is_positive": {
+          "name": "kinds_sort_order_is_positive",
+          "value": "\"kinds\".\"sort_order\" > 0"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "views": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

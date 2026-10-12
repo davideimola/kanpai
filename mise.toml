@@ -1,0 +1,14 @@
+# Toolchain for kanpai, managed by mise (https://mise.jdx.dev).
+# `mise install` provisions these.
+#
+# Node + pnpm run the Next.js app that holds both doors — the web view and, from S2, the
+# MCP route handler — over one core module. Pinned to the same versions as tsundoku
+# (ADR-0001), so a fix found in one applies to the other by the same diff.
+#
+# There is deliberately no database CLI here. Postgres runs in Docker locally (see the
+# README's local loop) and wherever a copy is deployed; neither needs a tool on the
+# developer's PATH. `psql` is reached through `pnpm db:psql`, which runs it inside the
+# container.
+[tools]
+node = "22"
+pnpm = "10.32.1"

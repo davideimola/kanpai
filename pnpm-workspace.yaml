@@ -1,0 +1,8 @@
+# esbuild's install script fetches its platform binary; vitest reaches it through
+# vite and does not start without it.
+onlyBuiltDependencies:
+  - esbuild
+
+ignoredBuiltDependencies:
+  - sharp
+  - unrs-resolver
