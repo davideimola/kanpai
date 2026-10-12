@@ -8,6 +8,7 @@ rule to break last.
 ```
 src/core/
 ├── db.ts            the pool, and the only file that knows what a pool is
+├── health.ts        whether the database answers, for `/healthz` — no table, no write
 ├── transaction.ts   how a verb that is several writes stays one
 ├── refusal.ts       what a verb throws when the database says no
 ├── typed.ts         what was typed, on its way to a column: trimmed, a day, a price

@@ -36,15 +36,16 @@ describe("the proxy's matcher", () => {
   );
 
   // The things that must stay outside it, each for the reason `src/proxy.ts` gives beside
-  // the pattern: Auth.js's endpoints, the sign-in screen, the MCP door (ADR-0009),
-  // `.well-known`, the build output, and the icon and the manifest a browser fetches
-  // without a cookie.
+  // the pattern: Auth.js's endpoints, the sign-in screen, the MCP door (ADR-0009), the
+  // health check a probe asks without a session, `.well-known`, the build output, and the
+  // icon and the manifest a browser fetches without a cookie.
   it.each([
     "/api/auth/signin/google",
     "/api/auth/callback/google",
     "/signin",
     "/mcp",
     "/mcp/",
+    "/healthz",
     "/.well-known",
     "/.well-known/oauth-protected-resource",
     "/.well-known/oauth-protected-resource/mcp",
@@ -65,6 +66,8 @@ describe("the proxy's matcher", () => {
     "/signing-off",
     "/mcps",
     "/mcp-token",
+    "/healthzz",
+    "/healthz-and-more",
     "/api/authors",
     "/api/anything-a-later-slice-adds",
     "/.well-known-ish",

@@ -48,6 +48,10 @@ export const config = {
   //     (ADR-0009), and a redirect to a Google consent screen is not an answer an
   //     assistant can read. Reserved here so the slice that builds it (S2) does not have
   //     to edit this line.
+  //   - **`healthz`**, which whatever runs the image asks whether the database answers. A
+  //     probe carries no session, and gated it would be answered `307 /signin` — which it
+  //     counts as healthy, whatever Postgres is doing. It reads no row and writes nothing,
+  //     and says `ok` or `unavailable` and never why.
   //   - **`.well-known`**, the prefix RFC 8615 reserves for metadata a machine fetches
   //     *before* it has any credentials to fetch it with. Nothing is served under it yet,
   //     and gated it would answer a discovery probe `307 /signin` where a `404` correctly
@@ -66,9 +70,9 @@ export const config = {
   //
   // Every named path is anchored to a path boundary. Unanchored they would also excuse
   // anything merely *starting* with those letters — `/api/authors`, `/mcp-token`,
-  // `/.well-known-ish`, `/icon.svg.map` — which is a wider hole than the reservation: the
-  // exclusion is for these paths, not for these prefixes.
+  // `/healthzz`, `/.well-known-ish`, `/icon.svg.map` — which is a wider hole than the
+  // reservation: the exclusion is for these paths, not for these prefixes.
   matcher: [
-    "/((?!_next/static|_next/image|favicon\\.ico|(?:api/auth|signin|mcp|\\.well-known|icon\\.svg|apple-icon\\.png|manifest\\.webmanifest)(?:$|/)).*)",
+    "/((?!_next/static|_next/image|favicon\\.ico|(?:api/auth|signin|mcp|healthz|\\.well-known|icon\\.svg|apple-icon\\.png|manifest\\.webmanifest)(?:$|/)).*)",
   ],
 };

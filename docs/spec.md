@@ -116,6 +116,7 @@ door, its gate and its rules are [`src/lib/mcp/README.md`](../src/lib/mcp/README
 | `/to-check` | Unverified Labels, oldest first: open, edit, merge or mark as checked |
 | `/settings` | as in the siblings, plus **access tokens**: issue (shown once), name, last used, revoke; and **Kinds**: add, rename, reorder, move to a section, set its bottle shape and liquid, hide one in use (a Kind with Labels is never deleted; one with none may be) |
 | `/signin` | as in the siblings |
+| `/healthz` | outside the gate, for whatever runs the image: `select 1` within two seconds, `200 ok` or `503 unavailable`, never cached and never why |
 
 Installable as a PWA (manifest and icons outside the gate), dark and light following the system.
 
