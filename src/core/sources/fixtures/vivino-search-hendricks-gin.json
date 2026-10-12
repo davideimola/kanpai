@@ -1,0 +1,36 @@
+{
+  "hits": [
+    {
+      "id": 1185152,
+      "name": "Hendrick's Gin",
+      "type_id": 25,
+      "alcohol": 0,
+      "non_vintage": true,
+      "grapes": null,
+      "winery": null,
+      "region": null,
+      "image": {
+        "location": "//images.vivino.com/labels/00xzyy1nzmegb.jpg",
+        "variations": {
+          "large": "//images.vivino.com/thumbs/00xzyy1nzmegb_375x500.jpg",
+          "medium": "//images.vivino.com/thumbs/00xzyy1nzmegb_150x200.jpg",
+          "medium_square": "//images.vivino.com/thumbs/00xzyy1nzmegb_150x150.jpg",
+          "small_square": "//images.vivino.com/thumbs/00xzyy1nzmegb_80x80.jpg"
+        }
+      },
+      "vintages": [
+        {
+          "id": 1744904,
+          "year": "U.V."
+        },
+        {
+          "id": 1744904,
+          "year": ""
+        }
+      ]
+    }
+  ],
+  "nbHits": 1,
+  "query": "Hendrick's gin",
+  "hitsPerPage": 10
+}

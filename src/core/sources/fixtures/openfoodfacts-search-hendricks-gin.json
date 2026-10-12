@@ -1,0 +1,148 @@
+{
+  "hits": [
+    {
+      "code": "5010327709000",
+      "brands": ["Hendrick’s"],
+      "product_name": "Hendricks gin",
+      "product_name_en": "Hendricks gin",
+      "image_front_url": "https://images.openfoodfacts.org/images/products/501/032/770/9000/front_en.10.400.jpg"
+    },
+    {
+      "code": "5010327755014",
+      "brands": ["Hendrick's"],
+      "categories_tags": [
+        "en:beverages",
+        "en:alcoholic-beverages",
+        "en:distilled-beverages",
+        "en:hard-liquors",
+        "en:gins"
+      ],
+      "product_name": "Heindrick's Gin",
+      "product_name_en": "Hendrick's Gin",
+      "image_front_url": "https://images.openfoodfacts.org/images/products/501/032/775/5014/front.11.400.jpg"
+    },
+    {
+      "code": "0083664990436",
+      "categories_tags": ["en:beverages", "en:alcoholic-beverages"],
+      "nutriments": {
+        "fat_100g": 0,
+        "sugars_100g": 0,
+        "proteins_100g": 0,
+        "fiber_100g": 0,
+        "energy-kcal_100g": 0,
+        "sodium_100g": 0,
+        "salt_100g": 0,
+        "carbohydrates_100g": 0,
+        "saturated-fat_100g": 0
+      },
+      "product_name": "Hendricks",
+      "product_name_en": "Hendricks",
+      "image_front_url": "https://images.openfoodfacts.org/images/products/008/366/499/0436/front_en.6.400.jpg"
+    },
+    {
+      "code": "0083664874811",
+      "product_name": "Hendricks",
+      "product_name_en": "Hendricks",
+      "image_front_url": "https://images.openfoodfacts.org/images/products/008/366/487/4811/front_en.3.400.jpg"
+    },
+    {
+      "code": "5010327705811",
+      "brands": ["Hendrick's"],
+      "categories_tags": [
+        "en:beverages",
+        "en:alcoholic-beverages",
+        "en:distilled-beverages",
+        "en:hard-liquors",
+        "en:gins"
+      ],
+      "image_front_url": "https://images.openfoodfacts.org/images/products/501/032/770/5811/front_en.4.400.jpg"
+    },
+    {
+      "code": "5010327753003",
+      "brands": ["Hendrick's"],
+      "nutriments": {
+        "fat_100g": 0,
+        "saturated-fat_100g": 0,
+        "sugars_100g": 0,
+        "proteins_100g": 0,
+        "carbohydrates_100g": 0,
+        "sodium_100g": 0,
+        "salt_100g": 0,
+        "energy-kj_100g": 1005,
+        "energy-kcal_100g": 240
+      },
+      "product_name": "Джин &quot;Хендрикс Лунар&quot;",
+      "product_name_en": "Lunar Gin",
+      "image_front_url": "https://images.openfoodfacts.org/images/products/501/032/775/3003/front_ru.10.400.jpg"
+    },
+    {
+      "code": "5010327705453",
+      "brands": ["Hendrick's"],
+      "categories_tags": [
+        "en:beverages",
+        "en:alcoholic-beverages",
+        "en:distilled-beverages",
+        "en:hard-liquors",
+        "en:gins"
+      ],
+      "nutriments": {
+        "carbohydrates_100g": 0,
+        "energy-kcal_100g": 240,
+        "energy-kj_100g": 992,
+        "fat_100g": 0,
+        "proteins_100g": 0
+      },
+      "product_name": "Джин «Нептуния»",
+      "product_name_en": "Neptunia Gin",
+      "image_front_url": "https://images.openfoodfacts.org/images/products/501/032/770/5453/front_ru.9.400.jpg"
+    },
+    {
+      "code": "8710176780751",
+      "brands": ["Hendrick's"],
+      "categories_tags": [
+        "en:seafood",
+        "en:fishes-and-their-products",
+        "en:fishes",
+        "en:fatty-fishes",
+        "en:salmons",
+        "en:smoked-fishes",
+        "en:smoked-salmons"
+      ],
+      "nutriments": {
+        "carbohydrates_100g": 0.5,
+        "energy-kcal_100g": 150,
+        "energy-kj_100g": 635,
+        "fat_100g": 8.3,
+        "fiber_100g": 0.5,
+        "proteins_100g": 21.2,
+        "salt_100g": 2.6,
+        "saturated-fat_100g": 3.5,
+        "sodium_100g": 1.04,
+        "sugars_100g": 0.5
+      },
+      "product_name": "Salmone affumicato selvaggio Red sockeye",
+      "product_name_it": "Salmone affumicato selvaggio Red sockeye",
+      "image_front_url": "https://images.openfoodfacts.org/images/products/871/017/678/0751/front_it.3.400.jpg"
+    },
+    {
+      "code": "0628451773160",
+      "brands": ["Gin"],
+      "categories_tags": ["en:beverages-and-beverages-preparations", "en:beverages"],
+      "product_name": "empress 1908"
+    },
+    {
+      "code": "8413425011964",
+      "brands": ["Gin"],
+      "categories_tags": [
+        "en:beverages",
+        "en:alcoholic-beverages",
+        "en:distilled-beverages",
+        "en:hard-liquors"
+      ],
+      "product_name": "LEVEL"
+    }
+  ],
+  "count": 635,
+  "page": 1,
+  "page_size": 10
+}

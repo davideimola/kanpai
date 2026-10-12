@@ -1,0 +1,74 @@
+{
+  "hits": [
+    {
+      "id": 21929,
+      "name": "Costasera Amarone della Valpolicella Classico",
+      "type_id": 1,
+      "alcohol": 15,
+      "non_vintage": false,
+      "grapes": [43, 45, 46],
+      "winery": {
+        "name": "Masi",
+        "region": {
+          "name": "Veneto",
+          "country": "it"
+        }
+      },
+      "region": {
+        "name": "Amarone della Valpolicella Classico",
+        "country": "it",
+        "class": {
+          "abbreviation": "DOCG"
+        }
+      },
+      "image": {
+        "location": "//images.vivino.com/thumbs/giuHgypHTM21_kfvNLApCw_pl_480x640.png",
+        "variations": {
+          "bottle_large": "//images.vivino.com/thumbs/giuHgypHTM21_kfvNLApCw_pb_x960.png",
+          "bottle_medium": "//images.vivino.com/thumbs/giuHgypHTM21_kfvNLApCw_pb_x600.png",
+          "bottle_medium_square": "//images.vivino.com/thumbs/giuHgypHTM21_kfvNLApCw_pb_600x600.png",
+          "bottle_small": "//images.vivino.com/thumbs/giuHgypHTM21_kfvNLApCw_pb_x300.png",
+          "bottle_small_square": "//images.vivino.com/thumbs/giuHgypHTM21_kfvNLApCw_pb_300x300.png",
+          "label": "//images.vivino.com/thumbs/giuHgypHTM21_kfvNLApCw_pl_480x640.png",
+          "label_large": "//images.vivino.com/thumbs/giuHgypHTM21_kfvNLApCw_pl_375x500.png",
+          "label_medium": "//images.vivino.com/thumbs/giuHgypHTM21_kfvNLApCw_pl_150x200.png",
+          "label_medium_square": "//images.vivino.com/thumbs/giuHgypHTM21_kfvNLApCw_pl_150x150.png",
+          "label_small_square": "//images.vivino.com/thumbs/giuHgypHTM21_kfvNLApCw_pl_80x80.png",
+          "large": "//images.vivino.com/thumbs/giuHgypHTM21_kfvNLApCw_pl_375x500.png",
+          "medium": "//images.vivino.com/thumbs/giuHgypHTM21_kfvNLApCw_pl_150x200.png",
+          "medium_square": "//images.vivino.com/thumbs/giuHgypHTM21_kfvNLApCw_pl_150x150.png",
+          "small_square": "//images.vivino.com/thumbs/giuHgypHTM21_kfvNLApCw_pl_80x80.png"
+        }
+      },
+      "vintages": [
+        {
+          "id": 1469025,
+          "year": "U.V."
+        },
+        {
+          "id": 1469025,
+          "year": ""
+        },
+        {
+          "id": 182419929,
+          "year": "2024"
+        },
+        {
+          "id": 173667306,
+          "year": "2023"
+        },
+        {
+          "id": 170529453,
+          "year": "2022"
+        },
+        {
+          "id": 167153223,
+          "year": "2021"
+        }
+      ]
+    }
+  ],
+  "nbHits": 1,
+  "query": "",
+  "hitsPerPage": 1
+}

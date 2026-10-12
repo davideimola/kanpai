@@ -1,0 +1,31 @@
+{
+  "code": "5010327755014",
+  "product": {
+    "brands": "Hendrick's",
+    "categories_tags": [
+      "en:beverages-and-beverages-preparations",
+      "en:beverages",
+      "en:alcoholic-beverages",
+      "en:distilled-beverages",
+      "en:hard-liquors",
+      "en:gins"
+    ],
+    "code": "5010327755014",
+    "image_front_url": "https://images.openfoodfacts.org/images/products/501/032/775/5014/front_en.11.400.jpg",
+    "nutriments": {
+      "alcohol": 41.7,
+      "alcohol_100g": 41.7,
+      "alcohol_serving": 41.7,
+      "alcohol_unit": "% vol",
+      "alcohol_value": 41.7
+    },
+    "nutrition_data": "on",
+    "nutrition_data_per": "100ml",
+    "nutrition_data_prepared_per": "100g",
+    "origins": "Bulgaria",
+    "product_name": "Gin",
+    "product_name_en": "Hendrick’s Gin"
+  },
+  "status": 1,
+  "status_verbose": "product found"
+}
