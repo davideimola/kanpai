@@ -222,7 +222,7 @@ export type FoundLabel = LabelInList & {
 
 /**
  * Search our own Labels by what the owner or the assistant typed — the first half of
- * `search_catalogue`, which asks the Sources only after this (ADR-0004, ADR-0006).
+ * `search_catalogue`, which asks the Sources only after this (ADR-0004, ADR-0011).
  *
  * Three decisions, each from the catalogue as it is:
  *
