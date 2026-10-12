@@ -507,3 +507,262 @@ curl -s -A "<browser UA>" https://www.vivino.com/search/wines?q=x -L | grep -o '
 
 A hit counts only when the producer and the name match; distinguish 403 (blocked) and 503
 (throttled) from an empty result, as tsundoku's cover research learned the hard way.
+
+---
+
+## 9. Spirits, gin, rum and sake
+
+**Researched:** 2026-10-12 · Question: the spirits sample above was three bottles. Does the
+picture hold for gin, rum, sake, whisky, amaro and grappa, and is there a spirits- or
+sake-specific source with an open API that beats Vivino and Open Food Facts there? Same rules as
+above: requests from one residential IP in Italy, User-Agent `kanpai/0.1 (research)`, 1.2–4 s
+apart (about 150 in all), throwaway scripts outside the repo, nothing sent to get past a block.
+
+### 9a. Answer
+
+**No source is good for spirits the way Vivino is for wine.** Open Food Facts is the best of the
+general ones (12/20, with ABV and a barcode when it hits), Vivino holds spirits only as sparse
+user-entered records (11/20, never a bottle shot, never an ABV), and Wikidata knows the *brand*
+for most bottles (13/20) but almost never the *expression* (Dassai 45 vs Dassai 23, Zacapa 23 vs
+XO). For sake, **Sakenowa** has every brewery and brand in the sample (5/5) under an open,
+free, attribution-only licence — but in Japanese only, at brand level, without images.
+Whiskybase and Distiller have no public API and forbid automated access.
+
+| source | gin (5) | rum (5) | sake (5) | whisky (2) | amaro (2) | grappa (1) | **total** | first hit right | clean bottle image | ABV |
+|---|---|---|---|---|---|---|---|---|---|---|
+| **Open Food Facts** (search-a-licious, then barcode) | 4 | 3 | 1 | 2 | 2 | 0 | **12/20** | 8/20 | 2 of 16 inspected | 7 of 17 records |
+| **Vivino** (Algolia `WINES_prod`) | 3 | 3 | 3 | 0 | 1 | 1 | **11/20** | 11/20 | **0/11** | 1/11 (Berta only) |
+| **Wikidata** (brand level) | 4 | 4 | 2 | 1 | 2 | 0 | **13/20** | 12/20 | 8 of 13 have a bottle photo | 0 |
+| **Wikidata** (the exact expression) | — | — | — | 1 | — | — | 1/20 (+ Lagavulin 16) | | | 0 |
+| **Sakenowa** (brand level, kanji) | — | — | **5** | — | — | — | 5/5 sake | 5/5 by exact name | none | none |
+| Whiskybase | not reachable: Cloudflare challenge, 403 on every URL incl. `robots.txt` | | | | | | | | | |
+| Distiller | no public API; terms forbid automated access (§9f) | | | | | | | | | |
+
+"Found" means the same expression (producer + name, the age statement when the bottle has one);
+for Wikidata and Sakenowa, which stop at the brand, it means the brand, and the second Wikidata
+row counts the expression.
+
+**The one craft bottle measured, the owner's Hedonya Gin, is on none of the sources** (§9b'):
+niche bottles get no record and no image, only wrong candidates.
+
+### 9b. The sample
+
+Twenty bottles an Italian beginner might plausibly own; none is the owner's (his own Hedonya Gin
+is in §9b').
+
+| # | Kind | bottle | Vivino | Open Food Facts | Wikidata | notes |
+|---|---|---|---|---|---|---|
+| G1 | Gin | Hendrick's | yes, 1st (1185152) | yes, 1st (5010327755014: 41.7 %, 0.7 l) | yes (Q5713678, bottle photo) | |
+| G2 | Gin | Tanqueray London Dry | yes, 1st (2696988, US "Imported Dry Gin" label) | yes, 1st (5000281015248: 43.1 %) | brand (Q187155, cut-out bottle) | |
+| G3 | Gin | Monkey 47 Schwarzwald Dry | no (only a user-entered "Monkey 47 Red") | yes, **3rd** (42213277: 47 %, 500 ml) | brand (Q18862701, empty item) | OFF's 1st is a no-image duplicate (42113277) |
+| G4 | Gin | Malfy Con Limone | no | **sibling** (5000299296066 is the *Gin Rosa*) | brand (Q60785137, photo of two bottles) | |
+| G5 | Gin | Gin Mare | yes, 1st (2109303) | yes, 1st (8411640000459) | no | |
+| R1 | Rum | Ron Zacapa 23 | yes, 1st (4346434 "Sistema Solera 23") | yes, **3rd** (7401005008603; 1st is "Rons", no brand) | brand (Q1266184; its photo *is* the 23) | |
+| R2 | Rum | Diplomático Reserva Exclusiva | yes, 1st (1216609, **two duplicates**) | yes, 1st (7594003620059, named just "Diplomatico", 40 %) | brand (Q17638133, photo 215×346) | |
+| R3 | Rum | Plantation Original Dark | no | **sibling** (0695521151586 is *3 Stars*, no brand) | no | |
+| R4 | Rum | Don Papa | no | **sibling** (Baroko 1st; a 43 % "rhum" 2nd) | yes (Q35026670, bottle photo) | |
+| R5 | Rum | Havana Club Añejo 7 | yes, 1st (2121372, typed **red wine**) | yes, **4th** (8501110080453; image 97×200 at full) | brand (Q1411852; its photo *is* the 7) | |
+| S1 | Sake | Dassai 45 | no (`Dassai` → Château Dassault) | **sibling** (Dassai 50, no brand) | brand (Q114849273, landscape photo) | Sakenowa: 獺祭, brewery 獺祭, Yamaguchi |
+| S2 | Sake | Hakkaisan Tokubetsu Honjozo | **sibling** (Tokubetsu Junmai, typed red wine) | **sibling** (misspelled "Hakkasian" Tokubetsu Junmai) | brewery only (Q11391523) | Sakenowa: 八海山, 八海醸造, Niigata |
+| S3 | Sake | Kubota Senju | yes, 1st (1859521 "Senjyu Kubota") | no (Kubota mochi, noodles) | no (the tractor maker) | Sakenowa: 久保田, 朝日酒造, Niigata — no Senju |
+| S4 | Sake | Gekkeikan (Traditional) | yes, 1st (1382600 "The finest Sake Gekkeikan") | yes, 1st (21597664: 15.6 %, `en:sake`) | company (Q223215, head-office photo) | Sakenowa: 月桂冠, Kyoto |
+| S5 | Sake | Born Gold Junmai Daiginjo | yes, 1st (1675883, "Special Junmai Daiginjo Born": the Gold is not certain) | no | no | Sakenowa: 梵, 加藤吉平商店, Fukui |
+| W1 | Whisky | Nikka From the Barrel | no | yes, 1st (two barcodes; 51.4 %) | yes (Q22127157, empty item) | |
+| W2 | Whisky | Talisker 10 | no (`Talisker` → Talise wines) | yes, **4th** (5000281005416, "Single Malt Scotch Whisky," 45.8 %) | distillery only (Q278) | |
+| A1 | Liqueur and amaro | Amaro Montenegro | yes, 1st (1774848) | yes, 1st (8000330001748, no brand, no ABV) | yes (Q719468, bottle photo) | |
+| A2 | Liqueur and amaro | Amaro Averna | no (Averna *Sambuca*, Averna *Limoni*) | yes, 1st (8000400201210 and 8000400203782: 23.2 %, clean cut-out) | yes (Q790615, packaging photo) | |
+| P1 | Grappa | Berta Tre Soli Tre | yes, 1st (3234339, winery "Berta", Piemonte) | no (`Berta` → a cheese, a sauce) | an archive record only (Q81166864) | |
+
+The three bottles of §3c add: Lagavulin 16 (Vivino no, OFF yes, Wikidata **yes**: Q96278979
+with a bottle photo), Diplomático (as R2), Nonino Tradizione (Vivino yes with a wrong region, OFF
+no, Wikidata brand Q7049432 whose photo *is* the Tradizione).
+
+### 9b'. A craft bottle: Hedonya Gin
+
+One bottle the owner actually has, a small Italian gin, measured on its own to see whether niche
+bottles are found at all.
+
+| source | query | result |
+|---|---|---|
+| Vivino | `Hedonya Gin` | **not found** — 1,953 hits, the first five Hendrick's, Tanqueray, Gin Mare, Bulldog, Christian Drouin: the brand word is dropped and *Gin* alone matches. An adapter taking the first hit would store Hendrick's |
+| Vivino | `Hedonya` | not found — 4 hits, all wines (*Hedonia* Traminette, *Hedonys*, *Hedonysm*) |
+| Open Food Facts | `Hedonya Gin` | **not found** — 632 hits, all other gins with `brands: "Gin"` |
+| Open Food Facts | `Hedonya` | 0 hits |
+| Wikidata | `Hedonya` (en, it) | 0 items |
+
+**Not found anywhere; no record, no image.** Both searches answer a miss with confident, wrong,
+plausible candidates (other gins), so the "producer word must appear in the hit" filter of §9c is
+what keeps a craft bottle from being stored as Hendrick's. For such bottles the owner's own text
+(and, later, his own photo) is the record; the sources add nothing.
+
+### 9c. Vivino on spirits
+
+- **Spirits are a sliver of the index and all user-entered.** A facet query
+  (`{"query":"","hitsPerPage":0,"facets":["type_id"]}`) counts 2,030,946 records: 1 red
+  1,005,093 · 2 white 613,797 · 3 sparkling 180,218 · 4 rosé 121,610 · 7 dessert 69,998 ·
+  24 fortified 21,740 · **25 (spirits and everything else) 18,490**.
+- **Every spirit hit had `winery: null`** except Berta's grappa, `alcohol: 0` except one Berta
+  record (44), `region: null`, and an image under `images.vivino.com/labels/…jpg` — a user's
+  photo, never a `_pb_` bottle shot (0/11).
+- **Types are unreliable.** Havana Club 7, Hakkaisan Tokubetsu Junmai and Tanqueray Export
+  Strength are typed 1 (red wine), Hakkaisan Sparkling 3. So `filters` on `type_id` is no fix:
+  restricting to non-wine types recovered nothing (Monkey 47, Malfy, Plantation, Don Papa,
+  Dassai, Nikka, Talisker, Averna stayed missing) and *lost* Hakkaisan.
+- **Misses become confident wrong answers**, as with Rocca Sveva in §2: the index drops words it
+  cannot match, so `Monkey 47 Schwarzwald Dry Gin` returns Tanqueray and two Proseccos,
+  `Dassai 45` returns Marqués de Riscal, `Nikka From the Barrel` a Zinfandel, `Talisker 10` a
+  Brazilian Sauvignon Blanc. The adapter must drop hits whose name shares no word with the
+  query's producer.
+- **Duplicates.** Diplomático Reserva Exclusiva exists three times (1216609, 2330442, 2824497).
+
+**The key.** vivino.com answered **403 to `kanpai/0.1 (research)` on its home page** today, so the
+navigation bundle could not be re-fetched with an honest User-Agent. The key was re-read from the
+copy of `/packs/navigation-237f833246a6f87e.js` that the earlier probe (§3a) had saved, and it
+still works. A copy of kanpai cannot count on re-deriving it unattended.
+
+### 9d. Open Food Facts on spirits
+
+Endpoints and query rules as in §2 (`search.openfoodfacts.org/search?q=…&langs=it,en`, then
+`/api/v2/product/{code}.json`). On spirits:
+
+- **Better than on wine** — 12/20 against 2/14 — because big spirit brands are sold through
+  supermarkets, where contributors scan them. Japanese sake (1/5), Italian grappa (0/1) and a
+  flavoured variant (Malfy Con Limone) are where it runs out.
+- **The right record is often not first** (Monkey 47 3rd, Zacapa 3rd, Havana Club 7 4th,
+  Talisker 4th), and siblings come first (Malfy *Rosa*, Plantation *3 Stars*, Don Papa *Baroko*,
+  Dassai *50*). Never auto-pick; filter on `brands` containing the producer word and on
+  `categories_tags` containing `en:alcoholic-beverages`.
+- **What a barcode lookup carries for a spirit**, e.g. `5000281005416`:
+  ```
+  product_name               "Single Malt Scotch Whisky,"      ← the age is not in the name
+  brands                     "TALISKER"
+  quantity                   "70cl"
+  nutriments.alcohol_value   45.8                               ← on 7 of 17 records read
+  categories_tags            [… "en:whisky", "en:scotch-whisky"] (also en:gins, en:rums,
+                              en:old-rums, en:sake / en:rice-wines, en:herbal-liqueur)
+  image_front_url            ".../500/028/100/5416/front_fr.22.400.jpg"
+  ```
+  No producer separate from the brand, no age statement, no distillery, no region.
+- **Images:** of 16 front images inspected at 200 px, **two are clean** (Averna, a cut-out;
+  Tanqueray on a plain shelf). The rest: label close-ups (Hendrick's, Zacapa, Diplomático,
+  Gekkeikan), bottles held in a hand (Plantation, Gin Mare), a back label (Don Papa), gift boxes
+  (Nikka, Talisker), a kitchen counter (Dassai), a dark room (Montenegro). Licence CC BY-SA, as §2d.
+- The image host was slow (10–20 s per file at times) — the adapter should hotlink, never proxy.
+
+### 9e. Wikidata and Wikimedia Commons
+
+| Endpoint | Status | Use |
+|---|---|---|
+| `GET https://www.wikidata.org/w/api.php?action=wbsearchentities&search=…&language=en&format=json` | 200, **429 after ~15 calls at 1.2 s** | name → item id |
+| `GET https://www.wikidata.org/w/api.php?action=wbgetentities&ids=Q1|Q2|…&props=labels|claims` | 200, up to 50 ids per call | claims |
+| `GET https://query.wikidata.org/sparql?query=…` | 200; one query of six failed to return JSON | counts, bulk |
+| `GET https://commons.wikimedia.org/w/api.php?action=query&titles=File:…&prop=imageinfo&iiprop=url|size|extmetadata&iiurlwidth=…` | 200 | thumbnail URL, size, licence |
+
+- **It is a brand registry, not a bottle catalogue.** Items are brands (`P31` alcohol brand,
+  gin, rum, trademark), companies or distilleries. Expression-level items are rare: of the sample
+  only *Nikka from the Barrel* (an item with no claims at all) and, outside it, *Lagavulin 16 years
+  whisky* (Q96278979). SPARQL counts: 13 items under gin, 25 under rum, 16 under sake, 56 under
+  whisky, 2 under amaro; **1,669 alcohol brands, 799 with an image**.
+- **Fields:** `P176` manufacturer (Diageo, William Grant & Sons — the owner, not the distillery),
+  `P18` image, `P154` logo, `P856` website, `P17` country. **`P2665` (alcohol by volume) was empty
+  on every item read.** No age, no category beyond `P31`.
+- **Images:** a Commons photo on 8 of 13 brand hits that is a recognisable bottle (Hendrick's,
+  Tanqueray, Malfy, Zacapa, Diplomático, Don Papa, Havana Club, Montenegro; Averna's is its
+  packaging), often the flagship expression — Zacapa's is the 23, Havana Club's the 7, Nonino's
+  the Tradizione. Others are a distillery, a head office or a landscape. Licences vary per file
+  (CC BY 2.0–4.0, CC BY-SA); each needs its own attribution from `extmetadata.Artist`.
+  `upload.wikimedia.org` thumbnails (`…/thumb/…/250px-<file>`) answered 200 to the honest UA.
+- **Terms:** data CC0; files under their own licences; the
+  [User-Agent policy](https://meta.wikimedia.org/wiki/User-Agent_policy) asks for contact
+  details in the User-Agent, and the 429 here came with a contact-less one.
+
+### 9f. Spirits- and sake-specific sources
+
+**Sakenowa data (さけのわデータ)** — `https://muro.sakenowa.com/sakenowa-data/` — the open data of a
+Japanese sake check-in app.
+
+| Endpoint | Status | Contents |
+|---|---|---|
+| `GET https://muro.sakenowa.com/sakenowa-data/api/brands` | 200, 158 KB, 1.3 s | 3,298 brands `{id, name, breweryId}` |
+| `GET …/api/breweries` | 200, 81 KB | 1,745 breweries `{id, name, areaId}` |
+| `GET …/api/areas` | 200 | 47 prefectures (+ abroad) `{id, name}` |
+| `GET …/api/flavor-charts` | 200 | 1,367 brands × six axes `f1`–`f6` (華やか floral, 芳醇 rich, 重厚 heavy, 穏やか mild, ドライ dry, 軽快 light), 0–1 |
+| `GET …/api/rankings`, `…/api/flavor-tags`, `…/api/brand-flavor-tags` | per the docs | monthly ranking; tag ids and per-brand tags |
+
+- **Coverage:** all five sample sakes, by exact name: 獺祭 (887), 八海山 (380), 久保田 (431), 月桂冠
+  (1151), 梵 (1948), each with brewery, prefecture and a flavour chart.
+- **Limits:** names are **in Japanese only** (no romaji, so `Dassai` matches nothing: the
+  assistant over MCP, or the owner, must supply 獺祭); **brand level only** — Dassai 45 and 23,
+  Kubota Senju and Manju are all one record; **no images, no ABV, no grade** (junmai, ginjō…).
+  The whole dataset is ~250 KB and could be read once and searched locally.
+- **Terms** (from the page): free, commercial and non-commercial use, modification allowed; the
+  only condition is an **attribution** next to the data with a link to `https://sakenowa.com`
+  (e.g. "さけのわデータを利用しています"); not allowed without attribution, or in a way that harms
+  Sakenowa's image.
+
+**Whiskybase** — `www.whiskybase.com`, `api.whiskybase.com` and `robots.txt` all answered **403**
+with `cf-mitigated: challenge` (a Cloudflare JavaScript challenge) to the honest User-Agent. No
+public API documentation exists; its terms, as quoted in search results, exclude commercial use
+and downloading the service. Third-party scrapers exist; using one would be exactly what this
+research does not do. Not a source.
+
+**Distiller** — `distiller.com` serves pages to the honest User-Agent but `/search` answered 403.
+No public API. Its [terms of service](https://distiller.com/terms-of-service) forbid "*data
+mining tools or automation tools such as spiders, scrapers, crawlers*" and "*building databases
+or otherwise creating permanent copies of content*". Not a source.
+
+**SakeTime / sake-times** — no API found; the host did not answer. Not a source.
+
+### 9g. Recommendation per Kind
+
+| Kind | text search | barcode | image | why |
+|---|---|---|---|---|
+| Red, White, Rosé, Orange, Sparkling, Sweet, Fortified | Vivino, then Open Food Facts | Open Food Facts | Vivino `bottle_medium` | §7, unchanged |
+| **Whisky** | **Open Food Facts**, then Wikidata (brand) | Open Food Facts | Open Food Facts, else Commons | OFF 2/2 (+ Lagavulin) with ABV; Vivino 0/2 |
+| **Rum** | **Open Food Facts**, then Vivino | Open Food Facts | Open Food Facts, else Commons | OFF 3/5, Vivino 3/5: they miss different bottles; merge |
+| **Gin** | **Open Food Facts**, then Vivino | Open Food Facts | Open Food Facts, else Commons | OFF 4/5 with ABV; Vivino 3/5 without |
+| **Grappa** | **Vivino**, then Open Food Facts | Open Food Facts | Vivino user photo | the only hit for Berta (and Nonino) was Vivino's |
+| Brandy | Open Food Facts, then Vivino | Open Food Facts | Open Food Facts | not measured; by analogy with whisky |
+| **Liqueur and amaro** | **Open Food Facts**, then Vivino | Open Food Facts | Open Food Facts | OFF 2/2, Vivino 1/2 |
+| Vodka, Tequila and mezcal, Other spirit | Open Food Facts, then Vivino | Open Food Facts | Open Food Facts | not measured; by analogy with gin and rum |
+| **Sake** | **Sakenowa** (local copy, kanji) for brewery, prefecture, flavour; Vivino for the expression | Open Food Facts | Vivino user photo, else none | Sakenowa 5/5 brands; Vivino 3/5; OFF 1/5 |
+
+- **For spirits, merge Open Food Facts and Vivino as candidates**, Open Food Facts first, and
+  show nothing as "the" match: siblings and word-dropping misses dominate both.
+- **Wikidata is an optional enrichment, not a search**: when a candidate's brand resolves to an
+  item, its Commons `P18` can stand in for a missing or ugly image (with the file's own
+  attribution), and `P856` gives the official site. It never decides the expression.
+- **Sakenowa** fits a small adapter that downloads its ~250 KB once and matches kanji locally; it
+  needs an attribution line in the UI wherever its data shows.
+- **No spirits-specific source is usable**: the two that hold expression-level spirit data with
+  ABV and age (Whiskybase, Distiller) have no API and forbid automated access.
+
+**The Kinds.** The sample was named against the Kinds as `0010_the_kinds_grow.sql` leaves them:
+amaro is *Liqueur and amaro*, sake is *Sake*. Vodka, Tequila and mezcal, Vermouth, Beer, Cider
+and Mead were not measured.
+
+### 9h. How to re-run
+
+```sh
+# Vivino — the Kind distribution of the index
+curl -s -A "kanpai/0.1" \
+  -H "X-Algolia-Application-Id: 9TAKGWJUXL" -H "X-Algolia-API-Key: <VIVINO_ALGOLIA_KEY>" \
+  -d '{"query":"","hitsPerPage":0,"facets":["type_id"]}' \
+  "https://9takgwjuxl-dsn.algolia.net/1/indexes/WINES_prod/query"
+
+# Open Food Facts — a spirit by name, then by barcode
+curl -s -A "kanpai/0.1 (you@example.com)" --get "https://search.openfoodfacts.org/search" \
+  --data-urlencode "q=Nikka From the Barrel" \
+  --data "langs=it,en&page_size=5&fields=code,product_name,brands,categories_tags,image_front_url"
+curl -s -A "kanpai/0.1 (you@example.com)" \
+  "https://world.openfoodfacts.org/api/v2/product/5000281005416.json?fields=product_name,brands,quantity,nutriments,categories_tags,image_front_url"
+
+# Wikidata — brand search, then claims (keep ≥ 3 s between calls; put a contact in the UA)
+curl -s -A "kanpai/0.1 (you@example.com)" \
+  "https://www.wikidata.org/w/api.php?action=wbsearchentities&search=Havana%20Club&language=en&format=json"
+curl -s -A "kanpai/0.1 (you@example.com)" \
+  "https://www.wikidata.org/w/api.php?action=wbgetentities&ids=Q1411852&props=claims&format=json"
+
+# Sakenowa — the whole brand list (Japanese names)
+curl -s -A "kanpai/0.1 (you@example.com)" https://muro.sakenowa.com/sakenowa-data/api/brands
+```
