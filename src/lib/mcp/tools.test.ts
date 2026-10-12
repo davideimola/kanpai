@@ -181,10 +181,16 @@ describe("the S2 flow, through the door's own framing", () => {
     expect(cellar).toMatchObject([
       {
         section: "Wine",
-        bottles: [
-          { state: "open", level: "1/2", vintage: { dating: "unknown" } },
-          { state: "closed", level: null },
-        ],
+        // Two Bottles added in one call share their created_at, so their order is the ids'.
+        bottles: expect.arrayContaining([
+          expect.objectContaining({
+            id: added.bottles[0],
+            state: "open",
+            level: "1/2",
+            vintage: expect.objectContaining({ dating: "unknown" }),
+          }),
+          expect.objectContaining({ id: added.bottles[1], state: "closed", level: null }),
+        ]),
       },
     ]);
 
