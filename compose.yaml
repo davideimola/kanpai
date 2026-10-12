@@ -1,0 +1,104 @@
+# One copy of kanpai on one machine: Postgres, the migrations, the app (ADR-0008).
+#
+# **This is not the local loop.** Development is `pnpm db:up && pnpm dev` (README, *The
+# local loop*), where the gate is opened by `AUTH_DEV_OPEN` and nothing is built. This
+# file is the other thing: the whole application running somewhere, from the published
+# production image, with `docker compose up` and no orchestrator — and no clone, no node
+# and no build, because the image is pulled from GHCR.
+#
+# What it is missing on purpose is the backup. A volume on one machine is where the
+# data lives, not where it is safe, and whoever runs this owes themselves a copy of it
+# somewhere else.
+#
+#   curl -O https://raw.githubusercontent.com/davideimola/kanpai/main/compose.yaml
+#   curl -o .env https://raw.githubusercontent.com/davideimola/kanpai/main/.env.example
+#   # then fill in the gate in `.env`, see the README
+#   docker compose up            # http://localhost:3000
+#
+# From a clone, `docker compose up --build` builds the same image from the source instead
+# of pulling it.
+#
+# The three services are the deployment's three steps in order, and compose enforces
+# the order: the database answers, the migrations run to completion in the same image
+# that will serve, and only then does the app start.
+
+name: kanpai
+
+# The image both `migrate` and `app` run, said once. `main` is the tag CI moves on every
+# push to main (`.github/workflows/publish-image.yml`); pin a `main-<sha>-<timestamp>` tag
+# instead to choose when a copy moves forward.
+x-image: &image ${KANPAI_IMAGE:-ghcr.io/davideimola/kanpai:main}
+
+services:
+  # The same major the local loop runs, for the reason `db/container.ts` gives: a major
+  # that differs from the one you develop against is a difference you find out about at
+  # migration time.
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: kanpai
+      POSTGRES_PASSWORD: kanpai
+      POSTGRES_DB: kanpai
+    # No `ports:`. The database is reachable from this network only, which is why its
+    # password can be a word in a public file.
+    volumes:
+      # Postgres 18's image keeps its data under a major-versioned directory inside this
+      # path, so the volume is mounted one level up from where older images wanted it.
+      - data:/var/lib/postgresql
+    # `pg_isready` rather than a sleep: the migrations depend on this condition, and a
+    # container that has started is not a server that accepts connections.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U kanpai -d kanpai"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+  # The init container, said in compose. It runs `db/cli.ts migrate` from the image
+  # that is about to serve — one runner, one convention, nothing applied that was not
+  # built — and exits. `migrate` is the one `db:*` command that reaches for no Docker:
+  # the server already exists here and already holds the database and the role.
+  migrate:
+    image: *image
+    build: .
+    command:
+      - node
+      - --experimental-strip-types
+      - --disable-warning=MODULE_TYPELESS_PACKAGE_JSON
+      - db/cli.ts
+      - migrate
+    environment:
+      DATABASE_URL: postgres://kanpai:kanpai@postgres:5432/kanpai
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  app:
+    image: *image
+    build: .
+    ports:
+      - "3000:3000"
+    # The gate comes from your own `.env` — none of those values is in this repository
+    # and none ever should be. `.env.example` says what each one is and how to get it.
+    # Optional, so that a copy with no `.env` yet still starts and refuses everybody,
+    # which is the gate failing closed rather than compose failing to parse.
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      # Set here rather than taken from the file on purpose: `.env.example`'s value is
+      # the local loop's, `127.0.0.1`, which inside this network is this container.
+      DATABASE_URL: postgres://kanpai:kanpai@postgres:5432/kanpai
+      # Auth.js builds `redirect_uri` from the origin it is given, and a standalone
+      # server binds `0.0.0.0:3000` — so without this the sign-in asks Google to
+      # redirect to an address Google refuses. It must match the authorised redirect
+      # URI registered there exactly.
+      AUTH_URL: ${AUTH_URL:-http://localhost:3000}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+volumes:
+  data:

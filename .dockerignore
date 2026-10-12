@@ -1,0 +1,34 @@
+# What must not reach the build context, in the order of how much it would cost.
+#
+# The first entry is the whole reason this file exists. `.env.local` holds the local
+# `DATABASE_URL` and, once there is one, the gate's secrets — a `COPY . .` that took it
+# would bake a secret into a layer of a published image, where it stays for as long as the
+# tag does. The image is public (ADR-0008), so that is a secret published to everyone.
+.env
+.env.*
+!.env.example
+
+# Build output and dependencies from the host. Both are rebuilt inside the image, and the
+# host's `node_modules` is the wrong platform's binaries.
+node_modules
+.next
+out
+coverage
+*.tsbuildinfo
+next-env.d.ts
+
+# Worktrees. Each one is a whole second checkout, and one of them is this build's own.
+.claude
+
+# Tests. Nothing in a container reads them.
+**/*.test.ts
+src/test/
+
+# Nothing the running app reads.
+.git
+.github
+docs
+README.md
+CONTEXT.md
+AGENTS.md
+.DS_Store

@@ -1,0 +1,55 @@
+# What a pull request is held to, and it is `pnpm test` and nothing bespoke.
+#
+# The repository is public and anyone may run a copy (ADR-0008), so there has to be an
+# answer to "does this still work" that is not the owner's laptop. It is deliberately the
+# same three commands anybody runs before pushing — no CI-only script, no CI-only
+# environment — because a check that is not reproducible by hand is a check nobody can act
+# on when it goes red.
+#
+# **No Postgres service container.** The test run brings its own: `src/test/global-setup.ts`
+# creates the container from `DATABASE_URL`'s port, creates `kanpai_test`, and applies the
+# schema — which is exactly what it does on a clean clone. GitHub's runners have Docker, so
+# the seam here is the seam there, and the setup has no second path to drift down.
+#
+# It runs on pull requests from forks too. Nothing here needs a secret: there is no Google
+# OAuth client in the test run (the gate's tests mint their own token), and no third party
+# is called by any test.
+name: Check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    env:
+      # The one variable, as everywhere else. `pnpm test` appends `_test` to the database
+      # name itself and creates it.
+      DATABASE_URL: postgres://kanpai:kanpai@127.0.0.1:5432/kanpai
+
+    steps:
+      - uses: actions/checkout@v5
+
+      # The toolchain `mise.toml` pins, so what runs here is what runs on a laptop.
+      - uses: jdx/mise-action@v2
+        with:
+          experimental: true
+
+      - run: pnpm install --frozen-lockfile
+
+      # Lint before the slow ones: a formatting diff should not cost a database.
+      - run: pnpm lint
+
+      - run: pnpm typecheck
+
+      - run: pnpm test
