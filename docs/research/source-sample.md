@@ -31,8 +31,8 @@ Vivino shows "—" for the vintage where the owner did not record one.
   same estate; *Biscardo* and *Martino Biscardo – L'Ornato* likely too). Label search must not
   rely on the producer string matching exactly.
 - **Four of fourteen have no vintage** although they are not NV wines: the owner did not record
-  it. A Tasting on an unknown year needs somewhere to go — the NV Vintage is the wrong place,
-  since NV means *the producer blends years*. To be decided before S1.
+  it. They go to an **unknown** Vintage, never to NV
+  ([ADR-0010](../adr/0010-a-vintage-is-a-year-nv-or-unknown.md)).
 - **The images Vivino shows here are the owner's own photographs**, not studio bottle shots.
   Whether Vivino's catalogue image for the same Label is a studio shot is part of the measurement.
 - No spirits yet.

@@ -29,10 +29,14 @@ _Avoid_: type, category.
 
 **Vintage**:
 One year of a Label: *Barolo Castiglione 2019*. Bottles and Tastings attach here, not to the
-Label, because two years of the same wine are two different things to drink and to keep. A Label
-with no year — almost every spirit, a non-vintage sparkling — has exactly one Vintage, **NV**
-(ADR-0003).
-_Avoid_: year (as a noun for the record), release, batch.
+Label, because two years of the same wine are two different things to drink and to keep.
+A Vintage is **a year**, **NV** or **unknown** (ADR-0010). **NV** means the producer blends years
+— almost every spirit, a non-vintage sparkling — and such a Label has exactly one Vintage.
+**Unknown** means the wine has a year and nobody wrote it down; it is where a Tasting or a
+Bottle goes until the year is learned, and then they are moved to it. Never use NV to mean
+*I don't know*.
+_Avoid_: year (as a noun for the record), release, batch; U.V. and N.V. in the interface —
+spell them out.
 
 **Source**:
 An external catalogue a Label was found in, recorded with that source's own id and page:
