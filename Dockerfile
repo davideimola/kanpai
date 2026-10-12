@@ -15,7 +15,8 @@
 #   3. **It must carry the migrations.** Whatever runs this image runs them from this same
 #      image before the app is allowed to serve — compose's `migrate` service, or an init
 #      container — so what is applied is exactly what was built. `db/` is therefore copied
-#      into the runtime stage on purpose, next to the traced server rather than into it.
+#      into the runtime stage on purpose, next to the traced server rather than into it — and
+#      `src/core` beside it, for the token command in `db/token.ts`.
 #
 # `output: "standalone"` in `next.config.ts` is the other half of this file: it traces what
 # the server actually imports and writes a self-contained server, so the last stage is node
@@ -85,6 +86,13 @@ COPY --from=build --chown=node:node /build/.next/static ./.next/static
 # `db/migrations/` comes with it, `meta/` included: Drizzle's migrator reads the journal
 # there to decide what this database still needs.
 COPY --from=build --chown=node:node /build/db ./db
+
+# The core, as source, for the one command that runs it outside the server: `db/token.ts`,
+# which issues the first access token of a copy that has no web view to issue one from yet
+# (ADR-0009). It calls the same verbs `/settings` will, through node's type stripping like the
+# migration runner, so it needs the `.ts` files and not the server's bundled chunks. Tests come
+# along and are never run; excluding them would be a second list to keep.
+COPY --from=build --chown=node:node /build/src/core ./src/core
 
 # What the runner imports and the traced server does not leave behind. See the build stage.
 COPY --from=build --chown=node:node /build/runtime-node-modules/drizzle-orm ./node_modules/drizzle-orm
