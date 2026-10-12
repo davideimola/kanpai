@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { aLabel, emptyTheCatalogue } from "@/test/catalogue";
 import { addBottles, finishBottle, openBottle } from "../verbs/bottle.ts";
-import { readCellar } from "./cellar.ts";
+import { heldInTheCellar, readCellar } from "./cellar.ts";
 
 // Seam 1, against the real Postgres. The Cellar is a view over the Bottles (ADR-0007): what
 // is closed or open, by the heading the Kind's own row names.
@@ -69,5 +69,31 @@ describe("the Cellar", () => {
     const [bottle] = (await addBottles(vintageId, 1)) as [string];
     await finishBottle(bottle);
     expect(await readCellar()).toEqual([]);
+  });
+});
+
+describe("what the Cellar holds of some Labels", () => {
+  it("is each Label's Bottles in the house by Vintage, newest year first, finished ones left out", async () => {
+    const barolo = await aLabel({ vintage: 2019 });
+    const [drunk] = (await addBottles(barolo.vintageId, 3)) as [string];
+    await finishBottle(drunk);
+    const [older] = (await addBottles({ labelId: barolo.labelId, dating: 2016 }, 1)) as [string];
+    await openBottle(older, { level: "1/2" });
+    await addBottles({ labelId: barolo.labelId, dating: "unknown" }, 1);
+    const none = await aLabel({ producer: "Masi", name: "Costasera" });
+
+    const held = await heldInTheCellar([barolo.labelId, none.labelId, "lbl_nobody"]);
+
+    expect(held.get(barolo.labelId)).toEqual([
+      { dating: "year", year: 2019, bottles: 2, open: 0 },
+      { dating: "year", year: 2016, bottles: 1, open: 1 },
+      { dating: "unknown", year: null, bottles: 1, open: 0 },
+    ]);
+    expect(held.get(none.labelId)).toEqual([]);
+    expect(held.get("lbl_nobody")).toEqual([]);
+  });
+
+  it("asks nothing when there are no Labels", async () => {
+    expect(await heldInTheCellar([])).toEqual(new Map());
   });
 });

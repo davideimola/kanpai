@@ -63,3 +63,41 @@ export async function readCellar(): Promise<CellarSection[]> {
   }
   return sections;
 }
+
+/** What of one Vintage of a Label is in the Cellar: how many Bottles, and how many open. */
+export type HeldVintage = {
+  dating: "year" | "nv" | "unknown";
+  year: number | null;
+  /** Closed and open together. */
+  bottles: number;
+  open: number;
+};
+
+/**
+ * What the Cellar holds of each of these Labels, Vintage by Vintage — the line `/add` writes
+ * under a Label the owner already has (*Two bottles of 2019*), so a bottle bought twice is seen
+ * to be in the house before it is added again.
+ *
+ * Every Label asked about has an entry, empty when none of its Bottles is in the house. The
+ * Vintages are the years newest first, then NV, then unknown, as the Label page orders them.
+ */
+export async function heldInTheCellar(
+  labelIds: readonly string[]
+): Promise<Map<string, HeldVintage[]>> {
+  const held = new Map<string, HeldVintage[]>(labelIds.map((id) => [id, []]));
+  if (labelIds.length === 0) return held;
+
+  const rows = await query<HeldVintage & { labelId: string }>(
+    `select v.label_id as "labelId", v.dating, v.year,
+            count(*)::int as bottles,
+            (count(*) filter (where b.state = 'open'))::int as open
+       from bottles b
+       join vintages v on v.id = b.vintage_id
+      where v.label_id = any($1::text[]) and b.state <> 'finished'
+      group by v.label_id, v.id, v.dating, v.year
+      order by v.label_id, v.year desc nulls last, v.dating = 'unknown', v.id`,
+    [labelIds]
+  );
+  for (const { labelId, ...vintage } of rows) held.get(labelId)?.push(vintage);
+  return held;
+}
