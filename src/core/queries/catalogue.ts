@@ -13,7 +13,7 @@ import {
 } from "../sources/candidate.ts";
 import { isBarcode } from "../sources/openfoodfacts.ts";
 import type { SourceName } from "../verbs/source.ts";
-import { type FoundLabel, searchLabels } from "./label.ts";
+import { type FoundLabel, SILHOUETTE, searchLabels } from "./label.ts";
 
 // The question asked before anything is created: *is this bottle already here, and if not,
 // who knows it?* (ADR-0004, ADR-0011). It crosses areas — our Labels, then the Sources — so it
@@ -228,8 +228,8 @@ async function withOurLabels(candidates: Candidate[]): Promise<CatalogueCandidat
 async function labelsHolding(source: SourceName, idAtSource: string): Promise<FoundLabel[]> {
   return query<FoundLabel>(
     `select l.id, l.producer, l.name, json_build_object('id', k.id, 'name', k.name) as kind,
-            l.region, l.appellation, l.unverified, l.created_at as "createdAt",
-            1 as matched, 1 as "ofWords"
+            l.region, l.appellation, l.unverified, ${SILHOUETTE} as silhouette,
+            l.created_at as "createdAt", 1 as matched, 1 as "ofWords"
        from label_sources s
        join labels l on l.id = s.label_id
        join kinds k on k.id = l.kind_id

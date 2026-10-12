@@ -211,6 +211,11 @@ describe("a barcode", () => {
     expect(vivinoAsked).toEqual([]);
     expect(answer.sources.map((one) => one.source)).toEqual(["openfoodfacts"]);
     expect(answer.labels.map((one) => one.id)).toEqual([labelId]);
+    // Drawn like any Label a search finds: the screen reads its silhouette (ADR-0012).
+    expect(answer.labels[0]).toMatchObject({
+      kind: { id: "kind_gin", name: "Gin" },
+      silhouette: { shape: "spirit", liquid: "clear", imageUrl: null },
+    });
     // The candidate says it is already ours, so it is not made a second time.
     expect(answer.candidates).toMatchObject([
       { idAtSource: "5010327755014", strength: 41.7, label: labelId },
