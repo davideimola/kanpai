@@ -105,7 +105,7 @@ door, its gate and its rules are [`src/lib/mcp/README.md`](../src/lib/mcp/README
 | `/wishlist` | open Wishes |
 | `/palate` | the Palate, editable |
 | `/to-check` | Unverified Labels |
-| `/settings` | as in the siblings, plus **access tokens**: issue (shown once), name, last used, revoke |
+| `/settings` | as in the siblings, plus **access tokens**: issue (shown once), name, last used, revoke; and **Kinds**: add, rename, reorder, move to a section, hide one in use (a Kind with Labels is never deleted) |
 | `/signin` | as in the siblings |
 
 Installable as a PWA (manifest and icons outside the gate), dark and light following the system.

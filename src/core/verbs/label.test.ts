@@ -83,7 +83,7 @@ describe("creating a Label", () => {
   });
 
   it("refuses a Kind that does not exist", async () => {
-    await expect(aLabel({ kindId: "kind_mead" })).rejects.toMatchObject({
+    await expect(aLabel({ kindId: "kind_kombucha" })).rejects.toMatchObject({
       code: "not-found",
       constraint: "labels_kind_exists",
     });

@@ -22,9 +22,12 @@ know yet, and it is born **unverified** when the assistant created it (ADR-0004)
 _Avoid_: wine (it names one Kind, and a spirit is a Label too), product, item, reference.
 
 **Kind**:
-What a Label is: wine (red, white, rosé, sparkling, sweet/fortified) or spirit (whisky, rum,
-gin, grappa, …). It is **stored as data, not as an enum in code**, so a beer or a sake is a new
-row and not a migration (ADR-0002).
+What a Label is, under a **section** that is the general heading: *Wine* (red, white, rosé,
+orange, sparkling, sweet, fortified, vermouth), *Spirits* (whisky, rum, gin, vodka, tequila and
+mezcal, grappa, brandy, liqueur and amaro), *Sake, beer and more* (sake, beer, cider, mead). Two
+levels and no deeper: anything more specific — Champagne, Barolo, an Islay malt — is the
+Label's appellation, region or grapes. It is **stored as data, not as an enum in code**, so a
+copy's owner adds or renames one without a migration (ADR-0002).
 _Avoid_: type, category.
 
 **Vintage**:

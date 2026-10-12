@@ -71,6 +71,13 @@
       "when": 1791820022159,
       "tag": "0009_an_access_token_is_issued",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791823294288,
+      "tag": "0010_the_kinds_grow",
+      "breakpoints": true
     }
   ]
 }
