@@ -12,9 +12,10 @@ src/core/
 ├── refusal.ts       what a verb throws when the database says no
 ├── typed.ts         what was typed, on its way to a column: trimmed, a day, a price
 ├── queries/         one file per question the app answers
-│   ├── kind.ts  label.ts  tasting.ts  cellar.ts  wish.ts  palate.ts
+│   ├── kind.ts  label.ts  tasting.ts  cellar.ts  wish.ts  palate.ts  access-token.ts
 └── verbs/           one file per area of writing
     └── label.ts  vintage.ts  source.ts  bottle.ts  tasting.ts  wish.ts  palate.ts
+        access-token.ts
 ```
 
 ## There is no index
@@ -45,8 +46,11 @@ and both doors call it, so neither can reach a record the other cannot.
 - **Here**: the verbs, the queries, and the SQL. Derivations are queries, not stored
   columns, and they are the product — the Cellar out of the Bottles' States, a Label's
   latest and average score out of its Tastings.
-- **Not here**: anything about HTTP, sessions, bearer tokens, React or MCP framing.
-  Those belong to the adapter that has them.
+- **Not here**: anything about HTTP, sessions, headers, React or MCP framing. Those belong
+  to the adapter that has them. The **access tokens** the MCP door takes are here, because
+  they are records the owner issues, names and revokes (ADR-0009) and both doors reach them —
+  `/mcp` to check one, `/settings` to issue one. Reading one out of an `Authorization` header
+  is not: that is `src/lib/mcp/bearer.ts`.
 - **One expected exception, and it is outbound.** That rule is about the door a request
   arrives through. A Source the app *asks a question of* — Open Food Facts, Vivino
   (ADR-0006) — is the other direction, a dependency of the model like the pool, and when it

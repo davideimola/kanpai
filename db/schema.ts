@@ -387,3 +387,40 @@ export const palate = pgTable(
   },
   (table) => [check("palate_is_the_only_one", sql`${table.id} = 'palate'`)]
 );
+
+/**
+ * A credential the MCP door accepts (ADR-0009): a bearer token the owner issued, named after
+ * where it went — *Claude*, *laptop*, *tunnel* — and shown once.
+ *
+ * **The secret is never stored**, only its SHA-256, so a copy of this table opens nothing. A
+ * name is unique among the tokens still live, so a revoked *Claude* leaves the name free for
+ * the token that replaces it. Revoking is a moment, never a deletion: the row stays, so
+ * *what called last week* still has an answer.
+ *
+ * Every credential the door accepts is meant to be a row here — OAuth's access tokens too,
+ * when S10 builds them — so the check on `/mcp` is written once. Nothing for OAuth is here
+ * yet: it adds its columns when it exists.
+ */
+export const accessTokens = pgTable(
+  "access_tokens",
+  {
+    id: text().primaryKey().default(sql`gen_prefixed_id('tok')`),
+    name: text().notNull(),
+    secretHash: text().notNull(),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    lastUsedAt: timestamp({ withTimezone: true }),
+    revokedAt: timestamp({ withTimezone: true }),
+  },
+  (table) => [
+    unique("access_tokens_secret_hash_key").on(table.secretHash),
+    uniqueIndex("access_tokens_name_is_unique_while_live")
+      .on(table.name)
+      .where(sql`${table.revokedAt} is null`),
+    check("access_tokens_id_is_prefixed", prefixed(table.id, "tok")),
+    check(
+      "access_tokens_name_is_not_blank",
+      sql`${table.name} = btrim(${table.name}) and ${table.name} <> ''`
+    ),
+    check("access_tokens_secret_hash_is_a_sha256", sql`${table.secretHash} ~ '^[0-9a-f]{64}$'`),
+  ]
+);
