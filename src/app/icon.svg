@@ -1,18 +1,23 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <!--
-    A PLACEHOLDER MARK: a cup, raised. kanpai has no visual identity yet, and this is the
-    smallest drawing that says what the app is about until it does.
-
-    A tab is outside this application's cascade, so the file states its own ink on both
-    grounds rather than `currentColor`, which some browser chrome resolves to nothing. The
-    two greys are `--ink` from `src/app/globals.css`, light and dark, in sRGB.
+    THE MARK, SOLID: two glass rings, wine and spirit, linked. It is `docs/brand/mark.svg`
+    and `mark-dark.svg` in one file, because a favicon is fetched and parsed on its own and
+    has to carry both grounds itself; the stain drawn at large sizes would be mush at 16 px.
+    The colours are the brand's (docs/brand/README.md), stated here rather than inherited,
+    since a tab is outside this application's cascade.
   -->
   <style>
-    path { fill: none; stroke: #181818; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .wine { fill: #5E1B2D; }
+    .spirit { fill: #C27C1E; }
     @media (prefers-color-scheme: dark) {
-      path { stroke: #e8e8e8; }
+      .wine { fill: #B04A63; }
+      .spirit { fill: #D69238; }
     }
   </style>
-  <path d="M6 4h12l-1.2 7.5a4.8 4.8 0 0 1-9.6 0Z"/>
-  <path d="M12 16.3V20M8.5 20h7"/>
+  <defs><clipPath id="over"><rect x="0" y="0" width="64" height="30"/></clipPath></defs>
+  <g transform="translate(0 1)" fill-rule="evenodd">
+    <path class="spirit" d="M41 21a18 18 0 1 0 0.01 0Z M39.6 25a13.4 13.4 0 1 0 0.01 0Z"/>
+    <path class="wine" d="M24 5a19 19 0 1 0 0.01 0Z M25.5 10.4a13.2 13.2 0 1 0 0.01 0Z"/>
+    <path class="spirit" clip-path="url(#over)" d="M41 21a18 18 0 1 0 0.01 0Z M39.6 25a13.4 13.4 0 1 0 0.01 0Z"/>
+  </g>
 </svg>

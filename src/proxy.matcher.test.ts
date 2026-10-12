@@ -50,6 +50,7 @@ describe("the proxy's matcher", () => {
     "/.well-known/oauth-protected-resource/mcp",
     "/favicon.ico",
     "/icon.svg",
+    "/apple-icon.png",
     "/manifest.webmanifest",
     "/_next/static/chunks/main.js",
     "/_next/image",

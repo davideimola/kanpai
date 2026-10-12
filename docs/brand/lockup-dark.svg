@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 96" role="img" aria-label="kanpai 乾杯">
+  <!-- The lockup for the dark ground: the stain and the word. The face is Zen Old Mincho, named first and then fallen back through a serif stack; the PNG beside this file is the one rendered in the real face. See README.md. -->
+  <svg x="0" y="4" width="88" height="88" viewBox="0 0 64 64">
+  <g style="mix-blend-mode: screen">
+    <path fill-rule="evenodd" fill="#B04A63" fill-opacity=".6" d="M24 6a18 18 0 1 0 0.01 0Z M25.4 10.6a13.3 13.3 0 1 0 0.01 0Z"/>
+    <circle cx="24" cy="24" r="17.3" fill="none" stroke="#C25A74" stroke-width="1.4"/>
+  </g>
+  <g style="mix-blend-mode: screen">
+    <path fill-rule="evenodd" fill="#D69238" fill-opacity=".6" d="M41 22a17 17 0 1 0 0.01 0Z M39.8 25.2a13.4 13.4 0 1 0 0.01 0Z"/>
+    <circle cx="41" cy="39" r="16.3" fill="none" stroke="#E0A04A" stroke-width="1.4"/>
+  </g>
+  <circle cx="9" cy="44" r="1.6" fill="#C25A74"/>
+  </svg>
+  <text x="104" y="62" font-family="'Zen Old Mincho', 'Hiragino Mincho ProN', 'Noto Serif JP', Georgia, serif" font-weight="700" font-size="52" fill="#E6E8E1">kanpai</text>
+  <text x="282" y="62" font-family="'Zen Old Mincho', 'Hiragino Mincho ProN', 'Noto Serif JP', serif" font-weight="500" font-size="20" fill="#D69238">乾杯</text>
+</svg>

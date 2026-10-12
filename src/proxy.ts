@@ -55,7 +55,7 @@ export const config = {
   //     hard way, and what OAuth for MCP (S10) will publish under it.
   //   - **the build output and the favicon**, which the browser fetches unprompted and
   //     **without credentials**.
-  //   - **the icon and the manifest**, for exactly that last reason and no new one. A
+  //   - **the icons and the manifest**, for exactly that last reason and no new one. A
   //     manifest is fetched with credentials *omitted* unless the link asks otherwise — so
   //     gated it answers `307 /signin`, and the phone silently never offers to install the
   //     app. Nothing under them is the owner's data: an application's name and its logo are
@@ -69,6 +69,6 @@ export const config = {
   // `/.well-known-ish`, `/icon.svg.map` — which is a wider hole than the reservation: the
   // exclusion is for these paths, not for these prefixes.
   matcher: [
-    "/((?!_next/static|_next/image|favicon\\.ico|(?:api/auth|signin|mcp|\\.well-known|icon\\.svg|manifest\\.webmanifest)(?:$|/)).*)",
+    "/((?!_next/static|_next/image|favicon\\.ico|(?:api/auth|signin|mcp|\\.well-known|icon\\.svg|apple-icon\\.png|manifest\\.webmanifest)(?:$|/)).*)",
   ],
 };

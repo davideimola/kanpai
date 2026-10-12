@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="kanpai">
+  <!-- The mark as a stain: what a wine glass and a spirit glass leave on a table, rim darker than the ring, and a drop. For large sizes on the light ground. See README.md. -->
+  <g style="mix-blend-mode: multiply">
+    <path fill-rule="evenodd" fill="#5E1B2D" fill-opacity=".55" d="M24 6a18 18 0 1 0 0.01 0Z M25.4 10.6a13.3 13.3 0 1 0 0.01 0Z"/>
+    <circle cx="24" cy="24" r="17.3" fill="none" stroke="#5E1B2D" stroke-width="1.4"/>
+  </g>
+  <g style="mix-blend-mode: multiply">
+    <path fill-rule="evenodd" fill="#C27C1E" fill-opacity=".6" d="M41 22a17 17 0 1 0 0.01 0Z M39.8 25.2a13.4 13.4 0 1 0 0.01 0Z"/>
+    <circle cx="41" cy="39" r="16.3" fill="none" stroke="#C27C1E" stroke-width="1.4"/>
+  </g>
+  <circle cx="9" cy="44" r="1.6" fill="#5E1B2D"/>
+</svg>

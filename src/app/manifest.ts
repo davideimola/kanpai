@@ -1,8 +1,8 @@
 import type { MetadataRoute } from "next";
 
 // THE WEB APP MANIFEST — what the phone reads when the owner adds kanpai to a home screen
-// (spec §4: installable, manifest and icons outside the gate). A placeholder until the
-// visual direction exists: the name, the drawn icon, and the light ground.
+// (spec §4: installable, manifest and icons outside the gate). The name, the mark, and
+// the light ground.
 //
 // Two things about it are constraints rather than choices, and both come from it being read
 // by an operating system rather than by the document:
@@ -29,8 +29,14 @@ export default function manifest(): MetadataRoute.Manifest {
     display: "standalone",
     background_color: "#f5f5f5",
     theme_color: "#f5f5f5",
-    // The drawn file alone, for now. iOS wants a PNG for its home screen and Android a
-    // maskable one; both arrive with the mark itself, when there is a mark to render.
-    icons: [{ src: "/icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any" }],
+    icons: [
+      // The drawn file, which scales: the solid mark, on whichever ground the system has.
+      { src: "/icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any" },
+      // The raster, for everything that will not take a drawing — iOS outright, and
+      // Android's adaptive icon, which crops to a circle 80% across: the mark spans 62% of
+      // the tile, so the crop never reaches it. Rendered from `docs/brand/mark.svg` on the
+      // brand's paper; see `docs/brand/README.md`.
+      { src: "/apple-icon.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+    ],
   };
 }
