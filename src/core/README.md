@@ -15,7 +15,7 @@ src/core/
 │   ├── candidate.ts  http.ts  openfoodfacts.ts  vivino.ts  configured.ts  fixtures/
 ├── queries/         one file per question the app answers
 │   ├── kind.ts  label.ts  tasting.ts  cellar.ts  wish.ts  palate.ts  access-token.ts
-│       catalogue.ts
+│       catalogue.ts  drunk.ts
 └── verbs/           one file per area of writing
     └── label.ts  vintage.ts  source.ts  bottle.ts  tasting.ts  wish.ts  palate.ts  kind.ts
         access-token.ts  catalogue.ts
