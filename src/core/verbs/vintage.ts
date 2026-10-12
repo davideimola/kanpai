@@ -121,6 +121,9 @@ export async function setVintageYear(input: {
   bottleIds?: readonly string[];
   tastingIds?: readonly string[];
 }): Promise<YearSet> {
+  if (!Number.isInteger(input.year)) {
+    throw new Refusal("invalid", "A year is a whole number, like 2018.");
+  }
   const everything = input.bottleIds === undefined && input.tastingIds === undefined;
 
   return refusing(

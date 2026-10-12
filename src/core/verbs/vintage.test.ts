@@ -172,4 +172,11 @@ describe("setting the year", () => {
       code: "not-found",
     });
   });
+
+  it("refuses a year that is not a whole number, before touching anything", async () => {
+    const { labelId } = await aLabel({ vintage: "unknown" });
+    for (const year of [2018.5, Number.NaN]) {
+      await expect(setVintageYear({ labelId, year })).rejects.toMatchObject({ code: "invalid" });
+    }
+  });
 });
