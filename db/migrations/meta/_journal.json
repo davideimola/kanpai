@@ -15,6 +15,13 @@
       "when": 1791804944723,
       "tag": "0001_the_kinds",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791807302598,
+      "tag": "0002_a_label_has_vintages",
+      "breakpoints": true
     }
   ]
 }

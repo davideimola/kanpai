@@ -1,5 +1,19 @@
 import { sql } from "drizzle-orm";
-import { boolean, check, integer, pgTable, text, unique } from "drizzle-orm/pg-core";
+import {
+  type AnyPgColumn,
+  boolean,
+  check,
+  date,
+  foreignKey,
+  index,
+  integer,
+  numeric,
+  pgTable,
+  text,
+  timestamp,
+  unique,
+  uniqueIndex,
+} from "drizzle-orm/pg-core";
 
 // The schema, described for Drizzle.
 //
@@ -44,5 +58,119 @@ export const kinds = pgTable(
       sql`${table.section} = btrim(${table.section}) and ${table.section} <> ''`
     ),
     check("kinds_sort_order_is_positive", sql`${table.sortOrder} > 0`),
+  ]
+);
+
+// ── Helpers for the checks every table repeats ─────────────────────────────────────────────
+
+/** A prefixed id, as `gen_prefixed_id()` mints it — or a readable slug a fixture wrote. */
+function prefixed(column: AnyPgColumn, prefix: string) {
+  return sql`${column} ~ ${sql.raw(`'^${prefix}_[a-z0-9]+(_[a-z0-9]+)*$'`)}`;
+}
+
+/** Optional text that is either absent or says something: never `''`, never padding. */
+function absentOrSaid(column: AnyPgColumn) {
+  return sql`${column} is null or (${column} = btrim(${column}) and ${column} <> '')`;
+}
+
+/** Optional prose — notes, a description — which may span lines but is never only blanks. */
+function absentOrWritten(column: AnyPgColumn) {
+  return sql`${column} is null or btrim(${column}) <> ''`;
+}
+
+/** An address an image or a page is fetched from by the owner's browser, never by us. */
+function absentOrWebAddress(column: AnyPgColumn) {
+  return sql`${column} is null or ${column} ~ '^https?://[^[:space:]]+$'`;
+}
+
+/**
+ * One thing a producer bottles and sells under one name, independent of the year
+ * (`CONTEXT.md`, **Label**).
+ *
+ * The fields only one Kind uses — the age statement and the strength of a spirit, the
+ * appellation of a wine — are nullable columns here (ADR-0002). `unverified` is the mark an
+ * assistant-created Label carries until the owner has looked at it (ADR-0004). It always has
+ * at least one Vintage; that, and what a Kind without vintages allows, are triggers in the
+ * migration because a check cannot read another table.
+ */
+export const labels = pgTable(
+  "labels",
+  {
+    id: text().primaryKey().default(sql`gen_prefixed_id('lbl')`),
+    producer: text(),
+    name: text().notNull(),
+    kindId: text().notNull(),
+    country: text(),
+    region: text(),
+    appellation: text(),
+    grapes: text().array().notNull().default(sql`'{}'::text[]`),
+    ageStatement: text(),
+    strength: numeric({ precision: 4, scale: 1 }),
+    unverified: boolean().notNull().default(false),
+    ownImageUrl: text(),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    foreignKey({ name: "labels_kind_exists", columns: [table.kindId], foreignColumns: [kinds.id] }),
+    index("labels_kind_id_idx").on(table.kindId),
+    check("labels_id_is_prefixed", prefixed(table.id, "lbl")),
+    check(
+      "labels_name_is_not_blank",
+      sql`${table.name} = btrim(${table.name}) and ${table.name} <> ''`
+    ),
+    check("labels_producer_is_not_blank", absentOrSaid(table.producer)),
+    check("labels_country_is_not_blank", absentOrSaid(table.country)),
+    check("labels_region_is_not_blank", absentOrSaid(table.region)),
+    check("labels_appellation_is_not_blank", absentOrSaid(table.appellation)),
+    check("labels_age_statement_is_not_blank", absentOrSaid(table.ageStatement)),
+    check("labels_grapes_are_not_blank", sql`every_one_is_said(${table.grapes})`),
+    check(
+      "labels_strength_is_a_percentage",
+      sql`${table.strength} is null or (${table.strength} > 0 and ${table.strength} <= 100)`
+    ),
+    check("labels_own_image_url_is_a_web_address", absentOrWebAddress(table.ownImageUrl)),
+  ]
+);
+
+/**
+ * One year of a Label, or its NV, or its unknown (`CONTEXT.md`, **Vintage**; ADR-0010).
+ *
+ * `dating` says which of the three it is and `year` is present exactly when it is a year.
+ * A year is unique per Label, and there is at most one NV and at most one unknown — the two
+ * partial unique indexes below. Bottles and Tastings attach here, never to the Label.
+ */
+export const vintages = pgTable(
+  "vintages",
+  {
+    id: text().primaryKey().default(sql`gen_prefixed_id('vtg')`),
+    labelId: text().notNull(),
+    dating: text().notNull(),
+    year: integer(),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    foreignKey({
+      name: "vintages_label_exists",
+      columns: [table.labelId],
+      foreignColumns: [labels.id],
+    }),
+    unique("vintages_one_per_year_per_label").on(table.labelId, table.year),
+    uniqueIndex("vintages_one_nv_per_label").on(table.labelId).where(sql`${table.dating} = 'nv'`),
+    uniqueIndex("vintages_one_unknown_per_label")
+      .on(table.labelId)
+      .where(sql`${table.dating} = 'unknown'`),
+    check("vintages_id_is_prefixed", prefixed(table.id, "vtg")),
+    check(
+      "vintages_dating_is_a_year_nv_or_unknown",
+      sql`${table.dating} in ('year', 'nv', 'unknown')`
+    ),
+    check(
+      "vintages_year_is_there_exactly_when_dated_by_year",
+      sql`(${table.dating} = 'year') = (${table.year} is not null)`
+    ),
+    check(
+      "vintages_year_is_plausible",
+      sql`${table.year} is null or ${table.year} between 1800 and 2200`
+    ),
   ]
 );
