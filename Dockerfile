@@ -74,10 +74,14 @@ ENV NODE_ENV=production \
 
 # The traced server, its dependencies and the trimmed manifest, all of which `standalone`
 # writes. `.next/static` is the one thing it deliberately does not trace — it is served,
-# not imported — so it is copied. There is no `public/` yet; the slice that adds one adds
-# its line here.
+# not imported — so it is copied.
 COPY --from=build --chown=node:node /build/.next/standalone ./
 COPY --from=build --chown=node:node /build/.next/static ./.next/static
+
+# `public/` is not traced either, and it holds one thing: the barcode decoder the scanner falls
+# back to in Safari, which has no `BarcodeDetector` of its own (`src/components/scan.tsx`). Left
+# out, the scanner works in Chrome and is silently broken on an iPhone.
+COPY --from=build --chown=node:node /build/public ./public
 
 # The schema, and the runner that applies it. Plain `.ts` run through node's own type
 # stripping, which is how `pnpm db:migrate` runs it on a laptop too — one runner, one
