@@ -22,6 +22,13 @@
       "when": 1791807302598,
       "tag": "0002_a_label_has_vintages",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791807346466,
+      "tag": "0003_a_label_names_its_sources",
+      "breakpoints": true
     }
   ]
 }

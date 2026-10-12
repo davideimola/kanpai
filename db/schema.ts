@@ -174,3 +174,41 @@ export const vintages = pgTable(
     ),
   ]
 );
+
+/**
+ * Where a Label was found: an external catalogue, that catalogue's own id for it, and the
+ * image and page it showed (`CONTEXT.md`, **Source**; ADR-0006).
+ *
+ * The image is **hotlinked**: its address is stored, never its bytes. One record in a Source
+ * names one Label of ours, which is why `(source, id_at_source)` is unique across the table
+ * and not per Label — two Labels claiming the same Vivino wine is a merge waiting to happen.
+ */
+export const labelSources = pgTable(
+  "label_sources",
+  {
+    id: text().primaryKey().default(sql`gen_prefixed_id('src')`),
+    labelId: text().notNull(),
+    source: text().notNull(),
+    idAtSource: text().notNull(),
+    imageUrl: text(),
+    pageUrl: text(),
+    lookedUpAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    foreignKey({
+      name: "label_sources_label_exists",
+      columns: [table.labelId],
+      foreignColumns: [labels.id],
+    }),
+    unique("label_sources_one_label_per_record").on(table.source, table.idAtSource),
+    index("label_sources_label_id_idx").on(table.labelId),
+    check("label_sources_id_is_prefixed", prefixed(table.id, "src")),
+    check("label_sources_source_is_known", sql`${table.source} in ('openfoodfacts', 'vivino')`),
+    check(
+      "label_sources_id_at_source_is_not_blank",
+      sql`${table.idAtSource} = btrim(${table.idAtSource}) and ${table.idAtSource} <> ''`
+    ),
+    check("label_sources_image_url_is_a_web_address", absentOrWebAddress(table.imageUrl)),
+    check("label_sources_page_url_is_a_web_address", absentOrWebAddress(table.pageUrl)),
+  ]
+);

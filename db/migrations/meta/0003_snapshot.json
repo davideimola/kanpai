@@ -1,0 +1,496 @@
+{
+  "id": "caa26a66-1bf7-47e1-b0d7-782642fe875d",
+  "prevId": "61c714f9-ecf0-4970-8da4-0fa59d465c79",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.kinds": {
+      "name": "kinds",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_prefixed_id('kind')"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "section": {
+          "name": "section",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "has_vintages": {
+          "name": "has_vintages",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "kinds_name_key": {
+          "name": "kinds_name_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "name"
+          ]
+        },
+        "kinds_sort_order_key": {
+          "name": "kinds_sort_order_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "sort_order"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "kinds_id_is_prefixed": {
+          "name": "kinds_id_is_prefixed",
+          "value": "\"kinds\".\"id\" ~ '^kind_[a-z0-9]+(_[a-z0-9]+)*$'"
+        },
+        "kinds_name_is_not_blank": {
+          "name": "kinds_name_is_not_blank",
+          "value": "\"kinds\".\"name\" = btrim(\"kinds\".\"name\") and \"kinds\".\"name\" <> ''"
+        },
+        "kinds_section_is_not_blank": {
+          "name": "kinds_section_is_not_blank",
+          "value": "\"kinds\".\"section\" = btrim(\"kinds\".\"section\") and \"kinds\".\"section\" <> ''"
+        },
+        "kinds_sort_order_is_positive": {
+          "name": "kinds_sort_order_is_positive",
+          "value": "\"kinds\".\"sort_order\" > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.label_sources": {
+      "name": "label_sources",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_prefixed_id('src')"
+        },
+        "label_id": {
+          "name": "label_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source": {
+          "name": "source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id_at_source": {
+          "name": "id_at_source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "image_url": {
+          "name": "image_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "page_url": {
+          "name": "page_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "looked_up_at": {
+          "name": "looked_up_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "label_sources_label_id_idx": {
+          "name": "label_sources_label_id_idx",
+          "columns": [
+            {
+              "expression": "label_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "label_sources_label_exists": {
+          "name": "label_sources_label_exists",
+          "tableFrom": "label_sources",
+          "tableTo": "labels",
+          "columnsFrom": [
+            "label_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "label_sources_one_label_per_record": {
+          "name": "label_sources_one_label_per_record",
+          "nullsNotDistinct": false,
+          "columns": [
+            "source",
+            "id_at_source"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "label_sources_id_is_prefixed": {
+          "name": "label_sources_id_is_prefixed",
+          "value": "\"label_sources\".\"id\" ~ '^src_[a-z0-9]+(_[a-z0-9]+)*$'"
+        },
+        "label_sources_source_is_known": {
+          "name": "label_sources_source_is_known",
+          "value": "\"label_sources\".\"source\" in ('openfoodfacts', 'vivino')"
+        },
+        "label_sources_id_at_source_is_not_blank": {
+          "name": "label_sources_id_at_source_is_not_blank",
+          "value": "\"label_sources\".\"id_at_source\" = btrim(\"label_sources\".\"id_at_source\") and \"label_sources\".\"id_at_source\" <> ''"
+        },
+        "label_sources_image_url_is_a_web_address": {
+          "name": "label_sources_image_url_is_a_web_address",
+          "value": "\"label_sources\".\"image_url\" is null or \"label_sources\".\"image_url\" ~ '^https?://[^[:space:]]+$'"
+        },
+        "label_sources_page_url_is_a_web_address": {
+          "name": "label_sources_page_url_is_a_web_address",
+          "value": "\"label_sources\".\"page_url\" is null or \"label_sources\".\"page_url\" ~ '^https?://[^[:space:]]+$'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.labels": {
+      "name": "labels",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_prefixed_id('lbl')"
+        },
+        "producer": {
+          "name": "producer",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind_id": {
+          "name": "kind_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "country": {
+          "name": "country",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "region": {
+          "name": "region",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "appellation": {
+          "name": "appellation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "grapes": {
+          "name": "grapes",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::text[]"
+        },
+        "age_statement": {
+          "name": "age_statement",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "strength": {
+          "name": "strength",
+          "type": "numeric(4, 1)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "unverified": {
+          "name": "unverified",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "own_image_url": {
+          "name": "own_image_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "labels_kind_id_idx": {
+          "name": "labels_kind_id_idx",
+          "columns": [
+            {
+              "expression": "kind_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "labels_kind_exists": {
+          "name": "labels_kind_exists",
+          "tableFrom": "labels",
+          "tableTo": "kinds",
+          "columnsFrom": [
+            "kind_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "labels_id_is_prefixed": {
+          "name": "labels_id_is_prefixed",
+          "value": "\"labels\".\"id\" ~ '^lbl_[a-z0-9]+(_[a-z0-9]+)*$'"
+        },
+        "labels_name_is_not_blank": {
+          "name": "labels_name_is_not_blank",
+          "value": "\"labels\".\"name\" = btrim(\"labels\".\"name\") and \"labels\".\"name\" <> ''"
+        },
+        "labels_producer_is_not_blank": {
+          "name": "labels_producer_is_not_blank",
+          "value": "\"labels\".\"producer\" is null or (\"labels\".\"producer\" = btrim(\"labels\".\"producer\") and \"labels\".\"producer\" <> '')"
+        },
+        "labels_country_is_not_blank": {
+          "name": "labels_country_is_not_blank",
+          "value": "\"labels\".\"country\" is null or (\"labels\".\"country\" = btrim(\"labels\".\"country\") and \"labels\".\"country\" <> '')"
+        },
+        "labels_region_is_not_blank": {
+          "name": "labels_region_is_not_blank",
+          "value": "\"labels\".\"region\" is null or (\"labels\".\"region\" = btrim(\"labels\".\"region\") and \"labels\".\"region\" <> '')"
+        },
+        "labels_appellation_is_not_blank": {
+          "name": "labels_appellation_is_not_blank",
+          "value": "\"labels\".\"appellation\" is null or (\"labels\".\"appellation\" = btrim(\"labels\".\"appellation\") and \"labels\".\"appellation\" <> '')"
+        },
+        "labels_age_statement_is_not_blank": {
+          "name": "labels_age_statement_is_not_blank",
+          "value": "\"labels\".\"age_statement\" is null or (\"labels\".\"age_statement\" = btrim(\"labels\".\"age_statement\") and \"labels\".\"age_statement\" <> '')"
+        },
+        "labels_grapes_are_not_blank": {
+          "name": "labels_grapes_are_not_blank",
+          "value": "every_one_is_said(\"labels\".\"grapes\")"
+        },
+        "labels_strength_is_a_percentage": {
+          "name": "labels_strength_is_a_percentage",
+          "value": "\"labels\".\"strength\" is null or (\"labels\".\"strength\" > 0 and \"labels\".\"strength\" <= 100)"
+        },
+        "labels_own_image_url_is_a_web_address": {
+          "name": "labels_own_image_url_is_a_web_address",
+          "value": "\"labels\".\"own_image_url\" is null or \"labels\".\"own_image_url\" ~ '^https?://[^[:space:]]+$'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.vintages": {
+      "name": "vintages",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_prefixed_id('vtg')"
+        },
+        "label_id": {
+          "name": "label_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dating": {
+          "name": "dating",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "year": {
+          "name": "year",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "vintages_one_nv_per_label": {
+          "name": "vintages_one_nv_per_label",
+          "columns": [
+            {
+              "expression": "label_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"vintages\".\"dating\" = 'nv'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "vintages_one_unknown_per_label": {
+          "name": "vintages_one_unknown_per_label",
+          "columns": [
+            {
+              "expression": "label_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"vintages\".\"dating\" = 'unknown'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "vintages_label_exists": {
+          "name": "vintages_label_exists",
+          "tableFrom": "vintages",
+          "tableTo": "labels",
+          "columnsFrom": [
+            "label_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "vintages_one_per_year_per_label": {
+          "name": "vintages_one_per_year_per_label",
+          "nullsNotDistinct": false,
+          "columns": [
+            "label_id",
+            "year"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "vintages_id_is_prefixed": {
+          "name": "vintages_id_is_prefixed",
+          "value": "\"vintages\".\"id\" ~ '^vtg_[a-z0-9]+(_[a-z0-9]+)*$'"
+        },
+        "vintages_dating_is_a_year_nv_or_unknown": {
+          "name": "vintages_dating_is_a_year_nv_or_unknown",
+          "value": "\"vintages\".\"dating\" in ('year', 'nv', 'unknown')"
+        },
+        "vintages_year_is_there_exactly_when_dated_by_year": {
+          "name": "vintages_year_is_there_exactly_when_dated_by_year",
+          "value": "(\"vintages\".\"dating\" = 'year') = (\"vintages\".\"year\" is not null)"
+        },
+        "vintages_year_is_plausible": {
+          "name": "vintages_year_is_plausible",
+          "value": "\"vintages\".\"year\" is null or \"vintages\".\"year\" between 1800 and 2200"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
