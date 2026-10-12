@@ -64,11 +64,15 @@ function aLevel(form: FormData): Level {
 }
 
 /**
- * Which Vintage a panel's form names: one of the Label's own, by its id, or a year the owner
- * typed — found or created with the Bottles or the Tasting, in their transaction.
+ * Which Vintage a panel's form names: one of the Label's own, by its id; NV or unknown, when the
+ * Label has no such Vintage yet; or a year the owner typed — found or created with the Bottles or
+ * the Tasting, in their transaction.
  */
 function aVintage(form: FormData): string | VintageOf {
   const chosen = text(form, "vintage");
+  if (chosen === "nv" || chosen === "unknown") {
+    return { labelId: text(form, "labelId") ?? "", dating: chosen };
+  }
   if (chosen && chosen !== "year") return chosen;
   const year = aNumber(form, "year");
   if (year === null || year === undefined || !Number.isInteger(year)) {

@@ -58,6 +58,7 @@ function one(asked: Asked, name: string): string | undefined {
 }
 
 const SAID: Record<string, string> = {
+  made: "The Label is in your catalogue now.",
   amended: "Saved.",
   checked: "Marked as checked. It is off the to-check list.",
   merged: "Merged. Everything from the other Label is on this one now.",
@@ -819,8 +820,13 @@ async function MergePanel({
   );
 }
 
-/** Which Vintage: one the Label has, or a year typed in. A Kind without years has only NV. */
+/**
+ * Which Vintage: one the Label has, NV or unknown when it has no such one yet, or a year typed
+ * in (ADR-0010). A Kind without years has only NV.
+ */
 function VintageChoice({ label }: { label: LabelPage }) {
+  const has = (dating: LabelVintage["dating"]) =>
+    label.vintages.some((vintage) => vintage.dating === dating);
   return (
     <fieldset className="flex flex-col gap-2">
       <legend className="mb-1.5 text-sm font-medium">Which year</legend>
@@ -835,6 +841,12 @@ function VintageChoice({ label }: { label: LabelPage }) {
             {vintageAsWritten(vintage)}
           </option>
         ))}
+        {label.kind.hasVintages && !has("nv") ? (
+          <option value="nv">{vintageAsWritten({ dating: "nv", year: null })}</option>
+        ) : null}
+        {label.kind.hasVintages && !has("unknown") ? (
+          <option value="unknown">{vintageAsWritten({ dating: "unknown", year: null })}</option>
+        ) : null}
         {label.kind.hasVintages ? <option value="year">Another year…</option> : null}
       </select>
       {label.kind.hasVintages ? (
