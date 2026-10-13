@@ -13,7 +13,8 @@ import remarkGfm from "remark-gfm";
 // an image is drawn as its alt text, so the Palate never makes the browser fetch anything.
 //
 // The page title is "Palate", so a heading inside it is a section heading at most: `#` to
-// `###` are drawn at section sizes, never bigger than the title, in the serif of the house.
+// `###` are drawn at section sizes, never bigger than the title, in the serif of the house; the
+// text between them in the sans, where bold reads as bold (the serif's 700 is barely heavier).
 
 const HEADING = "font-serif font-bold leading-snug text-glass";
 
@@ -81,7 +82,7 @@ function Link({ href, children }: { href?: string; children?: ReactNode }) {
 /** The Palate's Markdown, drawn in the page's type at a reading measure. */
 export function PalateAsWritten({ prose }: { prose: string }) {
   return (
-    <div className="flex max-w-[65ch] flex-col gap-4 font-serif text-[18px] leading-relaxed md:text-[19px]">
+    <div className="flex max-w-[65ch] flex-col gap-4 text-[17px] leading-relaxed">
       <Markdown
         remarkPlugins={[remarkGfm]}
         components={COMPONENTS}
