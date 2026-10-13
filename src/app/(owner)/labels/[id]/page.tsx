@@ -18,6 +18,13 @@ import { BOTTLE_SHAPES } from "@/core/verbs/kind";
 import { requireOwner } from "@/lib/auth/owner";
 import { cn } from "@/lib/utils";
 import { theOccasion } from "../../diary";
+import {
+  DeleteTastingPanel,
+  EditTastingPanel,
+  TastingActs,
+  TastingFields,
+} from "../../tastings/panels";
+import { DELETE_PANEL, EDIT_PANEL } from "../../tastings/tastings";
 import { wish as addToTheWishlist, reopen } from "../../wishlist/actions";
 import {
   bottlesInWords,
@@ -51,6 +58,9 @@ import {
 // Every act that needs fields is a panel whose open state is the address (`?panel=edit`,
 // `merge`, `taste`, `bottles`, `wish`, `photo`; `@/components/drawer`). The Bottle acts — open,
 // set the level, finish, delete — are plain forms beside each Bottle, because each is one press.
+// A Tasting's Edit and Delete are panels too, naming it beside the panel (`?panel=edit-tasting&
+// tasting=…`): deleting one is asked in its panel first, and it is `../../tastings`, shared with
+// the diary, where the loose ones are.
 //
 // The wishlist's Bought and Tasted land here with `?wish=` beside the panel: the Wish is closed
 // already, so the panel says so, offers the undo, and starts on the Vintage the Wish named.
@@ -75,9 +85,20 @@ const SAID: Record<string, string> = {
   deleted: "The bottle is deleted.",
   dated: "The year is set, and what had no year moved to it.",
   wished: "On your wishlist.",
+  "tasting-edited": "The tasting is saved.",
+  "tasting-deleted": "The tasting is deleted.",
 };
 
-const PANELS = ["edit", "merge", "taste", "bottles", "wish", "photo"] as const;
+const PANELS = [
+  "edit",
+  "merge",
+  "taste",
+  "bottles",
+  "wish",
+  "photo",
+  EDIT_PANEL,
+  DELETE_PANEL,
+] as const;
 
 const SHAPE_NAMES: Record<string, string> = {
   bordeaux: "Bordeaux",
@@ -115,6 +136,8 @@ export default async function LabelScreen({
   const tastings = label.vintages
     .flatMap((vintage) => vintage.tastings.map((tasting) => ({ tasting, vintage })))
     .sort((a, b) => b.tasting.tastedOn.localeCompare(a.tasting.tastedOn));
+  const chosen = tastings.find(({ tasting }) => tasting.id === one(asked, "tasting"));
+  const about = chosen ? `${label.name}, ${vintageAsWritten(chosen.vintage)}` : label.name;
   const imageUrl = label.silhouette.imageUrl;
   const imageSource = label.sources.find((source) => source.imageUrl === imageUrl);
 
@@ -224,7 +247,13 @@ export default async function LabelScreen({
                 </p>
               ) : (
                 tastings.map(({ tasting, vintage }) => (
-                  <Tasting key={tasting.id} tasting={tasting} vintage={vintage} today={today} />
+                  <Tasting
+                    key={tasting.id}
+                    tasting={tasting}
+                    vintage={vintage}
+                    today={today}
+                    here={here}
+                  />
                 ))
               )}
             </section>
@@ -262,6 +291,18 @@ export default async function LabelScreen({
         <BottlesPanel label={label} here={here} refused={refused} closedWish={closedWish} />
       ) : null}
       {panel === "wish" ? <WishPanel label={label} here={here} refused={refused} /> : null}
+      {panel === EDIT_PANEL && chosen ? (
+        <EditTastingPanel
+          tasting={chosen.tasting}
+          about={about}
+          here={here}
+          refused={refused}
+          today={today}
+        />
+      ) : null}
+      {panel === DELETE_PANEL && chosen ? (
+        <DeleteTastingPanel tasting={chosen.tasting} about={about} here={here} today={today} />
+      ) : null}
       {panel === "photo" && imageUrl ? (
         <Drawer title="The photo" closesTo={here}>
           <div className="flex flex-col gap-4">
@@ -641,10 +682,12 @@ function Tasting({
   tasting,
   vintage,
   today,
+  here,
 }: {
   tasting: LabelTasting;
   vintage: LabelVintage;
   today: string;
+  here: string;
 }) {
   const occasion = theOccasion(tasting);
   const answers = [
@@ -678,6 +721,7 @@ function Tasting({
         </dl>
       )}
       {occasion ? <p className="text-[13px] text-glass-quiet">{occasion}</p> : null}
+      <TastingActs here={here} tasting={tasting.id} />
     </article>
   );
 }
@@ -985,8 +1029,6 @@ function VintageChoice({ label, chosen }: { label: LabelPage; chosen?: string | 
   );
 }
 
-const RATINGS = [5, 4.5, 4, 3.5, 3, 2.5, 2, 1.5, 1];
-
 function TastePanel({
   label,
   here,
@@ -1001,21 +1043,6 @@ function TastePanel({
   /** The Wish the wishlist closed as tasted on its way here, if it sent the owner. */
   closedWish: WishOf | null;
 }) {
-  const field = (name: string, title: string, hint?: string, long?: boolean) =>
-    long ? (
-      <label className={NAMED}>
-        {title}
-        {hint ? <span className={HINT}>{hint}</span> : null}
-        <textarea name={name} rows={3} className={cn(FIELD, "py-2.5")} />
-      </label>
-    ) : (
-      <label className={NAMED}>
-        {title}
-        {hint ? <span className={HINT}>{hint}</span> : null}
-        <input name={name} className={FIELD} />
-      </label>
-    );
-
   return (
     <Drawer
       title="Record a tasting"
@@ -1027,28 +1054,7 @@ function TastePanel({
       <form action={recordATasting} className="flex flex-col gap-4">
         <input type="hidden" name="labelId" value={label.id} />
         <VintageChoice label={label} chosen={closedWish?.vintageId} />
-        <label className={NAMED}>
-          Day
-          <input name="tastedOn" type="date" defaultValue={today} className={FIELD} />
-        </label>
-        <label className={NAMED}>
-          Rating
-          <select name="rating" defaultValue="" className={FIELD}>
-            <option value="">Not rated</option>
-            {RATINGS.map((rating) => (
-              <option key={rating} value={rating}>
-                {ratingAsWritten(rating)}
-              </option>
-            ))}
-          </select>
-        </label>
-        {field("likedIt", "Did you like it?", undefined, true)}
-        {field("bodyAndFeel", "Body and feel", "Light or full, smooth or dry in the mouth.", true)}
-        {field("remindedOf", "What did it remind you of?", undefined, true)}
-        {field("food", "With what food?")}
-        {field("place", "Where")}
-        {field("company", "With whom")}
-        {field("notes", "Anything else", undefined, true)}
+        <TastingFields today={today} />
         <button type="submit" className={cn(LOUD, "mt-2")}>
           Record the tasting
         </button>
