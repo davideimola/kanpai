@@ -375,10 +375,19 @@ function saidOf(label: LabelPage, said?: string, source?: string): string | unde
   return SAID[said ?? ""];
 }
 
-/** What the Sources are asked for first: the producer and the name, as the Label has them. */
+/**
+ * What the Sources are asked for first: the producer and the name, as the Label has them — the
+ * name alone when it says the producer already (*Hendrick's Gin*, by Hendrick's).
+ */
+function findWords(label: LabelPage): string {
+  const producer = label.producer?.trim();
+  return producer && !label.name.toLowerCase().includes(producer.toLowerCase())
+    ? `${producer} ${label.name}`
+    : label.name;
+}
+
 function findAddress(label: LabelPage, here: string): string {
-  const q = [label.producer, label.name].filter(Boolean).join(" ");
-  return `${here}?${new URLSearchParams({ panel: "find", q })}`;
+  return `${here}?${new URLSearchParams({ panel: "find", q: findWords(label) })}`;
 }
 
 /**
@@ -910,7 +919,7 @@ async function FindPanel({
           <input
             name="q"
             type="search"
-            defaultValue={q ?? [label.producer, label.name].filter(Boolean).join(" ")}
+            defaultValue={q ?? findWords(label)}
             placeholder="Name, producer or barcode"
             className={FIELD}
           />
