@@ -64,6 +64,17 @@ describe("the map and the routes agree", () => {
 });
 
 describe("the phone", () => {
+  it("carries the agreed five on the bar, and the two chores in the header", () => {
+    expect(onTheBar().map((d) => d.label)).toEqual([
+      "Diary",
+      "Cellar",
+      "Add",
+      "Wishlist",
+      "Palate",
+    ]);
+    expect(inTheHeader().map((d) => d.label)).toEqual(["To check", "Settings"]);
+  });
+
   it("puts every destination on the bar or in the header, once", () => {
     const placed = [...onTheBar(), ...inTheHeader()].map((d) => d.href).sort();
     expect(placed).toEqual(DESTINATIONS.map((d) => d.href).sort());
@@ -97,6 +108,7 @@ describe("where the owner is", () => {
     ["/cellar/", "/cellar"],
     ["/add", "/add"],
     ["/wishlist", "/wishlist"],
+    ["/palate", "/palate"],
     ["/to-check", "/to-check"],
     ["/settings", "/settings"],
   ])("reads %s as %s", (pathname, expected) => {

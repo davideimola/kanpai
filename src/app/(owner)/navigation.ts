@@ -13,7 +13,6 @@
  * **A destination is here only once its screen exists** (`./shell.test.ts` fails otherwise).
  * Add came with S6, and the Wishlist and the Palate with S7 (spec §5): with all three in, the
  * bar is the agreed five — Diary, Cellar, the round Add, Wishlist, Palate.
- * The Palate adds `{ href: "/palate", label: "Palate", phone: "bar" }` after the Wishlist.
  */
 
 export type Destination = {
@@ -35,6 +34,7 @@ export const DESTINATIONS: readonly Destination[] = [
   { href: "/cellar", label: "Cellar", phone: "bar" },
   { href: "/add", label: "Add", phone: "act" },
   { href: "/wishlist", label: "Wishlist", phone: "bar" },
+  { href: "/palate", label: "Palate", phone: "bar" },
   { href: "/to-check", label: "To check", phone: "header", counted: true },
   { href: "/settings", label: "Settings", phone: "header" },
 ];
