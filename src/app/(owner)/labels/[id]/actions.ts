@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isRefusal, Refusal } from "@/core/refusal";
+import { configuredSources } from "@/core/sources/configured";
 import {
   addBottles,
   deleteBottle,
@@ -11,11 +12,13 @@ import {
   openBottle,
   setBottleLevel,
 } from "@/core/verbs/bottle";
+import { linkLabelToSource } from "@/core/verbs/catalogue";
 import { BOTTLE_SHAPES, type BottleShape } from "@/core/verbs/kind";
 import { amendLabel, markLabelToCheck, markLabelVerified, mergeLabels } from "@/core/verbs/label";
 import { recordTasting } from "@/core/verbs/tasting";
 import { setVintageYear, type VintageOf } from "@/core/verbs/vintage";
 import { requireOwner } from "@/lib/auth/owner";
+import { chosenFrom } from "../../add/search";
 import { aList, aNumber, at, text } from "../../form";
 
 // The write side of a Label's page, and a thin adapter like the page (`AGENTS.md`): each one
@@ -167,6 +170,34 @@ export async function merge(form: FormData): Promise<void> {
     if (!isRefusal(error)) throw error;
     to = at(from, { panel: "merge", q: text(form, "q") ?? undefined, refused: error.message });
   }
+  revalidatePath("/", "layout");
+  redirect(to);
+}
+
+/**
+ * *This is it*: the Label is linked to the candidate the owner chose in *Find it in a
+ * catalogue*, re-read from its Source (`linkLabelToSource`, ADR-0011). It gains the photo, the
+ * page and the credit; nothing it says changes. A refusal — the record is on another Label, the
+ * Source did not answer — comes back in the panel, with the search as it was.
+ */
+export async function link(form: FormData): Promise<void> {
+  await requireOwner();
+  const path = labelPath(form);
+  const chosen = chosenFrom(text(form, "chosen") ?? undefined);
+  let to: string;
+  try {
+    if (!chosen) throw new Refusal("invalid", "Choose one of the bottles found.");
+    const linked = await linkLabelToSource(
+      configuredSources(),
+      text(form, "labelId") ?? "",
+      chosen
+    );
+    to = at(path, { said: linked.already ? "linked-already" : "linked", source: linked.source });
+  } catch (error) {
+    if (!isRefusal(error)) throw error;
+    to = at(path, { panel: "find", q: text(form, "q") ?? undefined, refused: error.message });
+  }
+  revalidatePath(path);
   revalidatePath("/", "layout");
   redirect(to);
 }

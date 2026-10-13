@@ -4,7 +4,8 @@ import { DANGER, FIELD, HINT, LOUD, NAMED, PLAIN, QUIET } from "@/components/con
 import { Drawer, Refused, Said } from "@/components/drawer";
 import { RatingRing, ratingAsWritten } from "@/components/rating-ring";
 import { Silhouette } from "@/components/silhouette";
-import { listEveryKind } from "@/core/queries/kind";
+import { type CatalogueAnswer, searchCatalogue } from "@/core/queries/catalogue";
+import { type KeptKind, listEveryKind } from "@/core/queries/kind";
 import {
   getLabel,
   type LabelBottle,
@@ -14,9 +15,13 @@ import {
   searchLabels,
 } from "@/core/queries/label";
 import { getWish, openWishOn, type WishOf, type WishOnLabel } from "@/core/queries/wish";
+import { isRefusal } from "@/core/refusal";
+import { configuredSources } from "@/core/sources/configured";
 import { BOTTLE_SHAPES } from "@/core/verbs/kind";
 import { requireOwner } from "@/lib/auth/owner";
 import { cn } from "@/lib/utils";
+import { CandidateRow } from "../../add/candidates";
+import { chosenAsParam, sourceSays, whatWasTyped } from "../../add/search";
 import { theOccasion } from "../../diary";
 import {
   DeleteTastingPanel,
@@ -28,6 +33,7 @@ import { DELETE_PANEL, EDIT_PANEL } from "../../tastings/tastings";
 import { wish as addToTheWishlist, reopen } from "../../wishlist/actions";
 import {
   bottlesInWords,
+  counted,
   dateAsWritten,
   dayAsWritten,
   levelAsWritten,
@@ -39,6 +45,7 @@ import {
   addSomeBottles,
   amend,
   finish,
+  link,
   markChecked,
   merge,
   open,
@@ -56,11 +63,17 @@ import {
 // its Source.
 //
 // Every act that needs fields is a panel whose open state is the address (`?panel=edit`,
-// `merge`, `taste`, `bottles`, `wish`, `photo`; `@/components/drawer`). The Bottle acts — open,
+// `merge`, `taste`, `bottles`, `wish`, `photo`, `find`; `@/components/drawer`). The Bottle acts — open,
 // set the level, finish, delete — are plain forms beside each Bottle, because each is one press.
 // A Tasting's Edit and Delete are panels too, naming it beside the panel (`?panel=edit-tasting&
 // tasting=…`): deleting one is asked in its panel first, and it is `../../tastings`, shared with
 // the diary, where the loose ones are.
+//
+// A Label with no Source — imported, or written by hand — offers *Find it in a catalogue*
+// beside the credit: a panel asking the Sources what `/add` asks them, prefilled with the
+// Label's producer and name, whose candidates each have *This is it*. Opening it is the
+// explicit search; rendering the page never asks a Source (ADR-0011). Linking adds the photo
+// and the page and changes nothing the Label says (`linkLabelToSource`).
 //
 // The wishlist's Bought and Tasted land here with `?wish=` beside the panel: the Wish is closed
 // already, so the panel says so, offers the undo, and starts on the Vintage the Wish named.
@@ -96,6 +109,7 @@ const PANELS = [
   "bottles",
   "wish",
   "photo",
+  "find",
   EDIT_PANEL,
   DELETE_PANEL,
 ] as const;
@@ -129,7 +143,7 @@ export default async function LabelScreen({
 
   const panel = PANELS.find((name) => name === one(asked, "panel"));
   const refused = one(asked, "refused");
-  const said = SAID[one(asked, "said") ?? ""];
+  const said = saidOf(label, one(asked, "said"), one(asked, "source"));
   const here = `/labels/${encodeURIComponent(label.id)}`;
   const today = todayAsADay();
 
@@ -291,6 +305,15 @@ export default async function LabelScreen({
         <BottlesPanel label={label} here={here} refused={refused} closedWish={closedWish} />
       ) : null}
       {panel === "wish" ? <WishPanel label={label} here={here} refused={refused} /> : null}
+      {panel === "find" ? (
+        <FindPanel
+          label={label}
+          here={here}
+          refused={refused}
+          q={one(asked, "q")}
+          kinds={await listEveryKind()}
+        />
+      ) : null}
       {panel === EDIT_PANEL && chosen ? (
         <EditTastingPanel
           tasting={chosen.tasting}
@@ -338,6 +361,24 @@ export default async function LabelScreen({
       ) : null}
     </main>
   );
+}
+
+/** What the page says after a press: the fixed sentences, or which Source was linked. */
+function saidOf(label: LabelPage, said?: string, source?: string): string | undefined {
+  const title = SOURCE_NAMES[source ?? ""];
+  if (said === "linked" && title) {
+    return label.sources.some((one) => one.source === source && one.imageUrl)
+      ? `Linked to ${title}. The photo and the link are on the page.`
+      : `Linked to ${title}. The link is on the page.`;
+  }
+  if (said === "linked-already" && title) return `It was linked to ${title} already.`;
+  return SAID[said ?? ""];
+}
+
+/** What the Sources are asked for first: the producer and the name, as the Label has them. */
+function findAddress(label: LabelPage, here: string): string {
+  const q = [label.producer, label.name].filter(Boolean).join(" ");
+  return `${here}?${new URLSearchParams({ panel: "find", q })}`;
 }
 
 /**
@@ -789,8 +830,159 @@ function SourceCredit({
           />
         </Link>
       ) : null}
-      <div className="flex min-w-0 flex-col gap-1">{words}</div>
+      <div className="flex min-w-0 flex-col gap-1">
+        {words}
+        {label.sources.length === 0 ? (
+          <Link
+            href={findAddress(label, here)}
+            scroll={false}
+            className={cn(QUIET, "mt-1.5 self-start text-sm")}
+          >
+            Find it in a catalogue
+          </Link>
+        ) : imageUrl ? null : (
+          <Link
+            href={findAddress(label, here)}
+            scroll={false}
+            className="inline-flex min-h-11 items-center self-start font-medium text-wine underline-offset-4 hover:underline md:min-h-0"
+          >
+            No photo yet: find it in a catalogue
+          </Link>
+        )}
+      </div>
     </div>
+  );
+}
+
+/**
+ * *Find it in a catalogue*: the Sources asked what `/add` asks them, for this Label, and each
+ * candidate offered with *This is it*. The search is the address (`?panel=find&q=`), so the
+ * panel works with nothing running in the browser, and a Source is asked only when it opens
+ * with words in it.
+ */
+async function FindPanel({
+  label,
+  here,
+  refused,
+  q,
+  kinds,
+}: {
+  label: LabelPage;
+  here: string;
+  refused?: string;
+  q?: string;
+  kinds: KeptKind[];
+}) {
+  const typed = q ? whatWasTyped(q) : undefined;
+  let answer: CatalogueAnswer | undefined;
+  let notASearch: string | undefined;
+  if (typed) {
+    try {
+      answer = await searchCatalogue(configuredSources(), {
+        ...typed,
+        kind: label.kind.id,
+        limit: 1,
+        candidates: 12,
+      });
+    } catch (error) {
+      if (!isRefusal(error)) throw error;
+      notASearch = error.message;
+    }
+  }
+  const quiet =
+    answer && typed
+      ? answer.sources
+          .map((consulted) => sourceSays(consulted, typed))
+          .filter((line): line is string => line !== null)
+      : [];
+
+  return (
+    <Drawer
+      title="Find it in a catalogue"
+      description="Give this Label its photo and a link to where it is described. Only what you choose is linked, and nothing it says changes."
+      refused={refused ?? notASearch}
+      closesTo={here}
+    >
+      <form action={here} className="flex items-end gap-2">
+        <input type="hidden" name="panel" value="find" />
+        <label className={cn(NAMED, "flex-1")}>
+          Search for
+          <input
+            name="q"
+            type="search"
+            defaultValue={q ?? [label.producer, label.name].filter(Boolean).join(" ")}
+            placeholder="Name, producer or barcode"
+            className={FIELD}
+          />
+        </label>
+        <button type="submit" className={QUIET}>
+          Search
+        </button>
+      </form>
+
+      {answer && answer.candidates.length > 0 ? (
+        <>
+          <p className="mt-5 text-sm leading-normal text-glass-quiet">
+            Check the producer and the photo before you choose: these are bottles the catalogues
+            know, not necessarily yours.
+            {answer.candidates.some((one) => one.source === "openfoodfacts")
+              ? " Photos from Open Food Facts, under CC BY-SA."
+              : ""}
+          </p>
+          <ul className="mt-2 flex flex-col">
+            {answer.candidates.map((candidate) => (
+              <CandidateRow
+                key={`${candidate.source}:${candidate.idAtSource}`}
+                candidate={candidate}
+                kinds={kinds}
+                source
+              >
+                {candidate.label === label.id ? (
+                  <span className="px-3 text-sm text-glass-quiet">Linked</span>
+                ) : candidate.label ? (
+                  <Link
+                    href={`/labels/${encodeURIComponent(candidate.label)}`}
+                    className={cn(PLAIN, "text-sm")}
+                  >
+                    On another Label
+                  </Link>
+                ) : (
+                  <form action={link}>
+                    <input type="hidden" name="labelId" value={label.id} />
+                    <input type="hidden" name="chosen" value={chosenAsParam(candidate)} />
+                    {q ? <input type="hidden" name="q" value={q} /> : null}
+                    <button type="submit" className={cn(QUIET, "text-sm")}>
+                      This is it
+                    </button>
+                  </form>
+                )}
+              </CandidateRow>
+            ))}
+          </ul>
+        </>
+      ) : null}
+
+      {quiet.length > 0 || (answer && answer.discarded > 0) ? (
+        <div className="mt-5 flex flex-col gap-1 text-sm leading-normal text-glass-quiet">
+          {quiet.map((line) => (
+            <p key={line}>{line}</p>
+          ))}
+          {answer && answer.discarded > 0 ? (
+            <p>
+              {counted(answer.discarded, "other bottle")} found named another producer, so{" "}
+              {answer.discarded === 1 ? "it is" : "they are"} not shown.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
+      {answer && answer.candidates.length === 0 ? (
+        <p className="mt-4 text-[15px] leading-normal text-glass-quiet">
+          No catalogue knows it by those words. Try fewer, or the barcode. A bottle no catalogue
+          knows is fine as it is.
+        </p>
+      ) : null}
+    </Drawer>
   );
 }
 
