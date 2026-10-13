@@ -12,6 +12,10 @@ import { Refusal, refusing } from "../refusal.ts";
 // the `Authorization` header that carries one — reading a header is the door's business, in
 // `src/lib/mcp/bearer.ts`, and this file never sees a request.
 //
+// OAuth's access tokens are rows in the same table (ADR-0013): minted by `./oauth.ts` under a
+// grant, an hour long, and let in by the same `authenticateAccessToken` below — which is what
+// ADR-0009 meant by one table holding every credential the door accepts.
+//
 // The secret is `kanpai_` and 32 random bytes in base64url: 256 bits, which nobody guesses
 // at any rate a door can be asked, and a prefix that says what it is when it turns up in a
 // shell history or a secret scanner. Only its SHA-256 reaches the database.

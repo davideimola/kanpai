@@ -4,8 +4,8 @@ The other door over the same core. The web view is a set of pages; this is one r
 handler at `/mcp`, and both are **thin adapters over `src/core`** with no domain logic of
 their own. It is tsundoku's door, taken over with its stack (ADR-0001): hand-rolled JSON-RPC,
 no SDK, the directory as the tool list. Where it differs is the gate — tokens the owner
-issues (ADR-0009) — and the write boundary — the assistant creates Labels directly
-(ADR-0004).
+issues (ADR-0009), and OAuth's, from kanpai's own authorization server (ADR-0013) — and the
+write boundary — the assistant creates Labels directly (ADR-0004).
 
 This door is the product as much as the web view is: the owner is a beginner and the
 assistant is their sommelier, so what the assistant reads here is what it knows.
@@ -166,9 +166,11 @@ owner's record here.
   preimage.
 - Every refusal is the same 401 with the same body. Which one it was — `absent`,
   `none-issued`, `unknown`, `revoked` — is logged for the owner and never returned.
-- `WWW-Authenticate: Bearer realm="kanpai"` names no `resource_metadata`: that is how a client
-  discovers an authorization server, and there is none until S10 — when OAuth's access
-  tokens become rows in the same table and this check does not change.
+- `WWW-Authenticate: Bearer realm="kanpai", resource_metadata="…/.well-known/oauth-protected-resource/mcp"`:
+  that is how a client given only this address discovers kanpai's own authorization server
+  (ADR-0013). OAuth's access tokens are rows in the same table, an hour long and tied to a
+  grant, and this check did not change to take them — `authenticateAccessToken` also refuses
+  one that has expired (`expired`) or whose grant was revoked.
 - **ChatGPT is not a special case.** The Secure MCP Tunnel is transport only and presents a
   token issued for it, like any other client; there is no tunnel path through the gate, and
   there must not be one.
@@ -177,6 +179,28 @@ owner's record here.
   windows of a minute: thirty requests per client, three hundred over the whole door; a 429
   carries `Retry-After`. The counters live in this process, which assumes one replica —
   `rate-limit.ts` says why that is an assumption and not an oversight.
+
+## OAuth (ADR-0013)
+
+kanpai is the authorization server for this door. The endpoints are route handlers beside it,
+thin over `src/core/verbs/oauth.ts`, with what they share in `src/lib/oauth/`:
+
+```
+src/app/.well-known/oauth-protected-resource[/mcp]    RFC 9728: /mcp, and who issues its tokens
+src/app/.well-known/oauth-authorization-server[/mcp]  RFC 8414: every endpoint below
+src/app/oauth/register    RFC 7591: an app registers itself; public clients only
+src/app/(consent)/oauth/authorize    the consent screen, behind the owner gate
+src/app/oauth/token       a code (S256 PKCE) or a refresh token for an access token
+src/app/oauth/revoke      RFC 7009: an app disconnects itself
+```
+
+The flow, as ChatGPT walks it: a 401 here names the resource metadata; that names kanpai as
+the authorization server; the app registers, opens `/oauth/authorize` in the owner's browser
+(through the Google sign-in if there is no session, and back), the owner presses *Allow*, and
+the app redeems the code for an hour-long `kanpai_at_…` and a `kanpai_rt_…` that rotates on
+every refresh. `/settings` lists the grant as a connected app and revokes it. The endpoints an
+app calls are outside the Google gate, answer any origin, and have a rate limit of their own;
+`/oauth/authorize` is gated like every screen.
 
 ## The transport
 
@@ -197,4 +221,5 @@ curl -s http://localhost:3000/mcp \
 ```
 
 Without the header, or with a revoked token, it is a 401 (`src/app/mcp/route.test.ts`). The
-root `README.md` has the Claude Code and Claude Desktop instructions.
+root `README.md` has the Claude Code and Claude Desktop instructions. The OAuth flow, end to end
+against the route handlers, is `src/app/oauth/oauth.test.ts`.
