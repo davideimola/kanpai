@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { emptyTheCatalogue } from "@/test/catalogue";
+import { aLabel, emptyTheCatalogue } from "@/test/catalogue";
 import { answering, timedOut } from "@/test/sources";
 import { query } from "../db.ts";
 import { getLabel } from "../queries/label.ts";
 import { openFoodFacts } from "../sources/openfoodfacts.ts";
 import { vivino } from "../sources/vivino.ts";
-import { createLabelFromSource } from "./catalogue.ts";
+import { createLabelFromSource, linkLabelToSource } from "./catalogue.ts";
 
 // Seam 1: a Label made from a chosen candidate, against the real Postgres, with the Source
 // answering from a recording (`src/test/sources.ts`). The Source is re-read by its id, and
@@ -157,5 +157,139 @@ describe("a candidate that cannot be made a Label", () => {
       createLabelFromSource(sources, chosen, { kindId: "kind_red" })
     ).rejects.toMatchObject({ code: "already-exists" });
     expect(await labelCount()).toBe(1);
+  });
+});
+
+describe("linking a Label to a candidate", () => {
+  it("re-reads the record and gives the Label its photo and page, changing nothing it says", async () => {
+    const { labelId } = await aLabel({
+      producer: "Masi",
+      name: "Costasera",
+      region: null,
+      appellation: null,
+      grapes: [],
+      unverified: true,
+      vintage: 2015,
+    });
+    const fetcher = answering(() => "vivino-by-id-21929.json");
+
+    const linked = await linkLabelToSource(
+      { openfoodfacts: null, vivino: vivino(ACCESS, fetcher) },
+      labelId,
+      { source: "vivino", idAtSource: "21929" }
+    );
+
+    expect(fetcher.asked[0]?.body).toMatchObject({ filters: "id=21929" });
+    expect(linked).toMatchObject({
+      sourceId: expect.stringMatching(/^src_/),
+      source: "vivino",
+      imageUrl: "https://images.vivino.com/thumbs/giuHgypHTM21_kfvNLApCw_pb_x600.png",
+      pageUrl: "https://www.vivino.com/w/21929",
+      already: false,
+    });
+    const label = await getLabel(labelId);
+    expect(label).toMatchObject({
+      // What the owner (or the assistant) wrote stays: a Source never overwrites it.
+      producer: "Masi",
+      name: "Costasera",
+      region: null,
+      appellation: null,
+      strength: null,
+      // A link vouches for no fact the assistant wrote, so it stays on the to-check list.
+      unverified: true,
+      silhouette: {
+        imageUrl: "https://images.vivino.com/thumbs/giuHgypHTM21_kfvNLApCw_pb_x600.png",
+      },
+      sources: [
+        {
+          id: linked.sourceId,
+          source: "vivino",
+          idAtSource: "21929",
+          pageUrl: "https://www.vivino.com/w/21929",
+          lookedUpAt: expect.any(Date),
+        },
+      ],
+    });
+  });
+
+  it("changes nothing when the Label has that record already", async () => {
+    const { labelId } = await aLabel();
+    const sources = { openfoodfacts: null, vivino: COSTASERA };
+    const chosen = { source: "vivino", idAtSource: "21929" } as const;
+    const first = await linkLabelToSource(sources, labelId, chosen);
+
+    const again = await linkLabelToSource(sources, labelId, chosen);
+    expect(again).toMatchObject({ sourceId: first.sourceId, already: true });
+    expect((await getLabel(labelId))?.sources).toHaveLength(1);
+  });
+
+  it("takes a second record, from the other Source", async () => {
+    const { labelId } = await aLabel();
+    await linkLabelToSource({ openfoodfacts: null, vivino: COSTASERA }, labelId, {
+      source: "vivino",
+      idAtSource: "21929",
+    });
+    await linkLabelToSource(
+      {
+        openfoodfacts: openFoodFacts(answering(() => "openfoodfacts-product-5010327755014.json")),
+        vivino: null,
+      },
+      labelId,
+      { source: "openfoodfacts", idAtSource: "5010327755014" }
+    );
+
+    expect((await getLabel(labelId))?.sources.map((one) => one.source).sort()).toEqual([
+      "openfoodfacts",
+      "vivino",
+    ]);
+  });
+
+  it("refuses a record already on another Label, and says which", async () => {
+    const sources = { openfoodfacts: null, vivino: COSTASERA };
+    const chosen = { source: "vivino", idAtSource: "21929" } as const;
+    const { labelId: holder } = await createLabelFromSource(sources, chosen, {
+      kindId: "kind_red",
+    });
+    const { labelId } = await aLabel();
+
+    const refused = linkLabelToSource(sources, labelId, chosen);
+    await expect(refused).rejects.toMatchObject({ code: "already-exists" });
+    await expect(refused).rejects.toThrow(
+      `That Vivino record is already on another Label, Costasera Amarone della Valpolicella Classico, Masi (${holder}).`
+    );
+    expect((await getLabel(labelId))?.sources).toEqual([]);
+  });
+
+  it("refuses a Label that does not exist, without asking the Source", async () => {
+    const fetcher = answering(() => "vivino-by-id-21929.json");
+    await expect(
+      linkLabelToSource({ openfoodfacts: null, vivino: vivino(ACCESS, fetcher) }, "lbl_missing", {
+        source: "vivino",
+        idAtSource: "21929",
+      })
+    ).rejects.toMatchObject({ code: "not-found" });
+    expect(fetcher.asked).toEqual([]);
+  });
+
+  it("refuses a Source this copy has off, and one that does not answer", async () => {
+    const { labelId } = await aLabel();
+    const chosen = { source: "vivino", idAtSource: "21929" } as const;
+    await expect(
+      linkLabelToSource({ openfoodfacts: null, vivino: null }, labelId, chosen)
+    ).rejects.toMatchObject({ code: "not-allowed" });
+    await expect(
+      linkLabelToSource(
+        {
+          openfoodfacts: null,
+          vivino: vivino(
+            ACCESS,
+            answering(() => timedOut())
+          ),
+        },
+        labelId,
+        chosen
+      )
+    ).rejects.toMatchObject({ code: "unavailable" });
+    expect((await getLabel(labelId))?.sources).toEqual([]);
   });
 });
