@@ -13,7 +13,7 @@ import {
 import { recordSource } from "./source.ts";
 import { recordTasting } from "./tasting.ts";
 import { ensureVintage } from "./vintage.ts";
-import { addWish } from "./wish.ts";
+import { addWish, closeWish } from "./wish.ts";
 
 // Seam 1, against the real Postgres. What is asserted is the Label as `getLabel` reads it
 // back — what the owner and the assistant see — and, for each rule, that the database
@@ -280,6 +280,7 @@ describe("merging two Labels", () => {
     const tastingOnUnknown = await recordTasting({ vintageId: goneUnknown, rating: 3.5 });
     const tastingOn2022 = await recordTasting({ vintageId: gone.vintageId, rating: 4 });
     const wishOnLabel = await addWish({ labelId: gone.labelId, why: "the 2023" });
+    await closeWish(wishOnLabel, "dropped"); // a Label has one open Wish at a time
     const wishOn2022 = await addWish({ vintageId: gone.vintageId });
     await recordSource(gone.labelId, { source: "vivino", idAtSource: "123" });
 

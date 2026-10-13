@@ -16,8 +16,8 @@ describe("the open Wishes", () => {
     const amarone = await aLabel({ producer: "Masi", name: "Costasera Amarone", vintage: 2004 });
     const first = await addWish({ vintageId: sassicaia.vintageId, cameFrom: "a friend" });
     const dropped = await addWish({ labelId: amarone.labelId });
-    const last = await addWish({ labelId: amarone.labelId, why: "for the holidays" });
     await closeWish(dropped, "dropped");
+    const last = await addWish({ labelId: amarone.labelId, why: "for the holidays" });
 
     expect(await listOpenWishes()).toEqual([
       {
@@ -89,10 +89,10 @@ describe("the wishlist page", () => {
   it("lists the closed ones apart, the most recently closed first, with how each ended", async () => {
     const { labelId } = await aLabel();
     const bought = await addWish({ labelId });
-    const dropped = await addWish({ labelId });
-    const open = await addWish({ labelId });
     await closeWish(bought, "bought", { at: new Date("2026-10-01T18:00:00Z") });
+    const dropped = await addWish({ labelId });
     await closeWish(dropped, "dropped", { at: new Date("2026-10-05T18:00:00Z") });
+    const open = await addWish({ labelId });
 
     expect(await listWishes("closed")).toMatchObject([
       { id: dropped, closedAs: "dropped", closedAt: new Date("2026-10-05T18:00:00Z") },

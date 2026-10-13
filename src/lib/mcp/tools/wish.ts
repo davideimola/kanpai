@@ -15,7 +15,8 @@ the two. Say why and where the idea came from: *you suggested it*, *a friend*, *
 shop*.
 
 The Label must already be in the catalogue: find it with \`search_catalogue\`, or create it with
-\`create_label\` first. Wish for the Label unless a particular year is the point.`,
+\`create_label\` first. Wish for the Label unless a particular year is the point. A Label is wished
+for once: refused (\`already-exists\`) while it has an open Wish — \`read_wishes\` shows it.`,
   inputSchema: {
     type: "object",
     properties: {

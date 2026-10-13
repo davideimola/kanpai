@@ -47,6 +47,20 @@ describe("adding a Wish", () => {
     }
   });
 
+  it("refuses a second open Wish on a Label, through any of its Vintages too", async () => {
+    const { labelId, vintageId } = await aLabel({ name: "Barolo Rocche", vintage: 2016 });
+    const first = await addWish({ vintageId });
+    for (const wish of [{ labelId }, { vintageId }]) {
+      await expect(addWish(wish)).rejects.toMatchObject({
+        code: "already-exists",
+        message: expect.stringContaining("Barolo Rocche is on the wishlist already"),
+      });
+    }
+
+    await closeWish(first, "bought");
+    expect(await addWish({ labelId })).toMatch(/^wish_/);
+  });
+
   it("refuses a Label that does not exist", async () => {
     await expect(addWish({ labelId: "lbl_missing" })).rejects.toMatchObject({
       code: "not-found",
@@ -90,6 +104,14 @@ describe("reopening a Wish", () => {
     expect(await query("select closed_as, closed_at from wishes where id = $1", [id])).toEqual([
       { closed_as: null, closed_at: null },
     ]);
+  });
+
+  it("refuses when the Label was wished for again meanwhile", async () => {
+    const { labelId } = await aLabel();
+    const dropped = await addWish({ labelId });
+    await closeWish(dropped, "dropped");
+    await addWish({ labelId, why: "changed my mind" });
+    await expect(reopenWish(dropped)).rejects.toMatchObject({ code: "already-exists" });
   });
 
   it("refuses a Wish still open, and one that does not exist", async () => {

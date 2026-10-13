@@ -91,7 +91,9 @@ _Avoid_: inventory, collection.
 **Wish**:
 A Label (or a Vintage) the owner wants to try or buy, with a note on why and where it came from:
 *the assistant suggested it*, *a friend*, *seen at the wine shop*. A Wish is closed when it is
-bought (it becomes a Bottle) or tasted (it becomes a Tasting), or dropped.
+bought (it becomes a Bottle) or tasted (it becomes a Tasting), or dropped; a close can be undone,
+and the Wish is open again. A Label is wished for once: while it has an open Wish, it is not
+given a second.
 _Avoid_: wishlist item, to-buy.
 
 **Palate**:

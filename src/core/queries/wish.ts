@@ -100,8 +100,8 @@ export type WishOnLabel = {
 
 /**
  * The open Wish on a Label — naming the Label or one of its Vintages — or `null` when it has
- * none. A Label is wished for once: a second Wish says nothing the first does not, so a door
- * asks this before it adds one (the Vivino import asks it too).
+ * none. A Label is wished for once (`addWish` refuses a second), so its page shows this one
+ * in place of Add to the wishlist, and the Vivino import skips a wine already wished for.
  */
 export async function openWishOn(labelId: string): Promise<WishOnLabel | null> {
   const [wish] = await query<WishOnLabel>(

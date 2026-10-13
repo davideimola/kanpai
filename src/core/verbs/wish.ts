@@ -10,8 +10,38 @@ export type WishEnding = "bought" | "tasted" | "dropped";
 const NO_SUCH_WISH = "No Wish has that id.";
 
 /**
+ * Refuse a second open Wish on a Label — one naming it, or any of its Vintages, other than
+ * `except`. The Label is named by its id or by one of its Vintages' (`CONTEXT.md`, **Wish**: a
+ * Label is wished for once).
+ */
+async function refuseASecondWish(
+  on: { labelId?: string | null; vintageId?: string | null },
+  except?: string
+): Promise<void> {
+  const [held] = await query<{ name: string }>(
+    `select l.name
+       from wishes w
+       left join vintages v on v.id = w.vintage_id
+       join labels l on l.id = coalesce(w.label_id, v.label_id)
+      where w.closed_as is null
+        and w.id is distinct from $3
+        and l.id = coalesce($1, (select label_id from vintages where id = $2))
+      limit 1`,
+    [on.labelId ?? null, on.vintageId ?? null, except ?? null]
+  );
+  if (held) {
+    throw new Refusal(
+      "already-exists",
+      `${held.name} is on the wishlist already. Its open Wish says why; close it before wishing again.`
+    );
+  }
+}
+
+/**
  * Want to try or buy something (`CONTEXT.md`, **Wish**): a Label, or one Vintage of it —
- * exactly one of the two — with why, and where the idea came from.
+ * exactly one of the two — with why, and where the idea came from. Refused when the Label
+ * already has an open Wish, on it or on any of its Vintages: a second says nothing the first
+ * does not.
  */
 export async function addWish(wish: {
   labelId?: string | null;
@@ -20,6 +50,7 @@ export async function addWish(wish: {
   /** The assistant suggested it, a friend, seen at the wine shop. */
   cameFrom?: string | null;
 }): Promise<string> {
+  await refuseASecondWish(wish);
   const [row] = await refusing(
     () =>
       query<{ id: string }>(
@@ -84,8 +115,14 @@ export async function closeWish(
  * Undo a close: the Wish is open again, as if it had never ended — what the wishlist's *Undo*
  * does after *Drop*, and after *Bought* or *Tasted* when nothing was bought or tasted after all.
  * Whatever was recorded meanwhile — a Bottle, a Tasting — is its own record and stays.
+ * Refused when the Label has been wished for again since: it has an open Wish already.
  */
 export async function reopenWish(wishId: string): Promise<void> {
+  const [wish] = await query<{ labelId: string | null; vintageId: string | null }>(
+    `select label_id as "labelId", vintage_id as "vintageId" from wishes where id = $1`,
+    [wishId]
+  );
+  if (wish) await refuseASecondWish(wish, wishId);
   const updated = await query(
     `update wishes set closed_as = null, closed_at = null
       where id = $1 and closed_as is not null
