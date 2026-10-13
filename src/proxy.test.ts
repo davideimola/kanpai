@@ -142,6 +142,24 @@ describe("the gate at the HTTP edge", () => {
     expect((await statusAndLocation(request)).location).toBe(`https://${HOST}/signin`);
   });
 
+  // The one exception (ADR-0013): an OAuth authorization request is carried through the
+  // sign-in, so the app waiting on the consent screen gets its answer.
+  it("carries an OAuth authorization request through the sign-in as next", async () => {
+    const asked = "/oauth/authorize?response_type=code&client_id=cli_abc&state=s%20t";
+    const { status, location } = await statusAndLocation(requestFor(asked));
+
+    expect(status).toBe(307);
+    const landing = new URL(location ?? "");
+    expect(landing.pathname).toBe("/signin");
+    expect(landing.searchParams.get("next")).toBe(asked);
+  });
+
+  it("carries nothing for a path that only looks like the consent screen", async () => {
+    for (const path of ["/oauth/authorized?x=1", "/settings?next=/oauth/authorize?x=1"]) {
+      expect((await statusAndLocation(requestFor(path))).location).toBe(`https://${HOST}/signin`);
+    }
+  });
+
   // Fail closed at the edge too: a deployment that forgot the variable refuses the
   // owner rather than admitting everybody.
   it("sends the owner to the sign-in screen when no owner is configured", async () => {

@@ -1,5 +1,9 @@
 # The MCP door takes tokens the owner issues, and OAuth comes later
 
+Status: **path 3 built in S10** —
+[ADR-0013](0013-kanpai-is-its-own-oauth-server-for-mcp-and-apps-register-themselves.md) records
+kanpai as its own OAuth server for `/mcp`, with its access tokens as rows in this ADR's one table.
+
 `/mcp` is reached three ways, and all three end at the same check:
 
 1. **Bearer tokens the owner issues from the web view** — named (*Claude*, *laptop*, *tunnel*),
@@ -8,7 +12,7 @@
 2. **OpenAI's Secure MCP Tunnel**, for ChatGPT, which cannot present a bearer. The tunnel is
    transport only: it presents one of the tokens above, issued for it. On the owner's cluster it
    is a second channel on the existing `tunnel-client`.
-3. **OAuth 2.1, later** (S10). kanpai becomes its own authorization server for MCP: discovery
+3. **OAuth 2.1** (S10, built: ADR-0013). kanpai becomes its own authorization server for MCP: discovery
    metadata, dynamic client registration, `/authorize` behind the existing owner sign-in with a
    consent screen, `/token` with PKCE and refresh. It is what lets someone else's copy work with
    ChatGPT with no OpenAI platform account and no tunnel.
@@ -26,3 +30,5 @@ Issuing tokens from the web costs one table and one settings screen.
   a one-off CLI command.
 - **OAuth is built only when it is needed**: when a copy other than the owner's wants ChatGPT,
   or when the tunnel stops being acceptable. Until then it is a slice in the spec, not code.
+  (It was needed on 2026-10-13, when ChatGPT's connector dialog asked for OAuth and nothing
+  else: ADR-0013.)

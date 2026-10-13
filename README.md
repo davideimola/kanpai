@@ -132,8 +132,18 @@ Developer → Edit Config), and its *custom connectors* are reached from Anthrop
 
 The header goes through the environment because some clients split an argument at its space.
 Restart Claude Desktop after editing. A copy deployed behind HTTPS is a custom connector on
-claude.ai or in the apps instead, with the same header; ChatGPT reaches it through OpenAI's
-Secure MCP Tunnel, which presents a token issued for it (S5).
+claude.ai or in the apps instead, with the same header — or with OAuth, below.
+
+**ChatGPT**, and anything else that connects with OAuth: kanpai is its own OAuth server for
+`/mcp` ([ADR-0013](docs/adr/0013-kanpai-is-its-own-oauth-server-for-mcp-and-apps-register-themselves.md)),
+so no token is issued by hand. In ChatGPT's *Add custom MCP server*, paste
+`https://<your domain>/mcp`, choose **OAuth** and leave the advanced settings on automatic
+(dynamic client registration). ChatGPT sends you to kanpai — through the Google sign-in if you
+are not signed in — and you press **Allow**. The app then shows under *Connected apps* in
+Settings, where you disconnect it. Claude's custom connectors and Claude Code
+(`claude mcp add --transport http kanpai https://<your domain>/mcp`, then `/mcp`) do the same
+when given no header. `AUTH_URL` must be the copy's public origin: it is the issuer every client
+checks.
 
 What the tools are, how one is added, and why the assistant creates Labels directly rather than
 proposing them, is [`src/lib/mcp/README.md`](src/lib/mcp/README.md).

@@ -18,7 +18,9 @@ MCP, can act as the owner's sommelier. The owner is a beginner; the assistant al
 Same stack and same shape as tsundoku ([ADR-0001](adr/0001-kanpai-is-its-own-app-on-tsundokus-stack.md)):
 one Next.js app on the cluster over Postgres, Drizzle migrations, **three doors over one
 `src/core`** — the owner's web view (Google, one address), `/mcp` (tokens the owner issues, the
-ChatGPT tunnel, OAuth later — [ADR-0009](adr/0009-the-mcp-door-takes-tokens-the-owner-issues-and-oauth-comes-later.md)), and nothing
+ChatGPT tunnel, and OAuth —
+[ADR-0009](adr/0009-the-mcp-door-takes-tokens-the-owner-issues-and-oauth-comes-later.md),
+[ADR-0013](adr/0013-kanpai-is-its-own-oauth-server-for-mcp-and-apps-register-themselves.md)), and nothing
 else for now. **No LLM inside the app, no tokens spent.**
 
 Single-owner **per copy**, and anyone can run a copy from the published image with
@@ -76,7 +78,14 @@ Postgres, not by `src/core`: the constraint or trigger named beside each is what
   last used at (touched at most once a minute), revoked at. A revocation is final and a
   token keeps its secret (`access_tokens_revoked_is_final`, `access_tokens_secret_is_final`);
   a row is revoked, never deleted. The secret is `kanpai_` + 32 random bytes in base64url,
-  shown once. Meant to hold OAuth's access tokens too (S10), which add their columns then.
+  shown once. It holds OAuth's access tokens too (S10, [ADR-0013](adr/0013-kanpai-is-its-own-oauth-server-for-mcp-and-apps-register-themselves.md)):
+  `grant_id` and `expires_at`, which go together (`access_tokens_grant_and_expiry_go_together`);
+  an OAuth token is `kanpai_at_…`, an hour long, and the name rule is the owner's tokens' only.
+- `oauth_clients`, `oauth_codes`, `oauth_grants`: kanpai as its own OAuth server for `/mcp`
+  ([ADR-0013](adr/0013-kanpai-is-its-own-oauth-server-for-mcp-and-apps-register-themselves.md)) —
+  apps registered by DCR (the id is the `client_id`), codes (hashed, five minutes, single use,
+  S256), and grants — a connected app, named after it, holding a refresh token's hash that
+  rotates on every refresh; revoked, never deleted (`oauth_grants_revoked_is_final`).
 
 ## 3. The MCP tools
 
@@ -140,7 +149,7 @@ S6, and the Wishlist and the Palate with S7, which completed the bar.
 | **S7** | **Wishlist and Palate pages** | both readable and editable from the web |
 | **S8** | **Import the Vivino history** | past Tastings and ratings are in, attached to Labels |
 | **S9** | **The self-host kit** — *Running your own copy* in the README, `.env.example` with every variable explained, the GitHub sign-in provider, connector guides for Claude and ChatGPT, the sommelier prompt | someone who is not the owner goes from nothing to a working copy following the README alone |
-| **S10** | **OAuth 2.1 for MCP** — discovery, dynamic client registration, consent behind the owner sign-in, PKCE, refresh, revocation | ChatGPT connects to a copy with no tunnel; built when a copy other than the owner's needs it |
+| **S10** | **OAuth 2.1 for MCP** — discovery, dynamic client registration, consent behind the owner sign-in, PKCE, refresh, revocation | ChatGPT connects to a copy with no tunnel — **built** ([ADR-0013](adr/0013-kanpai-is-its-own-oauth-server-for-mcp-and-apps-register-themselves.md)): paste `https://<domain>/mcp`, choose OAuth, allow it on the consent screen |
 
 ## 6. Out of scope for now
 
@@ -154,12 +163,15 @@ storing third-party images · a cellar map with racks and positions.
   apps ([`sources.md`](research/sources.md) §5). The ways in are the phone's own text scan into
   the search box, a barcode, and a photo sent to the assistant over MCP, which reads the label
   with its own vision.
-- **ChatGPT — settled, recorded here until it gets its ADR.** Same two paths as tsundoku, no
-  OAuth server: Claude reaches `/mcp` over the public Ingress with the bearer; ChatGPT, which
-  cannot present a bearer, reaches the same `/mcp` through OpenAI's **Secure MCP Tunnel** — the
-  cluster's existing `tunnel-client` (`davideimola/cluster`, `apps/tunnel-client`), which was
-  built to front several MCP servers through named channels. kanpai is a **second channel**
-  there, not a second tunnel. To check at S5: the deployment is configured today with a single
+- **ChatGPT — settled, then superseded by S10.** ChatGPT's connector dialog turned out to want
+  OAuth, so kanpai became its own OAuth server and ChatGPT connects with the address alone
+  ([ADR-0013](adr/0013-kanpai-is-its-own-oauth-server-for-mcp-and-apps-register-themselves.md)).
+  What was settled before, kept for the record — same two paths as tsundoku, no OAuth server:
+  Claude reaches `/mcp` over the public Ingress with the bearer; ChatGPT, which cannot present
+  a bearer, reaches the same `/mcp` through OpenAI's **Secure MCP Tunnel** — the cluster's
+  existing `tunnel-client` (`davideimola/cluster`, `apps/tunnel-client`), which was built to
+  front several MCP servers through named channels. kanpai is a **second channel** there, not a
+  second tunnel. To check at S5: the deployment is configured today with a single
   `MCP_SERVER_URL`, so adding a channel may change how it is configured. For other people's
   copies, the self-host kit (S9) documents the tunnel as the ChatGPT path.
 - **The owner's own photos.** `labels.own_image_url` is in the schema and nothing writes it

@@ -3,6 +3,7 @@ import type { NextAuthRequest } from "next-auth";
 
 import { auth } from "@/lib/auth";
 import { devGateIsOpen, gateSessionFrom, ownerGate, SIGN_IN_PATH } from "@/lib/auth/gate";
+import { CONSENT_PATH } from "@/lib/auth/return-to";
 
 // The first of the gate's two layers, and the one that is **ergonomics rather than
 // the wall**. It exists so that a request without a session lands on a sign-in screen
@@ -32,9 +33,18 @@ const gatedProxy = auth((request: NextAuthRequest, _event: NextFetchEvent) => {
   // No `callbackUrl`. The app has one home, and a sign-in happens about once a
   // quarter, so returning to the refused route is not worth an open-redirect surface
   // fed by a query parameter.
+  //
+  // **Except OAuth's consent screen** (ADR-0013), where returning is the whole point: an
+  // app is waiting for the answer to the request the owner was sent here with. That
+  // request alone is carried through, as `next`, and the sign-in honours it only if it is
+  // still one (`@/lib/auth/return-to`) — so the exception is a path, not a parameter.
+  const { pathname, search } = request.nextUrl;
   const signIn = request.nextUrl.clone();
   signIn.pathname = SIGN_IN_PATH;
   signIn.search = "";
+  if (pathname === CONSENT_PATH && search) {
+    signIn.searchParams.set("next", `${pathname}${search}`);
+  }
   return NextResponse.redirect(signIn);
 });
 
@@ -48,6 +58,11 @@ export const config = {
   //     (ADR-0009), and a redirect to a Google consent screen is not an answer an
   //     assistant can read. Reserved here so the slice that builds it (S2) does not have
   //     to edit this line.
+  //   - **`oauth/register`, `oauth/token` and `oauth/revoke`**, the OAuth endpoints an app
+  //     calls from its own server with no cookie (ADR-0013). Each answers in RFC 6749's
+  //     JSON and is limited; what stands in for the owner there is a code the owner's yes
+  //     produced, and the PKCE verifier only the app holds. **`oauth/authorize` is not
+  //     excluded**: it is the consent screen, and the owner signs in to see it.
   //   - **`healthz`**, which whatever runs the image asks whether the database answers. A
   //     probe carries no session, and gated it would be answered `307 /signin` — which it
   //     counts as healthy, whatever Postgres is doing. It reads no row and writes nothing,
@@ -56,7 +71,7 @@ export const config = {
   //     *before* it has any credentials to fetch it with. Nothing is served under it yet,
   //     and gated it would answer a discovery probe `307 /signin` where a `404` correctly
   //     says "this server publishes none" — which is what tsundoku's tunnel learned the
-  //     hard way, and what OAuth for MCP (S10) will publish under it.
+  //     hard way. OAuth for MCP publishes its two metadata documents under it (ADR-0013).
   //   - **the build output and the favicon**, which the browser fetches unprompted and
   //     **without credentials**.
   //   - **the icons and the manifest**, for exactly that last reason and no new one. A
@@ -73,6 +88,6 @@ export const config = {
   // `/healthzz`, `/.well-known-ish`, `/icon.svg.map` — which is a wider hole than the
   // reservation: the exclusion is for these paths, not for these prefixes.
   matcher: [
-    "/((?!_next/static|_next/image|favicon\\.ico|(?:api/auth|signin|mcp|healthz|\\.well-known|icon\\.svg|apple-icon\\.png|manifest\\.webmanifest)(?:$|/)).*)",
+    "/((?!_next/static|_next/image|favicon\\.ico|(?:api/auth|signin|mcp|oauth/(?:register|token|revoke)|healthz|\\.well-known|icon\\.svg|apple-icon\\.png|manifest\\.webmanifest)(?:$|/)).*)",
   ],
 };

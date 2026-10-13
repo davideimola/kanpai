@@ -108,8 +108,10 @@ export function clientOf(headers: Headers): string {
 /**
  * A limiter with its own counters.
  *
- * Exported so a test can have one nobody else has touched. In tsundoku a second door takes
- * one of its own from here; kanpai has one door that needs it, and `rateLimit` below is it.
+ * Exported so a test can have one nobody else has touched, and so a second door can take
+ * counters of its own: the OAuth endpoints do (`@/lib/oauth/http`, ADR-0013), so an app
+ * registering never spends the allowance an assistant needs here. `rateLimit` below is the
+ * door's.
  */
 export function createRateLimiter(): RateLimiter {
   const clients = new Map<string, Window>();

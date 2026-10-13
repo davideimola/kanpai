@@ -14,12 +14,15 @@ import { SRC, sourceFiles } from "@/test/source-files";
 //
 // The rule, in two halves:
 //
-//   1. every page lives in `(owner)` — behind the gate — or in `(public)`, which is
-//      the deliberate act of putting a page outside it;
-//   2. every page, every Server Function and every route handler inside `(owner)` calls
+//   1. every page lives in `(owner)` or `(consent)` — behind the gate — or in `(public)`,
+//      which is the deliberate act of putting a page outside it;
+//   2. every page, every Server Function and every route handler inside a gated group calls
 //      `requireOwner()`, because the proxy is ergonomics and not the wall: a layout
 //      does not run for a Server Function, and Next's own guidance is to verify inside
 //      each one rather than to rely on the proxy.
+//
+// `(consent)` is OAuth's consent screen (ADR-0013): gated exactly like `(owner)`, and a group
+// of its own only because it must not be drawn inside the owner's shell.
 
 const APP = `${SRC}app`;
 
@@ -35,9 +38,12 @@ const otherEntryPoints = app.filter(
     (/^\s*["']use server["']/m.test(read.source) || /(?:^|\/)route\.tsx?$/.test(read.file))
 );
 
-/** Files under the gated route group, which is the only group that touches data. */
+/** The route groups behind the gate: the owner's screens, and OAuth's consent screen. */
+const GATED = ["(owner)/", "(consent)/"];
+
+/** Files under a gated route group, which are the only groups that touch data. */
 function gated(files: typeof pages) {
-  return files.filter((read) => read.file.startsWith("(owner)/"));
+  return files.filter((read) => GATED.some((group) => read.file.startsWith(group)));
 }
 
 // The call, not merely the import: a file that imports the wall and forgets to await it
@@ -51,16 +57,18 @@ describe("where a page is allowed to live", () => {
     expect(pages.length).toBeGreaterThan(0);
   });
 
-  it("is inside (owner) or inside (public), and nowhere else", () => {
+  it("is inside a gated group or inside (public), and nowhere else", () => {
     const homeless = pages
       .map((read) => read.file)
-      .filter((file) => !file.startsWith("(owner)/") && !file.startsWith("(public)/"));
+      .filter(
+        (file) => !GATED.some((group) => file.startsWith(group)) && !file.startsWith("(public)/")
+      );
 
     expect(homeless).toEqual([]);
   });
 });
 
-describe("the wall behind the gated route group", () => {
+describe("the wall behind the gated route groups", () => {
   it("is called by every page in it", () => {
     const unwalled = gated(pages)
       .filter((read) => !CALLS_THE_WALL.test(read.source))

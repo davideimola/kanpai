@@ -2,12 +2,14 @@ import { bearerGate } from "@/lib/mcp/bearer";
 import { answer } from "@/lib/mcp/protocol";
 import { clientOf, rateLimit } from "@/lib/mcp/rate-limit";
 import { mountedTools } from "@/lib/mcp/tools";
+import { originOf, resourceMetadataOf } from "@/lib/oauth/origin";
 
 // The second door — tsundoku's, taken over with its stack (ADR-0001). One route handler, and
 // as little of it as possible.
 //
 // It does three things and delegates all three: it asks `@/lib/mcp/bearer` whether this
-// request carries a token the owner issued, hands the body to `@/lib/mcp/protocol` to be
+// request carries a token the door accepts — one the owner issued, or an OAuth access token
+// (ADR-0013) — hands the body to `@/lib/mcp/protocol` to be
 // answered as MCP, and turns the answer into an HTTP response. It holds no domain logic, no
 // SQL and no tool list — **a slice exposing a new query adds a file under
 // `src/lib/mcp/tools/` and never touches this one**. See `src/lib/mcp/README.md`.
@@ -70,9 +72,19 @@ async function refuse(request: Request): Promise<Response | null> {
 
   console.warn("MCP request refused", { refusal: verdict.refusal, method: request.method });
 
+  // The challenge names where to start OAuth (RFC 9728 §5.1): the protected resource
+  // metadata, which names kanpai as the authorization server. That is how ChatGPT or Claude,
+  // given only this address, find their way to the consent screen (ADR-0013). A client holding
+  // an owner-issued token never reads it.
+  const metadata = resourceMetadataOf(originOf(request));
   return Response.json(
-    { error: "unauthorized", message: "This endpoint needs an access token the owner issued." },
-    { status: 401, headers: { "www-authenticate": 'Bearer realm="kanpai"' } }
+    { error: "unauthorized", message: "This endpoint needs an access token." },
+    {
+      status: 401,
+      headers: {
+        "www-authenticate": `Bearer realm="kanpai", resource_metadata="${metadata}"`,
+      },
+    }
   );
 }
 

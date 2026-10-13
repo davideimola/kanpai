@@ -38,6 +38,9 @@ group is the owner gate; a page outside it is a page served to anyone with the U
 Function or route handler inside it calls the wall too, because a layout does not run for
 either. `src/app/gated.test.ts` fails when any of that stops being true.
 
+OAuth's consent screen is the one gated page outside it, in `src/app/(consent)/` (ADR-0013):
+gated exactly like `(owner)`, a group of its own only so it is not drawn inside the shell.
+
 A page outside the gate is two deliberate acts: the file goes in `src/app/(public)/` **and**
 its path is excluded by name in the matcher in `src/proxy.ts`. `src/proxy.matcher.test.ts` pins
 every exclusion, and the exclusions are paths, never prefixes — `/api` in particular is not
