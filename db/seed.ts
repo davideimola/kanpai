@@ -54,7 +54,7 @@ async function main(): Promise<void> {
     "../src/core/verbs/bottle.ts"
   );
   const { recordTasting } = await import("../src/core/verbs/tasting.ts");
-  const { addWish } = await import("../src/core/verbs/wish.ts");
+  const { addWish, closeWish } = await import("../src/core/verbs/wish.ts");
   const { writePalate } = await import("../src/core/verbs/palate.ts");
 
   try {
@@ -471,6 +471,62 @@ async function main(): Promise<void> {
       why: "Tasted at a bar in Milan. Want a bottle.",
       cameFrom: "A bar",
     });
+    await addWish({
+      vintageId: await ensureVintage(barolo.labelId, 2016),
+      why: "The shop said 2016 was a great year for Barolo.",
+      cameFrom: "The wine shop",
+    });
+    const bollinger = await createLabel({
+      producer: "Bollinger",
+      name: "Special Cuvée",
+      kindId: "kind_sparkling",
+      country: "France",
+      region: "Champagne",
+      appellation: "Champagne AOC",
+      grapes: ["Pinot Noir", "Chardonnay", "Pinot Meunier"],
+      strength: 12,
+      unverified: false,
+      vintage: "nv",
+    });
+    await addWish({
+      labelId: bollinger.labelId,
+      why: "For a birthday. Fuller than a Franciacorta, they say.",
+      cameFrom: "A friend",
+    });
+    const gravner = await createLabel({
+      producer: "Gravner",
+      name: "Ribolla",
+      kindId: "kind_orange",
+      country: "Italy",
+      region: "Friuli-Venezia Giulia",
+      grapes: ["Ribolla Gialla"],
+      unverified: false,
+    });
+    await addWish({
+      labelId: gravner.labelId,
+      why: "To find out what an orange wine is.",
+      cameFrom: "The assistant",
+    });
+
+    // Closed ones, so the closed list has each ending.
+    const boughtWish = await addWish({
+      labelId: lagavulin.labelId,
+      why: "Smoky, everyone says. Wanted to try one.",
+      cameFrom: "The assistant",
+    });
+    await closeWish(boughtWish, "bought", { at: momentAgo(50) });
+    const tastedWish = await addWish({
+      labelId: dassai.labelId,
+      why: "A sake to start with.",
+      cameFrom: "The assistant",
+    });
+    await closeWish(tastedWish, "tasted", { at: momentAgo(9) });
+    const droppedWish = await addWish({
+      labelId: miraval.labelId,
+      why: "Everyone posts it in summer.",
+      cameFrom: "Instagram",
+    });
+    await closeWish(droppedWish, "dropped", { at: momentAgo(60) });
 
     await writePalate(
       [
