@@ -1,7 +1,7 @@
 import { getLabel } from "@/core/queries/label";
 import { Refusal } from "@/core/refusal";
 import { configuredSources } from "@/core/sources/configured";
-import { createLabelFromSource } from "@/core/verbs/catalogue";
+import { createLabelFromSource, linkLabelToSource } from "@/core/verbs/catalogue";
 import { createLabel } from "@/core/verbs/label";
 import { CANDIDATES, SEARCH_FIRST, VINTAGE } from "../prose.ts";
 import {
@@ -12,7 +12,8 @@ import {
   stringsArgument,
 } from "../tool.ts";
 
-// The Label area: one Label read whole, and a Label created from a conversation.
+// The Label area: one Label read whole, a Label created from a conversation, and an existing
+// Label given the catalogue record the owner confirmed for it.
 //
 // **The assistant creates Labels directly** (ADR-0004), which is where this door parts from
 // tsundoku's Inbox: the flow that matters is a photo at a restaurant table of a bottle nobody
@@ -39,7 +40,11 @@ each Vintage has its own.
 looked at it yet. It is a Label like any other: record on it freely.
 
 Use it to confirm a \`search_catalogue\` match is the bottle in front of the owner, and to find the
-Vintage id \`record_tasting\` and \`add_bottles\` take.`,
+Vintage id \`record_tasting\` and \`add_bottles\` take.
+
+A Label with no \`sources\` has no photo and no catalogue page — it was imported, or written by
+hand. Offer to find it with \`search_catalogue\` and, once the owner confirms a candidate, give it
+that photo and page with \`link_label_source\`.`,
   inputSchema: {
     type: "object",
     properties: {
@@ -175,4 +180,75 @@ vintages and "nv" for one without.`,
   },
 };
 
-export default [get, create];
+const linkSource: McpTool = {
+  name: "link_label_source",
+  title: "Link a Label to a catalogue record",
+  description: `Give an **existing Label** its photo and its page in an outside catalogue — **Open Food Facts**, or
+**Vivino** where this copy's owner turned it on. For the Labels with no \`sources\` in \`get_label\`: the
+ones imported from Vivino or written by hand, which have no photo.
+
+Search first: \`search_catalogue\` with the Label's producer and name (and its Kind). Then **show the
+owner the candidate — name, producer, image — and link it only after they say yes**: a candidate is a
+proposal to confirm, never a match, and a wrong link puts another bottle's photo on their Label.
+
+Pass the Label's id and the confirmed candidate's \`source\` and \`id_at_source\`, as \`search_catalogue\`
+returned them. The record is read again from that Source and kept with the Label — its bottle image,
+its page, and the credit the page shows. **Nothing the Label says changes**: its name, producer, Kind
+and the rest stay the owner's, and so does whether it is checked. Fix a wrong fact with the owner on
+their screen instead.
+
+A record already on **another** Label is refused, naming that Label: the two are the same bottle, and
+the owner merges them from their screen. Linking the record a Label already has changes nothing
+(\`already: true\`). A Label may have a record from each catalogue.
+
+${CANDIDATES}`,
+  inputSchema: {
+    type: "object",
+    properties: {
+      label: {
+        type: "string",
+        description: "The Label's id, `lbl_…`, from `search_catalogue` or `get_label`.",
+      },
+      source: {
+        type: "string",
+        enum: ["openfoodfacts", "vivino"],
+        description: "The Source of the candidate the owner confirmed, from `search_catalogue`.",
+      },
+      id_at_source: {
+        type: "string",
+        description: "The confirmed candidate's `idAtSource`: a barcode, a Vivino wine id.",
+      },
+    },
+    required: ["label", "source", "id_at_source"],
+    additionalProperties: false,
+  },
+  readOnly: false,
+  openWorld: true,
+  async run(input) {
+    const source = stringArgument(input, "source");
+    if (source !== "openfoodfacts" && source !== "vivino") {
+      throw new Refusal("invalid", 'A Source is "openfoodfacts" or "vivino".');
+    }
+    const idAtSource = stringArgument(input, "id_at_source");
+    if (idAtSource === undefined) {
+      throw new Refusal(
+        "invalid",
+        "Name the confirmed candidate with `source` and `id_at_source`, as `search_catalogue` returned them."
+      );
+    }
+    const linked = await linkLabelToSource(
+      configuredSources(),
+      stringArgument(input, "label") ?? "",
+      { source, idAtSource }
+    );
+    return {
+      label: stringArgument(input, "label"),
+      source: linked.source,
+      image_url: linked.imageUrl,
+      page_url: linked.pageUrl,
+      already: linked.already,
+    };
+  },
+};
+
+export default [get, create, linkSource];

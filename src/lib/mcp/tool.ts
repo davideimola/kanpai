@@ -64,8 +64,9 @@ export type McpTool = {
   readonly destructive?: boolean;
   /**
    * Whether calling it may reach outside this app's own database — a Source, over the
-   * network (ADR-0011). **Omitted means it does not**, the truth for every tool but the two
-   * that ask Open Food Facts or Vivino: `search_catalogue` and `create_label`.
+   * network (ADR-0011). **Omitted means it does not**, the truth for every tool but the three
+   * that ask Open Food Facts or Vivino: `search_catalogue`, `create_label` and
+   * `link_label_source`.
    */
   readonly openWorld?: boolean;
   /**

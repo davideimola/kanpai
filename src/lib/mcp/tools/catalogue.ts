@@ -27,7 +27,8 @@ It answers in two parts:
   owner turned it on — with producer, name, region, strength, the years known, a bottle image and the
   page. \`sources\` says which were consulted, which are off on this copy and which did not answer; a
   Source that did not answer says nothing about the bottle. To make a Label from a candidate, pass its
-  \`source\` and \`id_at_source\` to \`create_label\`.
+  \`source\` and \`id_at_source\` to \`create_label\`; to give a Label the owner already has its photo
+  and page — one imported or written by hand — pass them with its id to \`link_label_source\`.
 
 Send the Kind when you know it: wine, grappa and sake are asked of Vivino first, the other spirits of
 Open Food Facts first. Send the producer apart from the name when you can: candidates sharing no word

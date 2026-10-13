@@ -1,8 +1,10 @@
 import { readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { getLabel } from "@/core/queries/label";
 import { setKindHidden } from "@/core/verbs/kind";
-import { emptyTheCatalogue } from "@/test/catalogue";
+import { aLabel, emptyTheCatalogue } from "@/test/catalogue";
+import { answering } from "@/test/sources";
 import { CANDIDATES, SEARCH_FIRST, VINTAGE } from "./prose.ts";
 import { answer } from "./protocol.ts";
 import type { McpTool } from "./tool.ts";
@@ -59,6 +61,7 @@ describe("the tool list", () => {
       "create_label",
       "edit_tasting",
       "get_label",
+      "link_label_source",
       "list_kinds",
       "read_cellar",
       "read_palate",
@@ -116,16 +119,31 @@ describe("the tool list", () => {
       expect(tool.annotations, tool.name).toMatchObject({
         readOnlyHint: expect.any(Boolean),
         destructiveHint: expect.any(Boolean),
-        // Only the two tools that ask a Source reach past this app's own database (ADR-0011).
-        openWorldHint: ["search_catalogue", "create_label"].includes(tool.name),
+        // Only the tools that ask a Source reach past this app's own database (ADR-0011).
+        openWorldHint: ["search_catalogue", "create_label", "link_label_source"].includes(
+          tool.name
+        ),
       });
     }
   });
 
   // ADR-0011: a candidate is a proposal, said the same way wherever one is handled.
   it("says what a candidate is wherever one is returned or chosen", () => {
-    for (const name of ["search_catalogue", "create_label"]) {
+    for (const name of ["search_catalogue", "create_label", "link_label_source"]) {
       expect(byName(name).description, name).toContain(CANDIDATES);
+    }
+  });
+
+  // A Label imported or written by hand has no Source; the assistant may give it one, and only
+  // the one the owner confirmed. It is a write that takes nothing away.
+  it("links a Label to a catalogue record only after the owner says yes", () => {
+    const tool = byName("link_label_source");
+    expect(tool).toMatchObject({ readOnly: false, openWorld: true });
+    expect(tool.destructive).toBeFalsy();
+    expect(tool.description).toContain("link it only after they say yes");
+    expect(tool.description).toContain("**Nothing the Label says changes**");
+    for (const name of ["search_catalogue", "get_label"]) {
+      expect(byName(name).description, name).toContain("`link_label_source`");
     }
   });
 
@@ -326,5 +344,69 @@ describe("the S2 flow, through the door's own framing", () => {
       await setKindHidden("kind_mead", false);
     }
     expect(await ids()).toContain("kind_mead");
+  });
+});
+
+// The one place a tool reaches a Source through the door: Vivino is turned on for the test with
+// a stand-in key, and `fetch` answers from a recording, so nothing leaves the machine.
+describe("linking a Label to a candidate, through the door", () => {
+  beforeEach(async () => {
+    await emptyTheCatalogue();
+    process.env.VIVINO_ALGOLIA_APP_ID = "9TAKGWJUXL";
+    process.env.VIVINO_ALGOLIA_KEY = "a-stand-in-for-the-key";
+    vi.stubGlobal(
+      "fetch",
+      answering(() => "vivino-by-id-21929.json")
+    );
+  });
+  afterEach(() => {
+    delete process.env.VIVINO_ALGOLIA_APP_ID;
+    delete process.env.VIVINO_ALGOLIA_KEY;
+    vi.unstubAllGlobals();
+  });
+
+  it("gives an imported Label its photo and page, and keeps what it says", async () => {
+    const { labelId } = await aLabel({ producer: "Masi", name: "Costasera", unverified: true });
+
+    expect(
+      await call("link_label_source", { label: labelId, source: "vivino", id_at_source: "21929" })
+    ).toEqual({
+      label: labelId,
+      source: "vivino",
+      image_url: "https://images.vivino.com/thumbs/giuHgypHTM21_kfvNLApCw_pb_x600.png",
+      page_url: "https://www.vivino.com/w/21929",
+      already: false,
+    });
+    expect(await getLabel(labelId)).toMatchObject({
+      name: "Costasera",
+      unverified: true,
+      sources: [{ source: "vivino", idAtSource: "21929" }],
+    });
+
+    expect(
+      await call("link_label_source", { label: labelId, source: "vivino", id_at_source: "21929" })
+    ).toMatchObject({ already: true });
+  });
+
+  it("refuses a record on another Label, naming it, and a Source it does not know", async () => {
+    const { labelId: holder } = await aLabel({ name: "Costasera", producer: "Masi" });
+    const { labelId } = await aLabel({ name: "Amarone", producer: "Masi" });
+    await call("link_label_source", { label: holder, source: "vivino", id_at_source: "21929" });
+
+    const refused = await call("link_label_source", {
+      label: labelId,
+      source: "vivino",
+      id_at_source: "21929",
+    });
+    expect(refused.code).toBe("already-exists");
+    expect(refused.refused).toContain(`Costasera, Masi (${holder})`);
+
+    expect(
+      await call("link_label_source", {
+        label: labelId,
+        source: "wine-searcher",
+        id_at_source: "1",
+      })
+    ).toMatchObject({ code: "invalid" });
   });
 });
