@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { QUIET } from "@/components/controls";
+import { Refused, Said } from "@/components/drawer";
 import { RatingRing } from "@/components/rating-ring";
 import { GlassOutline, Silhouette } from "@/components/silhouette";
 import { type HeldVintage, heldInTheCellar, readCellar } from "@/core/queries/cellar";
 import { type DrunkLabel, listDrunk } from "@/core/queries/drunk";
 import { listKinds } from "@/core/queries/kind";
-import { listTastings, type TastingEntry } from "@/core/queries/tasting";
+import { getTasting, listTastings, type TastingEntry } from "@/core/queries/tasting";
 import { requireOwner } from "@/lib/auth/owner";
 import { cn } from "@/lib/utils";
 import { shelves } from "./cellar/shelf";
@@ -23,7 +24,9 @@ import {
   whenDrunk,
   whoMadeIt,
 } from "./diary";
-import { dayAsWritten, levelAsWritten, todayAsADay } from "./words";
+import { DeleteTastingPanel, EditTastingPanel, TastingActs } from "./tastings/panels";
+import { DELETE_PANEL, EDIT_PANEL } from "./tastings/tastings";
+import { dayAsWritten, levelAsWritten, todayAsADay, vintageAsWritten } from "./words";
 
 // THE DIARY (spec §4): what was drunk, in two views. It is the home page because it is what
 // the assistant writes and the owner comes to read back.
@@ -45,8 +48,22 @@ import { dayAsWritten, levelAsWritten, todayAsADay } from "./words";
 //
 // The search, the section, the view and the order are the address (`./diary`), so the page is
 // rendered with the answer in it and the back button undoes any of them.
+//
+// A loose Tasting has no page of its own, so its Edit and Delete are here, on its row, opening
+// their panels over the diary (`?panel=edit-tasting&tasting=…`, `./tastings`). A Tasting on a
+// Label is a link to the Label's page, which has the same two under it.
 
 type Asked = Record<string, string | string[] | undefined>;
+
+const SAID: Record<string, string> = {
+  "tasting-edited": "The tasting is saved.",
+  "tasting-deleted": "The tasting is deleted.",
+};
+
+function one(asked: Asked, name: string): string | undefined {
+  const value = asked[name];
+  return typeof value === "string" && value.trim() !== "" ? value.trim() : undefined;
+}
 
 export default async function DiaryPage({ searchParams }: { searchParams: Promise<Asked> }) {
   await requireOwner();
@@ -56,6 +73,14 @@ export default async function DiaryPage({ searchParams }: { searchParams: Promis
   const sections = [...new Set(kinds.map((kind) => kind.section))];
   const shown = shownFrom(asked, sections);
   const today = todayAsADay();
+  const here = diaryAt(shown);
+  const panel = one(asked, "panel");
+  const refused = one(asked, "refused");
+  const said = SAID[one(asked, "said") ?? ""];
+  const chosen =
+    panel === EDIT_PANEL || panel === DELETE_PANEL
+      ? await getTasting(one(asked, "tasting") ?? "")
+      : null;
 
   return (
     <main className="flex max-w-6xl flex-col gap-4 px-4 pt-5 pb-10 sm:px-6 md:px-10 md:pt-9">
@@ -97,13 +122,41 @@ export default async function DiaryPage({ searchParams }: { searchParams: Promis
         </div>
       </div>
 
+      {refused && !(chosen && panel === EDIT_PANEL) ? <Refused>{refused}</Refused> : null}
+      {said && !refused ? <Said>{said}</Said> : null}
+
       {shown.view === "wine" ? (
-        <ByWine shown={shown} today={today} />
+        <ByWine shown={shown} today={today} here={here} />
       ) : (
-        <ByDay shown={shown} today={today} />
+        <ByDay shown={shown} today={today} here={here} />
       )}
+
+      {chosen && panel === EDIT_PANEL ? (
+        <EditTastingPanel
+          tasting={chosen}
+          about={aboutTheTasting(chosen)}
+          here={here}
+          refused={refused}
+          today={today}
+        />
+      ) : null}
+      {chosen && panel === DELETE_PANEL ? (
+        <DeleteTastingPanel
+          tasting={chosen}
+          about={aboutTheTasting(chosen)}
+          here={here}
+          today={today}
+        />
+      ) : null}
     </main>
   );
+}
+
+/** What a panel says was drunk: the Label and its year, or a loose Tasting's description. */
+function aboutTheTasting(entry: TastingEntry): string {
+  return entry.label && entry.vintage
+    ? `${entry.label.name}, ${vintageAsWritten(entry.vintage)}`
+    : whatWasDrunk(entry);
 }
 
 /** A choice of a few, as links: the section, the view. The one shown is raised. */
@@ -242,7 +295,7 @@ function Order({ shown }: { shown: Shown }) {
   );
 }
 
-async function ByDay({ shown, today }: { shown: Shown; today: string }) {
+async function ByDay({ shown, today, here }: { shown: Shown; today: string; here: string }) {
   const [tastings, cellar] = await Promise.all([
     listTastings({ section: shown.section, text: shown.q }),
     readCellar(),
@@ -264,7 +317,7 @@ async function ByDay({ shown, today }: { shown: Shown; today: string }) {
               <ul>
                 {entries.map((entry) => (
                   <li key={entry.id} className="border-t border-rule">
-                    <Row entry={entry} />
+                    <Row entry={entry} here={here} />
                   </li>
                 ))}
               </ul>
@@ -323,7 +376,7 @@ const MIDDLE =
   "flex min-w-0 flex-col gap-1 md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)] md:gap-5";
 
 /** One Tasting: the ring, the name and who made it, the owner's words, the bottle. */
-function Row({ entry }: { entry: TastingEntry }) {
+function Row({ entry, here }: { entry: TastingEntry; here: string }) {
   const thought = whatWasThought(entry);
   const occasion = theOccasion(entry);
 
@@ -346,6 +399,7 @@ function Row({ entry }: { entry: TastingEntry }) {
             <span className="whitespace-pre-line text-[15px] leading-normal">{thought}</span>
           ) : null}
           {occasion ? <span className="text-[13px] text-glass-quiet">{occasion}</span> : null}
+          {entry.label ? null : <TastingActs here={here} tasting={entry.id} />}
         </div>
       </div>
       {entry.label ? (
@@ -369,7 +423,7 @@ function Row({ entry }: { entry: TastingEntry }) {
   );
 }
 
-async function ByWine({ shown, today }: { shown: Shown; today: string }) {
+async function ByWine({ shown, today, here }: { shown: Shown; today: string; here: string }) {
   const drunk = await listDrunk({ section: shown.section, text: shown.q, sort: shown.sort });
   const held = await heldInTheCellar(drunk.labels.map((label) => label.id));
 
@@ -398,7 +452,7 @@ async function ByWine({ shown, today }: { shown: Shown; today: string }) {
           <ul>
             {drunk.loose.map((entry) => (
               <li key={entry.id} className="border-t border-rule">
-                <LooseRow entry={entry} today={today} />
+                <LooseRow entry={entry} today={today} here={here} />
               </li>
             ))}
           </ul>
@@ -450,7 +504,7 @@ function WineRow({
 }
 
 /** A Tasting that kept no Label, on its own: what was known of it, and when (ADR-0005). */
-function LooseRow({ entry, today }: { entry: TastingEntry; today: string }) {
+function LooseRow({ entry, today, here }: { entry: TastingEntry; today: string; here: string }) {
   const thought = whatWasThought(entry);
   return (
     <div className={ROW}>
@@ -464,11 +518,12 @@ function LooseRow({ entry, today }: { entry: TastingEntry; today: string }) {
             Tasted on {dayInShort(entry.tastedOn, today)}
           </span>
         </div>
-        {thought ? (
-          <span className="mt-1.5 whitespace-pre-line text-[15px] leading-normal md:mt-0">
-            {thought}
-          </span>
-        ) : null}
+        <div className="mt-1.5 flex min-w-0 flex-col gap-1 md:mt-0">
+          {thought ? (
+            <span className="whitespace-pre-line text-[15px] leading-normal">{thought}</span>
+          ) : null}
+          <TastingActs here={here} tasting={entry.id} />
+        </div>
       </div>
       <GlassOutline className="h-[84px] w-7" />
     </div>
