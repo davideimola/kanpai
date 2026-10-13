@@ -11,11 +11,9 @@
  * go so much as chores, *To check* (with how many wait) and *Settings*.
  *
  * **A destination is here only once its screen exists** (`./shell.test.ts` fails otherwise).
- * Add came with S6; the Wishlist and the Palate are S7 (spec §5), and until then a line for them
- * would be a link to a 404. S7 adds its two lines after Add, in their place in the order —
- * `{ href: "/wishlist", label: "Wishlist", phone: "bar" }` and
- * `{ href: "/palate", label: "Palate", phone: "bar" }` — and the shell needs no edit: the
- * glyphs are drawn already (`src/components/glyphs.tsx`), and the bar puts the act in its middle.
+ * Add came with S6, and the Wishlist and the Palate with S7 (spec §5): with all three in, the
+ * bar is the agreed five — Diary, Cellar, the round Add, Wishlist, Palate.
+ * The Palate adds `{ href: "/palate", label: "Palate", phone: "bar" }` after the Wishlist.
  */
 
 export type Destination = {
@@ -36,13 +34,14 @@ export const DESTINATIONS: readonly Destination[] = [
   { href: "/", label: "Diary", phone: "bar" },
   { href: "/cellar", label: "Cellar", phone: "bar" },
   { href: "/add", label: "Add", phone: "act" },
+  { href: "/wishlist", label: "Wishlist", phone: "bar" },
   { href: "/to-check", label: "To check", phone: "header", counted: true },
   { href: "/settings", label: "Settings", phone: "header" },
 ];
 
 /**
  * The phone's bottom bar: the places, in map order, with the act in the middle when there is
- * one — Diary, Cellar, **+**, Wishlist, Palate once every slice has added its line.
+ * one — Diary, Cellar, **+**, Wishlist, Palate.
  */
 export function onTheBar(destinations: readonly Destination[] = DESTINATIONS): Destination[] {
   const places = destinations.filter((destination) => destination.phone === "bar");

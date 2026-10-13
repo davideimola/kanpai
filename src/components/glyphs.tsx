@@ -4,9 +4,8 @@ import { cn } from "@/lib/utils";
 // map in `src/app/(owner)/navigation.ts` stays data and a destination without a drawing is a
 // failing test (`src/app/(owner)/shell.test.ts`) rather than a tab with a hole in it.
 //
-// Line drawings on a 24-pixel grid, at the weight of the type beside them. The three for the
-// screens later slices add — Add, Wishlist, Palate — are drawn already, so that a slice adds a
-// line to the map and nothing here.
+// Line drawings on a 24-pixel grid, at the weight of the type beside them. A destination added
+// to the map draws its glyph here, or the wall fails.
 
 const GLYPHS: Record<string, string> = {
   "/": "M4 5.5C6.5 4.5 9.5 4.5 12 6c2.5-1.5 5.5-1.5 8-.5V19c-2.5-1-5.5-1-8 .5-2.5-1.5-5.5-1.5-8-.5Z M12 6v13.5",

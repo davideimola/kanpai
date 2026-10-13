@@ -13,10 +13,12 @@ import {
   type LabelVintage,
   searchLabels,
 } from "@/core/queries/label";
+import { getWish, openWishOn, type WishOf, type WishOnLabel } from "@/core/queries/wish";
 import { BOTTLE_SHAPES } from "@/core/verbs/kind";
 import { requireOwner } from "@/lib/auth/owner";
 import { cn } from "@/lib/utils";
 import { theOccasion } from "../../diary";
+import { wish as addToTheWishlist, reopen } from "../../wishlist/actions";
 import {
   bottlesInWords,
   dateAsWritten,
@@ -47,8 +49,11 @@ import {
 // its Source.
 //
 // Every act that needs fields is a panel whose open state is the address (`?panel=edit`,
-// `merge`, `taste`, `bottles`, `photo`; `@/components/drawer`). The Bottle acts — open, set the
-// level, finish, delete — are plain forms beside each Bottle, because each is one press.
+// `merge`, `taste`, `bottles`, `wish`, `photo`; `@/components/drawer`). The Bottle acts — open,
+// set the level, finish, delete — are plain forms beside each Bottle, because each is one press.
+//
+// The wishlist's Bought and Tasted land here with `?wish=` beside the panel: the Wish is closed
+// already, so the panel says so, offers the undo, and starts on the Vintage the Wish named.
 
 type Asked = Record<string, string | string[] | undefined>;
 
@@ -69,9 +74,10 @@ const SAID: Record<string, string> = {
   finished: "Finished. The bottle stays here as history.",
   deleted: "The bottle is deleted.",
   dated: "The year is set, and what had no year moved to it.",
+  wished: "On your wishlist.",
 };
 
-const PANELS = ["edit", "merge", "taste", "bottles", "photo"] as const;
+const PANELS = ["edit", "merge", "taste", "bottles", "wish", "photo"] as const;
 
 const SHAPE_NAMES: Record<string, string> = {
   bordeaux: "Bordeaux",
@@ -111,6 +117,13 @@ export default async function LabelScreen({
     .sort((a, b) => b.tasting.tastedOn.localeCompare(a.tasting.tastedOn));
   const imageUrl = label.silhouette.imageUrl;
   const imageSource = label.sources.find((source) => source.imageUrl === imageUrl);
+
+  // The open Wish on this Label, if any; and the one the wishlist just closed, if it sent here.
+  const [wished, handed] = await Promise.all([
+    openWishOn(label.id),
+    one(asked, "wish") ? getWish(one(asked, "wish") ?? "") : null,
+  ]);
+  const closedWish = handed && handed.labelId === label.id && handed.closedAs ? handed : null;
 
   return (
     <main className="flex max-w-6xl flex-col gap-6 px-4 pt-3 pb-10 sm:px-6 md:px-10 md:pt-6">
@@ -179,13 +192,14 @@ export default async function LabelScreen({
             <Identity label={label} tastings={tastings.length} large />
           </header>
 
-          <div className="grid grid-cols-2 gap-2.5 sm:flex sm:flex-wrap">
+          <div className="grid grid-cols-2 gap-2.5 sm:flex sm:flex-wrap sm:items-center">
             <Link href={`${here}?panel=taste`} scroll={false} className={LOUD}>
               Record a tasting
             </Link>
             <Link href={`${here}?panel=bottles`} scroll={false} className={cn(QUIET, "min-h-12")}>
               Add bottles
             </Link>
+            <Wished wished={wished} here={here} today={today} />
           </div>
 
           <Facts label={label} />
@@ -236,9 +250,18 @@ export default async function LabelScreen({
         <MergePanel label={label} here={here} refused={refused} q={one(asked, "q")} />
       ) : null}
       {panel === "taste" ? (
-        <TastePanel label={label} here={here} refused={refused} today={today} />
+        <TastePanel
+          label={label}
+          here={here}
+          refused={refused}
+          today={today}
+          closedWish={closedWish}
+        />
       ) : null}
-      {panel === "bottles" ? <BottlesPanel label={label} here={here} refused={refused} /> : null}
+      {panel === "bottles" ? (
+        <BottlesPanel label={label} here={here} refused={refused} closedWish={closedWish} />
+      ) : null}
+      {panel === "wish" ? <WishPanel label={label} here={here} refused={refused} /> : null}
       {panel === "photo" && imageUrl ? (
         <Drawer title="The photo" closesTo={here}>
           <div className="flex flex-col gap-4">
@@ -273,6 +296,99 @@ export default async function LabelScreen({
         </Drawer>
       ) : null}
     </main>
+  );
+}
+
+/**
+ * The third act beside Record a tasting and Add bottles: Add to the wishlist — or, when the
+ * Label is wished for already, since when, linking to the list where it is closed.
+ */
+function Wished({
+  wished,
+  here,
+  today,
+}: {
+  wished: WishOnLabel | null;
+  here: string;
+  today: string;
+}) {
+  if (wished) {
+    return (
+      <Link
+        href="/wishlist"
+        className={cn(
+          PLAIN,
+          "col-span-2 justify-start px-0 text-glass-quiet sm:col-span-1 sm:px-3"
+        )}
+      >
+        On your wishlist since {dateAsWritten(new Date(wished.createdAt), today)}
+      </Link>
+    );
+  }
+  return (
+    <Link
+      href={`${here}?panel=wish`}
+      scroll={false}
+      className={cn(QUIET, "col-span-2 min-h-12 sm:col-span-1")}
+    >
+      Add to the wishlist
+    </Link>
+  );
+}
+
+/** Want to try it or buy it: why, and where the idea came from — both optional. */
+function WishPanel({ label, here, refused }: { label: LabelPage; here: string; refused?: string }) {
+  return (
+    <Drawer
+      title="Add to the wishlist"
+      description={`${label.name}, kept on your wishlist until you buy it, taste it or drop it.`}
+      refused={refused}
+      closesTo={here}
+    >
+      <form action={addToTheWishlist} className="flex flex-col gap-4">
+        <input type="hidden" name="labelId" value={label.id} />
+        <input type="hidden" name="name" value={label.name} />
+        <label className={NAMED}>
+          Why
+          <span className={HINT}>A line for later: what made you want it.</span>
+          <textarea name="why" rows={3} className={cn(FIELD, "py-2.5")} />
+        </label>
+        <label className={NAMED}>
+          Where the idea came from
+          <input
+            name="cameFrom"
+            placeholder="A friend, the wine shop, a restaurant"
+            className={FIELD}
+          />
+        </label>
+        <button type="submit" className={cn(LOUD, "mt-2")}>
+          Add to the wishlist
+        </button>
+      </form>
+    </Drawer>
+  );
+}
+
+/**
+ * What the wishlist's Bought or Tasted did, said inside the panel it opened: the Wish is closed,
+ * and if nothing was bought or tasted after all, one press puts it back on the list.
+ */
+function WishClosed({ wish, name }: { wish: WishOf; name: string }) {
+  return (
+    <Said className="mb-5 flex flex-wrap items-center gap-x-4 gap-y-2">
+      <span className="flex-1">
+        {wish.closedAs === "bought"
+          ? "Your Wish is closed as bought. Say how many you brought home."
+          : "Your Wish is closed as tasted. Say what you thought of it."}
+      </span>
+      <form action={reopen}>
+        <input type="hidden" name="wishId" value={wish.id} />
+        <input type="hidden" name="name" value={name} />
+        <button type="submit" className={QUIET}>
+          Undo
+        </button>
+      </form>
+    </Said>
   );
 }
 
@@ -824,7 +940,7 @@ async function MergePanel({
  * Which Vintage: one the Label has, NV or unknown when it has no such one yet, or a year typed
  * in (ADR-0010). A Kind without years has only NV.
  */
-function VintageChoice({ label }: { label: LabelPage }) {
+function VintageChoice({ label, chosen }: { label: LabelPage; chosen?: string | null }) {
   const has = (dating: LabelVintage["dating"]) =>
     label.vintages.some((vintage) => vintage.dating === dating);
   return (
@@ -832,7 +948,11 @@ function VintageChoice({ label }: { label: LabelPage }) {
       <legend className="mb-1.5 text-sm font-medium">Which year</legend>
       <select
         name="vintage"
-        defaultValue={label.vintages[0]?.id}
+        defaultValue={
+          label.vintages.some((vintage) => vintage.id === chosen)
+            ? (chosen ?? undefined)
+            : label.vintages[0]?.id
+        }
         className={FIELD}
         aria-label="Vintage"
       >
@@ -872,11 +992,14 @@ function TastePanel({
   here,
   refused,
   today,
+  closedWish,
 }: {
   label: LabelPage;
   here: string;
   refused?: string;
   today: string;
+  /** The Wish the wishlist closed as tasted on its way here, if it sent the owner. */
+  closedWish: WishOf | null;
 }) {
   const field = (name: string, title: string, hint?: string, long?: boolean) =>
     long ? (
@@ -900,9 +1023,10 @@ function TastePanel({
       refused={refused}
       closesTo={here}
     >
+      {closedWish ? <WishClosed wish={closedWish} name={label.name} /> : null}
       <form action={recordATasting} className="flex flex-col gap-4">
         <input type="hidden" name="labelId" value={label.id} />
-        <VintageChoice label={label} />
+        <VintageChoice label={label} chosen={closedWish?.vintageId} />
         <label className={NAMED}>
           Day
           <input name="tastedOn" type="date" defaultValue={today} className={FIELD} />
@@ -937,10 +1061,13 @@ function BottlesPanel({
   label,
   here,
   refused,
+  closedWish,
 }: {
   label: LabelPage;
   here: string;
   refused?: string;
+  /** The Wish the wishlist closed as bought on its way here, if it sent the owner. */
+  closedWish: WishOf | null;
 }) {
   return (
     <Drawer
@@ -949,9 +1076,10 @@ function BottlesPanel({
       refused={refused}
       closesTo={here}
     >
+      {closedWish ? <WishClosed wish={closedWish} name={label.name} /> : null}
       <form action={addSomeBottles} className="flex flex-col gap-4">
         <input type="hidden" name="labelId" value={label.id} />
-        <VintageChoice label={label} />
+        <VintageChoice label={label} chosen={closedWish?.vintageId} />
         <label className={NAMED}>
           How many
           <input

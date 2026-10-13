@@ -14,7 +14,7 @@ import {
 // A wall, beside `src/app/gated.test.ts` and for the same reason — tsundoku's, taken over with
 // the shell. The failure it catches is silent: a screen nothing links to compiles and renders
 // and is reached by nobody, and a link to a screen that does not exist yet is a 404 the owner
-// meets on a phone. Add, the Wishlist and the Palate are later slices (spec §5), which is
+// meets on a phone. Add, the Wishlist and the Palate came in later slices (spec §5), which is
 // exactly when that second failure is likely.
 //
 // A grep and pure functions: no DOM, no renderer, as the configuration's seams require.
@@ -96,6 +96,7 @@ describe("where the owner is", () => {
     ["/cellar", "/cellar"],
     ["/cellar/", "/cellar"],
     ["/add", "/add"],
+    ["/wishlist", "/wishlist"],
     ["/to-check", "/to-check"],
     ["/settings", "/settings"],
   ])("reads %s as %s", (pathname, expected) => {
