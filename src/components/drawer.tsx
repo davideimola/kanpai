@@ -98,11 +98,14 @@ export function Refused({
   );
 }
 
-/** What just happened, said once, quietly. */
+/**
+ * What just happened, said once, quietly. A `<div>`, not a `<p>`: it may hold the form that
+ * undoes it, and a form inside a paragraph is invalid HTML that a browser splits apart.
+ */
 export function Said({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <p role="status" className={cn("rounded-xl bg-paper-quiet px-4 py-3 text-[15px]", className)}>
+    <div role="status" className={cn("rounded-xl bg-paper-quiet px-4 py-3 text-[15px]", className)}>
       {children}
-    </p>
+    </div>
   );
 }
