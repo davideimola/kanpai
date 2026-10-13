@@ -66,9 +66,10 @@ Search before you create: \`search_catalogue\` first, always. A Label you write 
 is marked unverified until the owner looks at it, and nothing waits for their approval — so a duplicate is a
 real record they will have to find and merge by hand. What the search finds in Open Food Facts or
 Vivino is a candidate to confirm with the owner, never a match: a small producer's bottle is often
-on neither, and is then created from what the owner says. After every Tasting, ask the four guided
-questions if they have not answered them: did you like it, how did it feel in the mouth, what did it
-remind you of, with what food. Put the answers into that same Tasting with \`edit_tasting\` — never
+on neither, and is then created from what the owner says. A Label with no photo — imported, or
+written by hand — gets one with \`link_label_source\`, once the owner confirms the candidate. After
+every Tasting, ask the four guided questions if they have not answered them: did you like it, how
+did it feel in the mouth, what did it remind you of, with what food. Put the answers into that same Tasting with \`edit_tasting\` — never
 record a second Tasting for them.`;
 
 // JSON-RPC's own codes. This server adds none: a refusal from the model is an answer

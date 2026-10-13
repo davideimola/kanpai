@@ -21,7 +21,7 @@ src/lib/mcp/
 ├── tools.ts             the directory *is* the tool list — see below
 └── tools/               one file per area
     ├── catalogue.ts     search_catalogue — our Labels, then the Sources' candidates (ADR-0011)
-    ├── label.ts         get_label, create_label
+    ├── label.ts         get_label, create_label, link_label_source
     ├── kind.ts          list_kinds
     ├── tasting.ts       record_tasting, edit_tasting, read_tastings
     ├── bottle.ts        add_bottles, update_bottle
@@ -73,7 +73,7 @@ Five rules, and they are the review surface:
 5. **All three hints, always.** `readOnly` means it; a write that takes away something that
    cannot be put back also says `destructive: true` — `update_palate`, which replaces prose
    the owner wrote. A tool that may ask a Source over the network says `openWorld: true` —
-   `search_catalogue` and `create_label`, and nothing else. `protocol.ts` states
+   `search_catalogue`, `create_label` and `link_label_source`, and nothing else. `protocol.ts` states
    `readOnlyHint`, `destructiveHint` and `openWorldHint` on every tool, because the protocol
    reads a missing one as the worst case and OpenAI refuses a connector without them.
 
@@ -100,12 +100,21 @@ years* (ADR-0010) — is in every tool that names a Vintage, and `tools.test.ts`
 
 The Sources add a third, `CANDIDATES` (ADR-0011): **a candidate from Open Food Facts or Vivino
 is a proposal, never a match**, the first one is not to be trusted, and a craft bottle no
-Source knows is created from what the owner says. `search_catalogue` and `create_label` both
+Source knows is created from what the owner says. `search_catalogue`, `create_label` and `link_label_source` all
 spend it. A Label made from a candidate names it by `source` and `id_at_source` only; the core
 reads the record again from the Source rather than trusting the fields an assistant relayed,
 and records the Source with the Label in one transaction. Which Sources a copy asks is read
 from its environment by `src/core/sources/configured.ts`, in the tool, and handed to the core
 as an argument — the test run turns them all off, so no test reaches a third party.
+
+**A Label that has none is given its Source with `link_label_source`** — one imported from a
+Vivino export, which links a Vintage's page rather than the wine's id, or one written by hand.
+It takes the Label's id and a candidate's `source` and `id_at_source`, exactly as `create_label`
+takes one, re-reads it and records it in the same shape (`linkLabelToSource`). Its description
+says to show the owner the candidate and link it only after they say yes. It changes nothing
+the Label says and not whether it is checked: a photo and a page vouch for no fact an assistant
+wrote. A record already on another Label is refused naming that Label — the two are one, and
+merging is the owner's.
 
 Everything else here acts on what exists: a Tasting on a Vintage or loose, Bottles into the
 Cellar, a Bottle opened or finished, a year learned, a Wish added or closed, the Palate

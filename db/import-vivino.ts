@@ -27,7 +27,9 @@ import { requireDatabaseUrl } from "./env.ts";
 // Labels are born checked: what Vivino says of a wine is a catalogue's word, not something
 // read off a photo (ADR-0004). They carry no Source record: the export links to a Vintage's
 // page (`/wines/<vintage id>`), not to the wine's id that the Vivino Source keys on (ADR-0011),
-// so recording it would make a second search of the same wine look like a stranger.
+// so recording it would make a second search of the same wine look like a stranger. The owner
+// gives one its Source afterwards, from its page (*Find it in a catalogue*), or the assistant
+// does with `link_label_source` once the owner confirms the candidate.
 
 registerHooks({
   resolve(specifier, context, next) {

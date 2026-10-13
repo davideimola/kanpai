@@ -106,3 +106,19 @@ and searches. Spec §7's open question is settled this way.
 - ADR-0008's `SOURCES_VIVINO=true` is replaced by the two Algolia variables; Open Food Facts can
   be turned off too, with `SOURCES_OPENFOODFACTS=false`, for a copy that should make no
   outbound call.
+
+## Amended 2026-10-13: a Source is also linked to a Label that exists
+
+A Source was recorded only when a Label was created from one, so the Labels imported from the
+owner's Vivino export — which links a Vintage's page, not the wine id this Source keys on — and
+the ones written by hand had no photo and no way to get one. **An existing Label is linked to a
+candidate** the same way one is made from it: the owner chooses it (*Find it in a catalogue* on
+its page, *This is it*), or the assistant does once the owner confirmed it
+(`link_label_source`); the record is re-read from its Source by its id and recorded in the
+same shape, looked up now (`linkLabelToSource`). **It changes nothing the Label says** — the
+Source fills no field, since the facts are already the owner's — **and not whether it is
+checked**: ADR-0004 makes a Label from a candidate born checked because its facts are the
+Source's, and a link brings no fact. A record already on another Label is refused naming it,
+because the two are the same bottle and want merging; the same record on the same Label again
+changes nothing. A Label may hold a record from each Source. Like `search_catalogue` and
+`create_label`, `link_label_source` says it reaches the open world.
