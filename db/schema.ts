@@ -431,9 +431,12 @@ export const palate = pgTable(
  * the token that replaces it. Revoking is a moment, never a deletion: the row stays, so
  * *what called last week* still has an answer.
  *
- * Every credential the door accepts is meant to be a row here — OAuth's access tokens too,
- * when S10 builds them — so the check on `/mcp` is written once. Nothing for OAuth is here
- * yet: it adds its columns when it exists.
+ * Every credential the door accepts is a row here — OAuth's access tokens too (S10, ADR-0013)
+ * — so the check on `/mcp` is written once. An OAuth access token is the same row with two
+ * more facts: the **grant** it was issued under and the moment it **expires**, which go
+ * together. A token the owner issued has neither, never expires, and is the only kind whose
+ * name must be unique while live: OAuth's are named after the app, and a second connection
+ * from ChatGPT is a second grant, not a clash.
  */
 export const accessTokens = pgTable(
   "access_tokens",
@@ -444,17 +447,135 @@ export const accessTokens = pgTable(
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     lastUsedAt: timestamp({ withTimezone: true }),
     revokedAt: timestamp({ withTimezone: true }),
+    // OAuth's (ADR-0013): the grant this token was issued under, and when it stops being
+    // accepted. Both or neither — a token the owner issued has neither.
+    grantId: text(),
+    expiresAt: timestamp({ withTimezone: true }),
   },
   (table) => [
     unique("access_tokens_secret_hash_key").on(table.secretHash),
     uniqueIndex("access_tokens_name_is_unique_while_live")
       .on(table.name)
-      .where(sql`${table.revokedAt} is null`),
+      .where(sql`${table.revokedAt} is null and ${table.grantId} is null`),
+    foreignKey({
+      name: "access_tokens_grant_exists",
+      columns: [table.grantId],
+      foreignColumns: [oauthGrants.id],
+    }),
+    index("access_tokens_by_grant").on(table.grantId),
+    check(
+      "access_tokens_grant_and_expiry_go_together",
+      sql`(${table.grantId} is null) = (${table.expiresAt} is null)`
+    ),
     check("access_tokens_id_is_prefixed", prefixed(table.id, "tok")),
     check(
       "access_tokens_name_is_not_blank",
       sql`${table.name} = btrim(${table.name}) and ${table.name} <> ''`
     ),
     check("access_tokens_secret_hash_is_a_sha256", sql`${table.secretHash} ~ '^[0-9a-f]{64}$'`),
+  ]
+);
+
+/**
+ * An application that registered itself to ask the owner for access (ADR-0013): ChatGPT,
+ * Claude, the MCP inspector. **Its id is the OAuth `client_id`.**
+ *
+ * Written by Dynamic Client Registration (RFC 7591), which anyone may call — so a row here
+ * grants nothing. It is a name and the addresses a code may be sent back to, and that is all
+ * it is until the owner presses *Allow* on the consent screen. Public clients only: there is
+ * no secret, and PKCE is what binds a code to the app that asked for it.
+ */
+export const oauthClients = pgTable(
+  "oauth_clients",
+  {
+    id: text().primaryKey().default(sql`gen_prefixed_id('cli')`),
+    name: text().notNull().default("An assistant"),
+    redirectUris: text().array().notNull(),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    check("oauth_clients_id_is_prefixed", prefixed(table.id, "cli")),
+    check(
+      "oauth_clients_name_is_not_blank",
+      sql`${table.name} = btrim(${table.name}) and ${table.name} <> ''`
+    ),
+    check("oauth_clients_have_a_redirect_uri", sql`cardinality(${table.redirectUris}) > 0`),
+  ]
+);
+
+/**
+ * One authorization code, between the owner pressing *Allow* and the app redeeming it
+ * (ADR-0013). Kept as a hash like every secret here; five minutes long, single use, and bound
+ * to the app, the address it was sent to and the PKCE challenge the app sent first.
+ *
+ * `grant_id` is written when the code is redeemed, so a code presented a second time can
+ * take down what the first use produced — OAuth 2.1's answer to a code that leaked.
+ */
+export const oauthCodes = pgTable(
+  "oauth_codes",
+  {
+    codeHash: text().primaryKey(),
+    clientId: text().notNull(),
+    redirectUri: text().notNull(),
+    codeChallenge: text().notNull(),
+    expiresAt: timestamp({ withTimezone: true }).notNull(),
+    usedAt: timestamp({ withTimezone: true }),
+    grantId: text(),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    foreignKey({
+      name: "oauth_codes_client_exists",
+      columns: [table.clientId],
+      foreignColumns: [oauthClients.id],
+    }),
+    foreignKey({
+      name: "oauth_codes_grant_exists",
+      columns: [table.grantId],
+      foreignColumns: [oauthGrants.id],
+    }),
+    check("oauth_codes_code_hash_is_a_sha256", sql`${table.codeHash} ~ '^[0-9a-f]{64}$'`),
+    check("oauth_codes_challenge_is_an_s256", sql`${table.codeChallenge} ~ '^[A-Za-z0-9_-]{43}$'`),
+    check(
+      "oauth_codes_grant_only_once_used",
+      sql`${table.grantId} is null or ${table.usedAt} is not null`
+    ),
+  ]
+);
+
+/**
+ * The owner's yes to one app (ADR-0013): what `/settings` lists as a **connected app** and
+ * revokes. Named after the app as it registered — *ChatGPT* — and holding the one refresh
+ * token that app has, as a hash that **changes on every refresh**: unlike an access token's
+ * secret, rotating is this row's job.
+ *
+ * The access tokens issued under it are rows in `access_tokens`, so the door's check stays
+ * one check (ADR-0009). Revoking a grant revokes them in the same transaction, and like an
+ * access token's, a grant's revocation is final.
+ */
+export const oauthGrants = pgTable(
+  "oauth_grants",
+  {
+    id: text().primaryKey().default(sql`gen_prefixed_id('grant')`),
+    clientId: text().notNull(),
+    name: text().notNull(),
+    refreshHash: text().notNull(),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    lastUsedAt: timestamp({ withTimezone: true }),
+    revokedAt: timestamp({ withTimezone: true }),
+  },
+  (table) => [
+    foreignKey({
+      name: "oauth_grants_client_exists",
+      columns: [table.clientId],
+      foreignColumns: [oauthClients.id],
+    }),
+    unique("oauth_grants_refresh_hash_key").on(table.refreshHash),
+    check("oauth_grants_id_is_prefixed", prefixed(table.id, "grant")),
+    check(
+      "oauth_grants_name_is_not_blank",
+      sql`${table.name} = btrim(${table.name}) and ${table.name} <> ''`
+    ),
+    check("oauth_grants_refresh_hash_is_a_sha256", sql`${table.refreshHash} ~ '^[0-9a-f]{64}$'`),
   ]
 );

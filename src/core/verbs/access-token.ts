@@ -32,7 +32,10 @@ export type IssuedToken = {
   createdAt: Date;
 };
 
-/** Who is calling, once the door has let them in. */
+/**
+ * Who is calling, once the door has let them in: an owner-issued token or an OAuth access
+ * token, alike — the door does not need to know which (ADR-0009, ADR-0013).
+ */
 export type Caller = { tokenId: string; name: string };
 
 /**
@@ -44,15 +47,29 @@ export type TokenRefusal =
   | "none-issued"
   /** No live or revoked token has this secret. */
   | "unknown"
-  /** It was a token, and the owner revoked it. */
-  | "revoked";
+  /** It was a token, and the owner revoked it — or the grant it was issued under. */
+  | "revoked"
+  /** An OAuth access token past its hour (ADR-0013). The app refreshes and comes back. */
+  | "expired";
 
 export type TokenCheck = { ok: true; caller: Caller } | { ok: false; refusal: TokenRefusal };
 
 const PREFIX = "kanpai_";
 
-/** The SHA-256 of a secret, in hex: what the database holds instead of it. */
-function hashOf(secret: string): string {
+/**
+ * A new secret: `prefix` and 32 random bytes in base64url. The owner's tokens are `kanpai_…`;
+ * OAuth's access and refresh tokens say which they are, `kanpai_at_…` and `kanpai_rt_…`, so
+ * one pasted into the wrong place is recognisable at a glance (`./oauth.ts`).
+ */
+export function newSecret(prefix: string): string {
+  return `${prefix}${randomBytes(32).toString("base64url")}`;
+}
+
+/**
+ * The SHA-256 of a secret, in hex: what the database holds instead of it. Every secret here
+ * — a token, an authorization code, a refresh token — is kept as this and nothing else.
+ */
+export function hashOf(secret: string): string {
   return createHash("sha256").update(secret, "utf8").digest("hex");
 }
 
@@ -62,11 +79,13 @@ const NO_SUCH_TOKEN = "No access token has that id.";
  * Issue a token named after where it is going — *Claude*, *laptop*, *tunnel* — and return
  * its secret, the one time it exists outside the client it is pasted into.
  *
- * A name already carried by a live token is refused: two *Claude*s would leave the owner
- * unable to tell which one to revoke. A revoked token's name is free again.
+ * A name already carried by a live token the owner issued is refused: two *Claude*s would
+ * leave the owner unable to tell which one to revoke. A revoked token's name is free again,
+ * and so is an OAuth app's: *ChatGPT* connected over OAuth is a connected app on `/settings`,
+ * listed apart, and does not stop the owner naming a token *ChatGPT* too.
  */
 export async function issueAccessToken(name: string): Promise<IssuedToken> {
-  const secret = `${PREFIX}${randomBytes(32).toString("base64url")}`;
+  const secret = newSecret(PREFIX);
 
   const [row] = await refusing(
     () =>
@@ -98,13 +117,17 @@ export async function issueAccessToken(name: string): Promise<IssuedToken> {
 export async function revokeAccessToken(tokenId: string): Promise<void> {
   const updated = await query(
     `update access_tokens set revoked_at = now()
-      where id = $1 and revoked_at is null
+      where id = $1 and revoked_at is null and grant_id is null
       returning id`,
     [tokenId]
   );
   if (updated.length > 0) return;
 
-  const found = await query("select 1 from access_tokens where id = $1", [tokenId]);
+  // An OAuth access token is not revoked one by one: it is the grant that is revoked, and
+  // every token under it with it (`./oauth.ts`). So here it is not a token the owner can name.
+  const found = await query("select 1 from access_tokens where id = $1 and grant_id is null", [
+    tokenId,
+  ]);
   throw found.length === 0
     ? new Refusal("not-found", NO_SUCH_TOKEN)
     : new Refusal("not-allowed", "That token is already revoked.");
@@ -112,34 +135,58 @@ export async function revokeAccessToken(tokenId: string): Promise<void> {
 
 /**
  * Whether a secret is a live token, and whose. A live one has its last-used time touched —
- * at most once a minute, so a conversation of thirty calls is one write and not thirty.
+ * at most once a minute, so a conversation of thirty calls is one write and not thirty — and,
+ * for an OAuth access token, its grant's too, which is what `/settings` shows beside a
+ * connected app.
+ *
+ * An OAuth access token is refused once its hour is up, and whenever its grant is revoked.
+ * Revoking a grant revokes its tokens in the same transaction (`./oauth.ts`), so the second
+ * condition never decides anything on its own; it is here so that the door does not depend on
+ * that verb having been the only thing to write a revocation.
  *
  * **Fails closed** with no help from here: with no token issued nothing matches, and every
  * request is refused. `none-issued` only tells the log why.
  */
 export async function authenticateAccessToken(secret: string): Promise<TokenCheck> {
-  const [found] = await query<{ id: string; name: string; revoked: boolean }>(
+  const [found] = await query<{ id: string; name: string; revoked: boolean; expired: boolean }>(
     `with found as (
-       select id, name, revoked_at is not null as revoked
-         from access_tokens
-        where secret_hash = $1
+       select t.id, t.name, t.grant_id,
+              t.revoked_at is not null or g.revoked_at is not null as revoked,
+              t.expires_at is not null and t.expires_at <= now() as expired
+         from access_tokens t
+         left join oauth_grants g on g.id = t.grant_id
+        where t.secret_hash = $1
      ),
      touched as (
        update access_tokens t
           set last_used_at = now()
          from found f
         where t.id = f.id
-          and not f.revoked
+          and not f.revoked and not f.expired
           and (t.last_used_at is null or t.last_used_at < now() - interval '1 minute')
        returning t.id
+     ),
+     touched_grant as (
+       update oauth_grants g
+          set last_used_at = now()
+         from found f
+        where g.id = f.grant_id
+          and not f.revoked and not f.expired
+          and (g.last_used_at is null or g.last_used_at < now() - interval '1 minute')
+       returning g.id
      )
-     select id, name, revoked from found`,
+     select id, name, revoked, expired from found`,
     [hashOf(secret)]
   );
 
-  if (found && !found.revoked) return { ok: true, caller: { tokenId: found.id, name: found.name } };
-  if (found) return { ok: false, refusal: "revoked" };
+  if (found?.revoked) return { ok: false, refusal: "revoked" };
+  if (found?.expired) return { ok: false, refusal: "expired" };
+  if (found) return { ok: true, caller: { tokenId: found.id, name: found.name } };
 
-  const live = await query("select 1 from access_tokens where revoked_at is null limit 1");
+  const live = await query(
+    `select 1 from access_tokens
+      where revoked_at is null and (expires_at is null or expires_at > now())
+      limit 1`
+  );
   return { ok: false, refusal: live.length === 0 ? "none-issued" : "unknown" };
 }
