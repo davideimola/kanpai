@@ -49,6 +49,16 @@ export default async function WishlistPage({ searchParams }: { searchParams: Pro
             record the bottles or the tasting.
           </p>
         </div>
+        {/* A Wish is made where a Label is found — Add, then *Add to the wishlist* — so this is a
+            way there and a sentence saying which button waits at the end of it. */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+          <Link href="/add" className={QUIET}>
+            Add a wish
+          </Link>
+          <span className="text-sm text-glass-quiet">
+            Find the wine, then choose Add to the wishlist.
+          </span>
+        </div>
         <nav aria-label="Show">
           <ul className="flex w-max rounded-xl bg-paper-quiet p-[3px]">
             {(
