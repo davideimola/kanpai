@@ -3,16 +3,25 @@ import { Refused, Said } from "@/components/drawer";
 import { Silhouette } from "@/components/silhouette";
 import { listAccessTokens } from "@/core/queries/access-token";
 import { type KeptKind, listEveryKind } from "@/core/queries/kind";
+import { listConnectedApps } from "@/core/queries/oauth";
 import { BOTTLE_SHAPES, LIQUIDS } from "@/core/verbs/kind";
 import { signOutOwner } from "@/lib/auth/actions";
 import { requireOwner } from "@/lib/auth/owner";
 import { cn } from "@/lib/utils";
 import { dateAsWritten, todayAsADay } from "../words";
-import { addAKind, amendAKind, deleteAKind, hideAKind, moveAKind, revoke } from "./actions";
+import {
+  addAKind,
+  amendAKind,
+  deleteAKind,
+  disconnect,
+  hideAKind,
+  moveAKind,
+  revoke,
+} from "./actions";
 import { IssueToken } from "./issue-token";
 
 // SETTINGS (spec §4): who is signed in, the access tokens the assistants connect with
-// (ADR-0009), and the Kinds (ADR-0002, ADR-0012).
+// (ADR-0009), the apps connected over OAuth (ADR-0013), and the Kinds (ADR-0002, ADR-0012).
 //
 // Every act is a plain form posting to `./actions`, and the answer comes back in the address,
 // except a token's secret (`./issue-token`). The Kinds are a list of disclosures: each opens
@@ -51,14 +60,20 @@ const LIQUID_NAMES: Record<string, string> = {
 export default async function SettingsPage({ searchParams }: { searchParams: Promise<Asked> }) {
   const owner = await requireOwner();
 
-  const [tokens, kinds, asked] = await Promise.all([
+  const [tokens, apps, kinds, asked] = await Promise.all([
     listAccessTokens(),
+    listConnectedApps(),
     listEveryKind(),
     searchParams,
   ]);
   const today = todayAsADay();
   const refused = typeof asked.refused === "string" ? asked.refused : null;
-  const said = typeof asked.said === "string" ? SAID[asked.said] : undefined;
+  const said =
+    asked.said === "disconnected" && typeof asked.app === "string"
+      ? `Disconnected. ${asked.app} can no longer reach kanpai.`
+      : typeof asked.said === "string"
+        ? SAID[asked.said]
+        : undefined;
   const sections = [...new Set(kinds.map((kind) => kind.section))];
 
   return (
@@ -134,6 +149,50 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
                     </button>
                   </form>
                 )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section id="apps" aria-labelledby="apps-title" className="flex scroll-mt-6 flex-col gap-4">
+        <div className="flex flex-col gap-1.5">
+          <h2 id="apps-title" className="font-serif text-[22px] font-bold">
+            Connected apps
+          </h2>
+          <p className="max-w-prose text-[15px] leading-relaxed text-glass-quiet">
+            Apps like ChatGPT connect by signing in here instead of with a token: you give them this
+            copy's address ending in /mcp, and they ask you to allow them. Each stays connected
+            until you disconnect it.
+          </p>
+        </div>
+
+        {apps.length === 0 ? (
+          <p className="border-t border-rule pt-3 text-[15px] text-glass-quiet">
+            No app is connected.
+          </p>
+        ) : (
+          <ul className="flex flex-col">
+            {apps.map((app) => (
+              <li
+                key={app.id}
+                className="flex flex-wrap items-center justify-between gap-3 border-t border-rule py-3.5"
+              >
+                <div className="flex min-w-0 flex-col gap-0.5">
+                  <span className="text-[15px] font-bold">{app.name}</span>
+                  <span className="text-[13px] text-glass-quiet">
+                    Connected {dateAsWritten(new Date(app.connectedAt), today)}
+                    {app.lastUsedAt
+                      ? `, last used ${dateAsWritten(new Date(app.lastUsedAt), today)}`
+                      : ", never used"}
+                  </span>
+                </div>
+                <form action={disconnect}>
+                  <input type="hidden" name="grantId" value={app.id} />
+                  <button type="submit" className={DANGER}>
+                    Revoke
+                  </button>
+                </form>
               </li>
             ))}
           </ul>

@@ -15,6 +15,7 @@ import {
   moveKind,
   setKindHidden,
 } from "@/core/verbs/kind";
+import { revokeGrant } from "@/core/verbs/oauth";
 import { requireOwner } from "@/lib/auth/owner";
 import { at, text } from "../form";
 
@@ -55,6 +56,24 @@ async function answer(work: () => Promise<void>, said: string, anchor: string): 
 
 export async function revoke(form: FormData): Promise<void> {
   await answer(() => revokeAccessToken(text(form, "tokenId") ?? ""), "revoked", "tokens");
+}
+
+/**
+ * Disconnect an app that connected over OAuth (ADR-0013). The sentence that says so names the
+ * app, so its name travels back in the address beside what was said — a name, never a secret.
+ */
+export async function disconnect(form: FormData): Promise<void> {
+  await requireOwner();
+  let to: string;
+  try {
+    const { name } = await revokeGrant(text(form, "grantId") ?? "");
+    to = at("/settings", { said: "disconnected", app: name });
+  } catch (error) {
+    if (!isRefusal(error)) throw error;
+    to = at("/settings", { refused: error.message });
+  }
+  revalidatePath("/", "layout");
+  redirect(`${to}#apps`);
 }
 
 function aShape(form: FormData): BottleShape {
