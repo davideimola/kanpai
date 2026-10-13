@@ -57,6 +57,7 @@ describe("the tool list", () => {
       "add_wish",
       "close_wish",
       "create_label",
+      "edit_tasting",
       "get_label",
       "list_kinds",
       "read_cellar",
@@ -69,6 +70,28 @@ describe("the tool list", () => {
       "update_bottle",
       "update_palate",
     ]);
+  });
+
+  // A Tasting is amended over MCP and never struck there: deleting one is the owner's, from the
+  // web view. `edit_tasting` exists because an assistant with no way to amend recorded the four
+  // guided answers as a second Tasting, a duplicate the owner could not remove.
+  it("amends a Tasting, and strikes none", () => {
+    const names = everyTool.map((tool) => tool.name);
+    expect(names).toContain("edit_tasting");
+    expect(names.filter((name) => /strike|delete|remove/.test(name))).toEqual([]);
+    expect(byName("edit_tasting")).toMatchObject({ readOnly: false });
+    expect(byName("edit_tasting").destructive).toBeFalsy();
+    expect(byName("record_tasting").description).toContain("`edit_tasting`");
+  });
+
+  it("tells the assistant, before anything, to put the guided answers in the same Tasting", async () => {
+    const initialized = (await answer(
+      JSON.stringify({ jsonrpc: "2.0", id: 1, method: "initialize", params: {} }),
+      mounted
+    )) as { result: { instructions: string } };
+    expect(initialized.result.instructions).toContain(
+      "Put the answers into that same Tasting with `edit_tasting`"
+    );
   });
 
   // `protocol.ts` refuses an argument a tool does not declare only where the schema is
@@ -229,6 +252,53 @@ describe("the S2 flow, through the door's own framing", () => {
     expect((await call("read_tastings", { grape: "primitivo" })).tastings).toMatchObject([
       { description: "Primitivo by the glass", rating: 3.5, label: null },
     ]);
+  });
+
+  it("puts the guided answers into the Tasting just recorded, and records no second one", async () => {
+    const { tasting } = await call("record_tasting", {
+      description: "Primitivo by the glass",
+      rating: 3.5,
+      notes: "At the trattoria",
+    });
+    const { tastings } = await call("read_tastings");
+    expect(tastings).toMatchObject([{ id: tasting }]);
+
+    const edited = await call("edit_tasting", {
+      tasting,
+      liked_it: "Yes, soft and easy",
+      body_and_feel: "Light and smooth",
+      food: "pizza",
+      rating: 4,
+      notes: null,
+    });
+    expect(edited.tasting).toMatchObject({
+      id: tasting,
+      likedIt: "Yes, soft and easy",
+      bodyAndFeel: "Light and smooth",
+      food: "pizza",
+      rating: 4,
+      notes: null,
+      description: "Primitivo by the glass",
+    });
+    expect((await call("read_tastings")).tastings).toHaveLength(1);
+
+    // A blank is not a clear, and what was left out stays.
+    await call("edit_tasting", { tasting, food: "", rating: null });
+    expect((await call("read_tastings")).tastings).toMatchObject([
+      { food: "pizza", rating: null, likedIt: "Yes, soft and easy" },
+    ]);
+  });
+
+  it("refuses to edit a Tasting that does not exist, or with nothing to change", async () => {
+    expect(await call("edit_tasting", { tasting: "tst_missing", rating: 3 })).toEqual({
+      refused: "No Tasting has that id.",
+      code: "not-found",
+    });
+    const { tasting } = await call("record_tasting", { description: "A glass" });
+    expect(await call("edit_tasting", { tasting })).toMatchObject({ code: "invalid" });
+    expect(await call("edit_tasting", { tasting, rating: 4.3 })).toMatchObject({
+      code: "invalid",
+    });
   });
 
   it("hands a refusal back as a result the assistant can read, with its code", async () => {

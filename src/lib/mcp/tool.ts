@@ -125,6 +125,28 @@ export function numberArgument(input: Record<string, unknown>, key: string): num
 }
 
 /**
+ * The string at `key` for a tool that amends: `null` when the caller sent an explicit `null` —
+ * *clear it* — and otherwise what `stringArgument` reads, `undefined` meaning *leave it alone*.
+ *
+ * A blank string is not a clear: it is a client filling in every field of the schema, and
+ * reading it as one would wipe what the owner wrote for a value nobody meant.
+ */
+export function clearableStringArgument(
+  input: Record<string, unknown>,
+  key: string
+): string | null | undefined {
+  return input[key] === null ? null : stringArgument(input, key);
+}
+
+/** The number at `key` for a tool that amends: `null` clears it, as `clearableStringArgument`. */
+export function clearableNumberArgument(
+  input: Record<string, unknown>,
+  key: string
+): number | null | undefined {
+  return input[key] === null ? null : numberArgument(input, key);
+}
+
+/**
  * Which Vintage of a Label is meant, at `key`: a year, `"nv"` or `"unknown"` (ADR-0010), or
  * `undefined` where nothing was sent.
  *
