@@ -79,3 +79,23 @@ export async function closeWish(
     ? new Refusal("not-found", NO_SUCH_WISH)
     : new Refusal("not-allowed", "That Wish is already closed.");
 }
+
+/**
+ * Undo a close: the Wish is open again, as if it had never ended — what the wishlist's *Undo*
+ * does after *Drop*, and after *Bought* or *Tasted* when nothing was bought or tasted after all.
+ * Whatever was recorded meanwhile — a Bottle, a Tasting — is its own record and stays.
+ */
+export async function reopenWish(wishId: string): Promise<void> {
+  const updated = await query(
+    `update wishes set closed_as = null, closed_at = null
+      where id = $1 and closed_as is not null
+      returning id`,
+    [wishId]
+  );
+  if (updated.length > 0) return;
+
+  const found = await query("select 1 from wishes where id = $1", [wishId]);
+  throw found.length === 0
+    ? new Refusal("not-found", NO_SUCH_WISH)
+    : new Refusal("not-allowed", "That Wish is still open.");
+}

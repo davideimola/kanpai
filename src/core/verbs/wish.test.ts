@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { aLabel, emptyTheCatalogue } from "@/test/catalogue";
 import { query } from "../db.ts";
 import { listOpenWishes } from "../queries/wish.ts";
-import { addWish, closeWish } from "./wish.ts";
+import { addWish, closeWish, reopenWish } from "./wish.ts";
 
 // Seam 1, against the real Postgres. A Wish names a Label or a Vintage, and how it ended and
 // when go together.
@@ -75,6 +75,28 @@ describe("closing a Wish", () => {
     await closeWish(id, "dropped");
     await expect(closeWish(id, "tasted")).rejects.toMatchObject({ code: "not-allowed" });
     await expect(closeWish("wish_missing", "tasted")).rejects.toMatchObject({ code: "not-found" });
+  });
+});
+
+describe("reopening a Wish", () => {
+  it("undoes how it ended: it is open again, on the wishlist", async () => {
+    const { labelId } = await aLabel();
+    const id = await addWish({ labelId, why: "for the holidays" });
+    await closeWish(id, "dropped");
+
+    await reopenWish(id);
+
+    expect(await listOpenWishes()).toMatchObject([{ id, why: "for the holidays" }]);
+    expect(await query("select closed_as, closed_at from wishes where id = $1", [id])).toEqual([
+      { closed_as: null, closed_at: null },
+    ]);
+  });
+
+  it("refuses a Wish still open, and one that does not exist", async () => {
+    const { labelId } = await aLabel();
+    const id = await addWish({ labelId });
+    await expect(reopenWish(id)).rejects.toMatchObject({ code: "not-allowed" });
+    await expect(reopenWish("wish_missing")).rejects.toMatchObject({ code: "not-found" });
   });
 });
 

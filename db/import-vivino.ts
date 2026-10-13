@@ -162,6 +162,7 @@ async function main(): Promise<void> {
   const { addBottles } = await import("../src/core/verbs/bottle.ts");
   const { recordTasting } = await import("../src/core/verbs/tasting.ts");
   const { addWish } = await import("../src/core/verbs/wish.ts");
+  const { openWishOn } = await import("../src/core/queries/wish.ts");
 
   const said = (line: string) => process.stdout.write(`${line}\n`);
   const counts = { labels: 0, tastings: 0, bottles: 0, wishes: 0 };
@@ -253,14 +254,7 @@ async function main(): Promise<void> {
     for (const row of wished) {
       if (drunkKeys.has(key(row))) continue;
       const labelId = labelIds.get(key(row));
-      if (labelId) {
-        const [held] = await query(
-          `select 1 from wishes w left join vintages v on v.id = w.vintage_id
-            where coalesce(w.label_id, v.label_id) = $1 and w.closed_as is null`,
-          [labelId]
-        );
-        if (held) continue;
-      }
+      if (labelId && (await openWishOn(labelId))) continue;
       said(`Wish     ${where(row)}`);
       counts.wishes++;
       if (!apply || !labelId) continue;
