@@ -2,6 +2,7 @@
 
 import { SIGN_IN_PATH } from "./gate";
 import { signIn, signOut } from "./index";
+import { returnTo } from "./return-to";
 
 // The two acts of the gate. Both are Server Functions because both set a cookie, and
 // both end in a redirect thrown by Auth.js.
@@ -9,12 +10,13 @@ import { signIn, signOut } from "./index";
 /**
  * The one button on `/signin`.
  *
- * Sign-in always lands on the home page rather than on the route that was refused:
- * the proxy's redirect deliberately carries no `callbackUrl`, so there is no
- * visitor-supplied destination to validate here.
+ * Sign-in lands on the home page rather than on the route that was refused — with one
+ * exception: an OAuth authorization request, which the proxy carries through as `next` so that
+ * an app waiting on the consent screen gets its answer (ADR-0013). `returnTo` honours that and
+ * nothing else; any other `next` is home, so there is still no visitor-supplied destination.
  */
-export async function signInWithGoogle() {
-  await signIn("google", { redirectTo: "/" });
+export async function signInWithGoogle(form?: FormData) {
+  await signIn("google", { redirectTo: returnTo(form?.get("next")) });
 }
 
 /**

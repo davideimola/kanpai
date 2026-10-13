@@ -28,25 +28,39 @@ describe("the proxy's matcher", () => {
 
   // Everything the owner looks at, starting with the home page — which is the whole
   // of the web view today and the reason the exclusions have to be a short list.
-  it.each(["/", "/cellar", "/labels/lbl_abc", "/palate", "/anything-a-later-slice-adds"])(
-    "covers %s",
-    (pathname) => {
-      expect(gateCovers(pathname)).toBe(true);
-    }
-  );
+  // `/oauth/authorize` among them: it is OAuth's consent screen, and the owner signs in to
+  // see it (ADR-0013).
+  it.each([
+    "/",
+    "/cellar",
+    "/labels/lbl_abc",
+    "/palate",
+    "/anything-a-later-slice-adds",
+    "/oauth/authorize",
+    "/oauth",
+    "/oauth/anything-else",
+  ])("covers %s", (pathname) => {
+    expect(gateCovers(pathname)).toBe(true);
+  });
 
   // The things that must stay outside it, each for the reason `src/proxy.ts` gives beside
-  // the pattern: Auth.js's endpoints, the sign-in screen, the MCP door (ADR-0009), the
-  // health check a probe asks without a session, `.well-known`, the build output, and the
-  // icon and the manifest a browser fetches without a cookie.
+  // the pattern: Auth.js's endpoints, the sign-in screen, the MCP door (ADR-0009), the OAuth
+  // endpoints an app calls with no cookie (ADR-0013), the health check a probe asks without a
+  // session, `.well-known`, the build output, and the icon and the manifest a browser fetches
+  // without a cookie.
   it.each([
     "/api/auth/signin/google",
     "/api/auth/callback/google",
     "/signin",
     "/mcp",
     "/mcp/",
+    "/oauth/register",
+    "/oauth/token",
+    "/oauth/revoke",
     "/healthz",
     "/.well-known",
+    "/.well-known/oauth-authorization-server",
+    "/.well-known/oauth-authorization-server/mcp",
     "/.well-known/oauth-protected-resource",
     "/.well-known/oauth-protected-resource/mcp",
     "/favicon.ico",
@@ -66,6 +80,9 @@ describe("the proxy's matcher", () => {
     "/signing-off",
     "/mcps",
     "/mcp-token",
+    "/oauth/tokens",
+    "/oauth/registered",
+    "/oauth/revoke-everything",
     "/healthzz",
     "/healthz-and-more",
     "/api/authors",
