@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { at } from "../form";
 import { counted, heldInWords } from "../words";
 import { choose, writeIn } from "./actions";
+import { aboutTheCandidate, CandidatePicture, CandidateRow } from "./candidates";
 import { chosenAsParam, chosenFrom, sourceSays, whatWasTyped } from "./search";
 
 // ADD (spec §4, S6): a bottle in the owner's hand — at the shop, at the table — found and recorded
@@ -288,58 +289,6 @@ function Found({
   );
 }
 
-/** What a candidate says about itself, in one line: producer, where, strength. */
-function aboutTheCandidate(candidate: CatalogueCandidate): string {
-  return [
-    candidate.producer,
-    candidate.region ?? candidate.country,
-    candidate.strength === null ? null : `${candidate.strength}%`,
-  ]
-    .filter(Boolean)
-    .join(", ");
-}
-
-/**
- * The candidate's photo, small and whole in a quiet box — never cropped into a silhouette
- * (ADR-0012) — or, when its Source has none, the bottle its Kind would be drawn as.
- */
-function CandidatePicture({
-  candidate,
-  kinds,
-  large,
-}: {
-  candidate: CatalogueCandidate;
-  kinds: KeptKind[];
-  large?: boolean;
-}) {
-  const kind = kinds.find((one) => one.id === candidate.kind);
-  return (
-    <span
-      className={cn(
-        "flex shrink-0 items-center justify-center overflow-hidden rounded-lg bg-paper-quiet",
-        large ? "h-48 w-36 rounded-xl" : "h-[84px] w-16"
-      )}
-    >
-      {candidate.imageUrl ? (
-        // biome-ignore lint/performance/noImgElement: hotlinked, never ours to resize (ADR-0011)
-        <img
-          src={candidate.imageUrl}
-          alt={`The bottle, as ${SOURCE_TITLE[candidate.source]} shows it`}
-          referrerPolicy="no-referrer"
-          loading="lazy"
-          className="h-full w-full object-contain p-1"
-        />
-      ) : kind ? (
-        <Silhouette
-          shape={kind.bottleShape}
-          liquid={kind.liquid}
-          className={large ? "h-40 w-[53px]" : "h-[72px] w-6"}
-        />
-      ) : null}
-    </span>
-  );
-}
-
 function Candidate({
   candidate,
   kinds,
@@ -349,37 +298,25 @@ function Candidate({
   kinds: KeptKind[];
   here: string;
 }) {
-  const about = aboutTheCandidate(candidate);
   return (
-    <li className="grid grid-cols-[64px_minmax(0,1fr)_auto] items-center gap-3.5 border-t border-rule py-3.5">
-      <CandidatePicture candidate={candidate} kinds={kinds} />
-      <div className="flex min-w-0 flex-col gap-0.5">
-        <span className="font-serif text-[17px] font-bold leading-snug break-words">
-          {candidate.name}
-        </span>
-        {about ? (
-          <span className="text-[13.5px] leading-snug text-glass-quiet">{about}</span>
-        ) : null}
-      </div>
-      <div>
-        {candidate.label ? (
-          <Link
-            href={`/labels/${encodeURIComponent(candidate.label)}`}
-            className={cn(PLAIN, "text-sm")}
-          >
-            Already yours
-          </Link>
-        ) : (
-          <Link
-            href={`${here}${here.includes("?") ? "&" : "?"}${new URLSearchParams({ choose: chosenAsParam(candidate) })}`}
-            scroll={false}
-            className={cn(QUIET, "text-sm")}
-          >
-            Choose
-          </Link>
-        )}
-      </div>
-    </li>
+    <CandidateRow candidate={candidate} kinds={kinds}>
+      {candidate.label ? (
+        <Link
+          href={`/labels/${encodeURIComponent(candidate.label)}`}
+          className={cn(PLAIN, "text-sm")}
+        >
+          Already yours
+        </Link>
+      ) : (
+        <Link
+          href={`${here}${here.includes("?") ? "&" : "?"}${new URLSearchParams({ choose: chosenAsParam(candidate) })}`}
+          scroll={false}
+          className={cn(QUIET, "text-sm")}
+        >
+          Choose
+        </Link>
+      )}
+    </CandidateRow>
   );
 }
 
