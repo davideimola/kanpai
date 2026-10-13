@@ -114,9 +114,11 @@ describe("the first Vintage of a Label the owner makes (ADR-0010)", () => {
 });
 
 describe("where the owner goes next", () => {
-  it("is the Tasting unless they chose Bottles", () => {
+  it("is the Tasting unless they chose Bottles or the wishlist", () => {
     expect(nextStep("bottles")).toBe("bottles");
+    expect(nextStep("wish")).toBe("wish");
     expect(nextStep("taste")).toBe("taste");
+    expect(nextStep("anything")).toBe("taste");
     expect(nextStep(null)).toBe("taste");
   });
 });

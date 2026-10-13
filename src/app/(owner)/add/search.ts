@@ -89,7 +89,10 @@ export function firstVintage(said: {
   return said.dating === "nv" ? "nv" : "unknown";
 }
 
-/** Where the owner goes once the Label exists: the act they chose, open on its page. */
-export function nextStep(said: string | null): "taste" | "bottles" {
-  return said === "bottles" ? "bottles" : "taste";
+/**
+ * Where the owner goes once the Label exists: the act they chose, open on its page — Record a
+ * tasting, Add bottles, or Add to the wishlist.
+ */
+export function nextStep(said: string | null): "taste" | "bottles" | "wish" {
+  return said === "bottles" || said === "wish" ? said : "taste";
 }

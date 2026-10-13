@@ -37,7 +37,8 @@ import { chosenAsParam, chosenFrom, sourceSays, whatWasTyped } from "./search";
 //
 // Choosing a candidate or writing one in is a panel whose open state is the address
 // (`?choose=vivino:1234`, `?panel=write`; `@/components/drawer`), and it ends on the new Label's
-// page with Record a tasting or Add bottles open — the Label page's own panels (`./actions`).
+// page with Record a tasting, Add bottles or Add to the wishlist open — the Label page's own
+// panels (`./actions`).
 
 type Asked = Record<string, string | string[] | undefined>;
 
@@ -212,6 +213,9 @@ function Yours({ label, held }: { label: FoundLabel; held: HeldVintage[] }) {
           </Link>
           <Link href={`${page}?panel=bottles`} className={cn(QUIET, "text-sm")}>
             Add bottles
+          </Link>
+          <Link href={`${page}?panel=wish`} className={cn(PLAIN, "text-sm")}>
+            Add to the wishlist
           </Link>
         </div>
       </div>
@@ -432,7 +436,10 @@ function YearChoice() {
   );
 }
 
-/** The two ways on, once the Label exists: the Label page with that act open. */
+/**
+ * The three ways on, once the Label exists: the Label page with that act open. The wishlist is
+ * for a bottle seen, not yet bought or drunk.
+ */
 function NextStep() {
   return (
     <div className="mt-2 flex flex-col gap-2.5">
@@ -443,6 +450,9 @@ function NextStep() {
         </button>
         <button type="submit" name="next" value="bottles" className={cn(QUIET, "min-h-12")}>
           Add bottles
+        </button>
+        <button type="submit" name="next" value="wish" className={cn(QUIET, "col-span-2 min-h-12")}>
+          Add to the wishlist
         </button>
       </div>
     </div>

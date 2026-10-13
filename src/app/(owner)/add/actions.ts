@@ -20,7 +20,7 @@ import { chosenFrom, firstVintage, nextStep } from "./search";
 // list is for what an assistant read off a photo or a conversation.
 //
 // **Once it exists, the owner lands on its page with the act they chose open** — Record a
-// tasting, or Add bottles — so the panels and the Server Functions behind them are the Label
+// tasting, Add bottles, or Add to the wishlist — so the panels and the Server Functions behind them are the Label
 // page's own, never a second copy of them here. A refusal comes back to `/add` with the panel
 // that was open, the sentence beside its fields.
 
