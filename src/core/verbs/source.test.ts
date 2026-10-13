@@ -44,7 +44,19 @@ describe("recording a Source", () => {
     ).rejects.toMatchObject({
       code: "already-exists",
       constraint: "label_sources_one_label_per_record",
+      message: `That Open Food Facts record is already on another Label, Barolo Castiglione, Vietti (${first.labelId}). If it is the same bottle, use that Label, or merge the two.`,
     });
+  });
+
+  it("changes nothing when the Label has that record already", async () => {
+    const { labelId } = await aLabel();
+    const record = { source: "openfoodfacts", idAtSource: "8001234567890" } as const;
+    const id = await recordSource(labelId, record);
+
+    expect(await recordSource(labelId, { ...record, imageUrl: "https://example.org/a.png" })).toBe(
+      id
+    );
+    expect((await getLabel(labelId))?.sources).toMatchObject([{ id, imageUrl: null }]);
   });
 
   it("refuses a Label that does not exist", async () => {
