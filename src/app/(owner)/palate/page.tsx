@@ -7,6 +7,7 @@ import { requireOwner } from "@/lib/auth/owner";
 import { cn } from "@/lib/utils";
 import { dateAsWritten, todayAsADay } from "../words";
 import { save } from "./actions";
+import { PalateAsWritten } from "./as-written";
 import { ratedWellInWords } from "./rated-well";
 
 // THE PALATE (spec §4, S7): the owner's taste, in prose — **an instruction to the external
@@ -14,8 +15,9 @@ import { ratedWellInWords } from "./rated-well";
 // suggests anything, and proposes changes to it as the Tastings add up; here the owner reads it
 // and rewrites it.
 //
-// Edited in place: the prose, and `?edit=1` turns it into the field holding it. Saving replaces
-// the whole of it, as `update_palate` does. An empty Palate opens on the field, with what it is
+// Edited in place: the prose drawn as the Markdown it is written in (`./as-written.tsx`), and
+// `?edit=1` turns it into the field holding its source. Saving replaces the whole of it, as
+// `update_palate` does. An empty Palate opens on the field, with what it is
 // for and what to write in it, because the owner is a beginner and a blank box asks too much.
 //
 // Beside it, quietly, what the diary says was rated well — counted (`whatWasRatedWell`), never
@@ -74,11 +76,18 @@ export default async function PalatePage({ searchParams }: { searchParams: Promi
                 </span>
                 <textarea
                   name="prose"
-                  rows={12}
+                  rows={20}
                   defaultValue={palate.prose}
                   placeholder="I like reds that are soft and fruity, like… I find… I'm curious about…"
-                  className={cn(FIELD, "py-3 text-[17px] leading-relaxed")}
+                  aria-describedby="palate-markdown"
+                  className={cn(
+                    FIELD,
+                    "min-h-[22rem] py-3 font-mono text-[15px] leading-relaxed md:min-h-[30rem]"
+                  )}
                 />
+                <span id="palate-markdown" className={HINT}>
+                  Markdown works: # headings, - lists, **bold**.
+                </span>
               </label>
               <div className="flex flex-wrap gap-2">
                 <button type="submit" className={LOUD}>
@@ -93,10 +102,8 @@ export default async function PalatePage({ searchParams }: { searchParams: Promi
             </form>
           ) : (
             <section aria-label="Your Palate" className="flex flex-col items-start gap-4">
-              <div className="w-full rounded-2xl bg-paper-raised px-5 py-5 md:px-7 md:py-6">
-                <p className="max-w-prose whitespace-pre-line font-serif text-[19px] leading-relaxed">
-                  {palate.prose}
-                </p>
+              <div className="w-full rounded-2xl bg-paper-raised px-5 py-5 md:px-8 md:py-7">
+                <PalateAsWritten prose={palate.prose} />
               </div>
               <Link href="/palate?edit=1" className={QUIET}>
                 Edit
