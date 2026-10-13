@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { aLabel, emptyTheCatalogue } from "@/test/catalogue";
 import { recordTasting } from "../verbs/tasting.ts";
-import { listTastings } from "./tasting.ts";
+import { listTastings, whatWasRatedWell } from "./tasting.ts";
 
 // Seam 1, against the real Postgres: `read_tastings`, filtered the ways spec §3 lists.
 beforeEach(emptyTheCatalogue);
@@ -176,6 +176,79 @@ describe("reading the Tastings", () => {
 
     it("combines with the section", async () => {
       expect(await ids({ text: "sangiovese", section: "Wine" })).toEqual([chianti]);
+    });
+  });
+});
+
+// The aside beside the Palate: counts over the well-rated Tastings, and nothing guessed.
+describe("what was rated well", () => {
+  it("counts the Tastings on a Label rated at least four, by Kind, grape and region", async () => {
+    expect(await whatWasRatedWell()).toEqual({
+      atLeast: 4,
+      tastings: 2,
+      kinds: [
+        { name: "Red", tastings: 1 },
+        { name: "Whisky", tastings: 1 },
+      ],
+      grapes: [
+        { name: "Barley", tastings: 1 },
+        { name: "Nebbiolo", tastings: 1 },
+      ],
+      regions: [
+        { name: "Islay", tastings: 1 },
+        { name: "Piemonte", tastings: 1 },
+      ],
+    });
+  });
+
+  it("counts a Label loved twice twice, each grape of a blend, and at most three of each", async () => {
+    const b = await aLabel({ name: "Barolo Rocche", vintage: 2016 });
+    const c = await aLabel({
+      producer: "Fattoria le Corti",
+      name: "Don Tommaso",
+      region: "Toscana",
+      grapes: ["Sangiovese", "Merlot"],
+      vintage: 2020,
+    });
+    const g = await aLabel({
+      producer: "Malfy",
+      name: "Malfy Gin",
+      kindId: "kind_gin",
+      region: null,
+      grapes: [],
+      vintage: undefined,
+    });
+    for (const vintageId of [b.vintageId, b.vintageId, c.vintageId, g.vintageId]) {
+      await recordTasting({ vintageId, rating: 5 });
+    }
+    await recordTasting({ description: "A Nebbiolo by the glass", rating: 5 });
+
+    const well = await whatWasRatedWell();
+    expect(well.tastings).toBe(6);
+    expect(well.kinds).toEqual([
+      { name: "Red", tastings: 4 },
+      { name: "Gin", tastings: 1 },
+      { name: "Whisky", tastings: 1 },
+    ]);
+    expect(well.grapes).toEqual([
+      { name: "Nebbiolo", tastings: 3 },
+      { name: "Barley", tastings: 1 },
+      { name: "Merlot", tastings: 1 },
+    ]);
+    expect(well.regions).toEqual([
+      { name: "Piemonte", tastings: 3 },
+      { name: "Islay", tastings: 1 },
+      { name: "Toscana", tastings: 1 },
+    ]);
+  });
+
+  it("is nothing when nothing was rated that well", async () => {
+    expect(await whatWasRatedWell(5)).toEqual({
+      atLeast: 5,
+      tastings: 0,
+      kinds: [],
+      grapes: [],
+      regions: [],
     });
   });
 });

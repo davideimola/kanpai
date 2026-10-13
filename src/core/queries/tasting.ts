@@ -135,3 +135,64 @@ function blankless(value: string | undefined): string | null {
   const trimmed = value?.trim();
   return trimmed ? trimmed : null;
 }
+
+/** One thing the well-rated Tastings have in common, and on how many of them. */
+export type Tally = { name: string; tastings: number };
+
+/**
+ * What the owner rated well, counted — the quiet aside beside the Palate. Counts and nothing
+ * else: no Tasting is weighed and nothing is inferred, so the sentence it becomes is one the
+ * owner can check against the diary.
+ */
+export type RatedWell = {
+  /** The lowest Rating counted. */
+  atLeast: number;
+  /** How many Tastings on a Label were rated at least that. Loose ones have no Kind to count. */
+  tastings: number;
+  /** The Kinds, most Tastings first, then by name: at most three. */
+  kinds: Tally[];
+  /** The grapes — a blend counts for each of its grapes — most Tastings first: at most three. */
+  grapes: Tally[];
+  /** The regions, as the Labels write them, most Tastings first: at most three. */
+  regions: Tally[];
+};
+
+/**
+ * The Tastings on a Label rated `atLeast` or more, and what they share: their Kinds, grapes and
+ * regions, each counted in Tastings — the same Label drunk twice and loved twice counts twice,
+ * because it was chosen twice.
+ */
+export async function whatWasRatedWell(atLeast = 4): Promise<RatedWell> {
+  const [row] = await query<Omit<RatedWell, "atLeast">>(
+    `with well as (
+       select t.id, k.name as kind, l.grapes, l.region
+         from tastings t
+         join vintages v on v.id = t.vintage_id
+         join labels l on l.id = v.label_id
+         join kinds k on k.id = l.kind_id
+        where t.rating >= $1
+     ),
+     tally as (
+       select 'kinds' as what, kind as name, count(*)::int as n from well group by kind
+       union all
+       select 'grapes', g, count(*)::int from well, unnest(grapes) as g group by g
+       union all
+       select 'regions', region, count(*)::int from well where region is not null group by region
+     ),
+     top as (
+       select what, name, n,
+              row_number() over (partition by what order by n desc, lower(name), name) as place
+         from tally
+     )
+     select (select count(*)::int from well) as tastings,
+            coalesce((select json_agg(json_build_object('name', name, 'tastings', n) order by place)
+                        from top where what = 'kinds' and place <= 3), '[]') as kinds,
+            coalesce((select json_agg(json_build_object('name', name, 'tastings', n) order by place)
+                        from top where what = 'grapes' and place <= 3), '[]') as grapes,
+            coalesce((select json_agg(json_build_object('name', name, 'tastings', n) order by place)
+                        from top where what = 'regions' and place <= 3), '[]') as regions`,
+    [atLeast]
+  );
+  if (!row) throw new Error("the tally of what was rated well returned no row");
+  return { atLeast, ...row };
+}
