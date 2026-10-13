@@ -23,7 +23,7 @@ src/lib/mcp/
     ├── catalogue.ts     search_catalogue — our Labels, then the Sources' candidates (ADR-0011)
     ├── label.ts         get_label, create_label
     ├── kind.ts          list_kinds
-    ├── tasting.ts       record_tasting, read_tastings
+    ├── tasting.ts       record_tasting, edit_tasting, read_tastings
     ├── bottle.ts        add_bottles, update_bottle
     ├── vintage.ts       set_vintage_year
     ├── cellar.ts        read_cellar
@@ -111,6 +111,14 @@ Everything else here acts on what exists: a Tasting on a Vintage or loose, Bottl
 Cellar, a Bottle opened or finished, a year learned, a Wish added or closed, the Palate
 rewritten. **Nothing deletes**: there is no tool to strike a Tasting, delete a Bottle or merge
 Labels. Those are the owner's, from the web view.
+
+**A Tasting is edited, not recorded again** (ADR-0003, amended 2026-10-13). One Tasting is
+filled in over a conversation — recorded, then the four guided questions asked — and before
+`edit_tasting` existed an assistant with no way to amend one recorded the answers as a second
+Tasting, a duplicate the owner could not remove. So `edit_tasting` amends a Tasting by its id
+(`read_tastings` gives every one's), and `record_tasting` and the server's instructions both say
+the answers go there. It is not `destructive`: it amends, and its description tells the assistant
+to ask before overwriting what the owner wrote. A field left out stays; `null` clears one.
 
 A Bottle or a Tasting names its Vintage by `vintage_id`, or by `label` with `vintage` — a
 year, `"nv"` or `"unknown"` — which finds that Vintage or creates it in the same transaction
