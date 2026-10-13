@@ -77,6 +77,25 @@ export const LABEL_WORDS = `concat_ws(' ', l.name, l.producer, l.appellation, l.
                                  array_to_string(l.grapes, ' '), k.name)`;
 
 /**
+ * One Tasting as `TastingEntry` reads it, with what it was on: the select and its joins, every
+ * Tasting aliased `t`, its Vintage `v`, Label `l` and Kind `k`. A caller adds the `where`.
+ */
+const ENTRY = `select t.id, t.tasted_on::text as "tastedOn", t.place, t.food, t.company,
+            t.rating::float8 as rating, t.notes, t.liked_it as "likedIt",
+            t.body_and_feel as "bodyAndFeel", t.reminded_of as "remindedOf", t.description,
+            case when v.id is null then null
+                 else json_build_object('id', v.id, 'dating', v.dating, 'year', v.year) end as vintage,
+            case when l.id is null then null
+                 else json_build_object('id', l.id, 'producer', l.producer, 'name', l.name,
+                        'kind', json_build_object('id', k.id, 'name', k.name, 'section', k.section),
+                        'region', l.region, 'appellation', l.appellation,
+                        'silhouette', ${SILHOUETTE}) end as label
+       from tastings t
+       left join vintages v on v.id = t.vintage_id
+       left join labels l on l.id = v.label_id
+       left join kinds k on k.id = l.kind_id`;
+
+/**
  * The Tastings, newest first, filtered (spec §3, `read_tastings`).
  *
  * Loose Tastings (ADR-0005) are read alongside the others. They have no Kind, so a Kind
@@ -90,20 +109,7 @@ export async function listTastings(filter: TastingFilter = {}): Promise<TastingE
       throw new Refusal("invalid", "A day is written 2026-10-12.");
   }
   return query<TastingEntry>(
-    `select t.id, t.tasted_on::text as "tastedOn", t.place, t.food, t.company,
-            t.rating::float8 as rating, t.notes, t.liked_it as "likedIt",
-            t.body_and_feel as "bodyAndFeel", t.reminded_of as "remindedOf", t.description,
-            case when v.id is null then null
-                 else json_build_object('id', v.id, 'dating', v.dating, 'year', v.year) end as vintage,
-            case when l.id is null then null
-                 else json_build_object('id', l.id, 'producer', l.producer, 'name', l.name,
-                        'kind', json_build_object('id', k.id, 'name', k.name, 'section', k.section),
-                        'region', l.region, 'appellation', l.appellation,
-                        'silhouette', ${SILHOUETTE}) end as label
-       from tastings t
-       left join vintages v on v.id = t.vintage_id
-       left join labels l on l.id = v.label_id
-       left join kinds k on k.id = l.kind_id
+    `${ENTRY}
       where ($1::text is null or l.kind_id = $1)
         and ($2::text is null or strpos(
               lower(unaccent(concat_ws(' ', l.region, l.appellation, t.description))),
@@ -129,6 +135,15 @@ export async function listTastings(filter: TastingFilter = {}): Promise<TastingE
       blankless(filter.text),
     ]
   );
+}
+
+/**
+ * One Tasting by its id, as the diary shows it, or `null` when no Tasting has that id — what an
+ * edit is made from, and what `edit_tasting` answers with.
+ */
+export async function getTasting(id: string): Promise<TastingEntry | null> {
+  const [entry] = await query<TastingEntry>(`${ENTRY} where t.id = $1`, [id]);
+  return entry ?? null;
 }
 
 function blankless(value: string | undefined): string | null {

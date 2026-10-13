@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { aLabel, emptyTheCatalogue } from "@/test/catalogue";
 import { recordTasting } from "../verbs/tasting.ts";
-import { listTastings, whatWasRatedWell } from "./tasting.ts";
+import { getTasting, listTastings, whatWasRatedWell } from "./tasting.ts";
 
 // Seam 1, against the real Postgres: `read_tastings`, filtered the ways spec §3 lists.
 beforeEach(emptyTheCatalogue);
@@ -181,6 +181,26 @@ describe("reading the Tastings", () => {
 });
 
 // The aside beside the Palate: counts over the well-rated Tastings, and nothing guessed.
+describe("reading one Tasting", () => {
+  it("reads it as the diary does, on a Vintage or loose, and nothing for an unknown id", async () => {
+    expect(await getTasting(barolo)).toMatchObject({
+      id: barolo,
+      tastedOn: "2026-10-11",
+      rating: 4,
+      description: null,
+      label: { name: "Barolo Castiglione" },
+      vintage: { year: 2019 },
+    });
+    expect(await getTasting(loose)).toMatchObject({
+      id: loose,
+      description: "Sangiovese by the glass, Montalcino",
+      label: null,
+      vintage: null,
+    });
+    expect(await getTasting("tst_missing")).toBeNull();
+  });
+});
+
 describe("what was rated well", () => {
   it("counts the Tastings on a Label rated at least four, by Kind, grape and region", async () => {
     expect(await whatWasRatedWell()).toEqual({
