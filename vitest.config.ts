@@ -28,6 +28,9 @@ import { defineConfig } from "vitest/config";
 // renders anything. `src/lib/mcp/tools.test.ts` is a third of the same kind over the tool
 // list — a schema left open, a tool wording *search first* its own way — and it also drives
 // the MCP door's definition of done through the framing, against Seam 1's database.
+// `src/app/(owner)/palate/as-written.test.ts` is a fourth: the Palate is Markdown an assistant
+// wrote, and it pins what that text may put on the page — no raw HTML, no script link, no
+// image fetched. It renders one component to a string, text in and markup out, and nothing else.
 export default defineConfig({
   resolve: {
     alias: {

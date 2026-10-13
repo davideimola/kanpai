@@ -100,7 +100,8 @@ _Avoid_: wishlist item, to-buy.
 The owner's taste, written in prose: what they like, what they don't, what they are curious
 about, what they want to spend. **It is an instruction to the external sommelier, not a note to
 self**, so it is readable and writable over MCP. The assistant proposes updates to it as
-Tastings accumulate; the owner can edit it directly.
+Tastings accumulate; the owner can edit it directly. It is written in Markdown — headings,
+lists, bold — and the owner's page draws it as such.
 _Avoid_: profile, preferences, taste profile.
 
 **Unverified**:
