@@ -5,7 +5,7 @@ in [`docs/adr/`](adr/), and the vocabulary lives in [`CONTEXT.md`](../CONTEXT.md
 document is the inventory and the build order.
 
 > **Status: draft.** Written from the first design conversation (2026-10-12). Section 7 lists
-> what is still open. Built so far: S0, S1, S2, S3, S4, S6.
+> what is still open. Built so far: S0, S1, S2, S3, S4, S6, S7.
 
 ---
 
@@ -111,8 +111,8 @@ door, its gate and its rules are [`src/lib/mcp/README.md`](../src/lib/mcp/README
 | `/cellar` | the Cellar, one shelf per section (not per Kind), each Bottle drawn — closed full, open with its level; an open Bottle stands alone, closed ones of a Vintage stand together with a count; filtered by Everything, Open, or a section |
 | `/labels/<id>` | one Label: Vintages, Bottles, Tastings, derived scores, Sources and their credit, the photo, when there is one, shown small and whole beside the Source's credit and full size when pressed (never drawn into the bottle); edit (every field, the Kind and the bottle shape), merge, record a Tasting, add Bottles, open / set the level / finish / delete a Bottle that is not finished, set the year of the unknown Vintage, mark as checked |
 | `/add` | one field searches the catalogue (`?q=`): a name or a producer — the phone's own text scan types into it — or a barcode, typed or read by the camera (`src/components/scan.tsx`, tsundoku's, the one script on the page). **Already yours** first, each with what the Cellar holds of it and Record a tasting / Add bottles; then **Found on** each Source, each candidate with its photo small and whole, to **Choose**; a Source that is off or did not answer says so in a line. A bottle no Source knows is **written in** by hand. Choosing or writing asks the Kind and the year, makes the Label — born checked (ADR-0004, amended) — and lands on its page with Record a tasting or Add bottles open |
-| `/wishlist` | open Wishes |
-| `/palate` | the Palate, editable |
+| `/wishlist` | the open Wishes, newest first, each with its Label drawn, the year when it names a Vintage, why, where the idea came from and when it was added; **Bought** closes it and opens the Label's Add bottles, **Tasted** closes it and opens Record a tasting — each panel saying so, with an undo — and **Drop** closes it with an undo on the list. The closed ones apart (`?show=closed`), with how each ended, and can be put back. A Wish is added from a Label's page (**Add to the wishlist**, with why and where the idea came from) or from `/add`, as the third way on after Choose or Write it in; a Label already wished for says so instead of taking a second |
+| `/palate` | the Palate, read and rewritten in place: saving replaces the whole prose, as `update_palate` does, and says when it last changed. Empty, it says what a Palate is for and what is worth writing in one. Beside it, quietly, what the diary rated 4 or more has in common — Kinds, grapes, regions, counted in Tastings, only what two or more share — to help write it; the assistant reads the Palate, not that |
 | `/to-check` | Unverified Labels, oldest first: open, edit, merge or mark as checked |
 | `/settings` | as in the siblings, plus **access tokens**: issue (shown once), name, last used, revoke; and **Kinds**: add, rename, reorder, move to a section, set its bottle shape and liquid, hide one in use (a Kind with Labels is never deleted; one with none may be) |
 | `/signin` | as in the siblings |
@@ -124,8 +124,7 @@ The navigation is one list (`src/app/(owner)/navigation.ts`): at the desk a rail
 and Diary, Cellar, Add, Wishlist, Palate, To check, Settings; on a phone a bottom bar — Diary,
 Cellar, a round Add in the middle, Wishlist, Palate — with To check (and how many wait) and
 Settings in the header. **A destination is listed only once its screen exists**: Add came with
-S6, and the Wishlist and the Palate (S7) add their lines in their slice; until then the bar
-carries Diary, the round Add and Cellar.
+S6, and the Wishlist and the Palate with S7, which completed the bar.
 
 ## 5. Build order
 
