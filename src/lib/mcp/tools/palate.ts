@@ -12,7 +12,7 @@ const read: McpTool = {
   title: "Read the owner's Palate",
   description: `The **Palate**: the owner's taste, in their prose — what they like, what they don't, what they
 are curious about, what they want to spend. It is written **to you**, as an instruction: read it before
-you recommend anything, and follow it over your own taste.
+you recommend anything, and follow it over your own taste. It is Markdown: headings, lists, bold.
 
 Empty until somebody writes it. If it is, recommend from \`read_tastings\` and offer to start one.`,
   inputSchema: { type: "object", properties: {}, additionalProperties: false },
@@ -31,8 +31,9 @@ Keep it current as Tastings accumulate: when a pattern shows (*three Nebbiolos r
 oaky Chardonnay a 2*), **propose the change to the owner in the conversation first**, and write it only
 once they agree. Start from \`read_palate\` and keep what they wrote; it is theirs, in their words.
 
-Plain prose a sommelier would read, not a list of scores: what they like and why, what they don't,
-what they are curious about, their budget.`,
+Prose a sommelier would read, not a list of scores: what they like and why, what they don't,
+what they are curious about, their budget. Write it in Markdown — \`##\` headings for the parts, \`-\`
+lists, **bold** — which the owner's page draws as formatting; raw HTML is shown as text.`,
   inputSchema: {
     type: "object",
     properties: {
