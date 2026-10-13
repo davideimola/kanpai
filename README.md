@@ -1,4 +1,16 @@
-# kanpai
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/png/lockup-dark.png">
+    <img src="docs/brand/png/lockup-light.png" alt="kanpai 乾杯" width="480">
+  </picture>
+</p>
+
+<p align="center">
+  <a href="https://github.com/davideimola/kanpai/actions/workflows/check.yml"><img src="https://github.com/davideimola/kanpai/actions/workflows/check.yml/badge.svg" alt="Check"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-1f2a27" alt="MIT"></a>
+  <img src="https://img.shields.io/badge/Next.js%2016-Postgres%2018-1f2a27" alt="Next.js 16, Postgres 18">
+  <img src="https://img.shields.io/badge/LLM%20inside-none-1f2a27" alt="No LLM inside">
+</p>
 
 **乾杯** — *kanpai*. The Japanese toast, and literally *"dry the cup"*: finish what is in it.
 
