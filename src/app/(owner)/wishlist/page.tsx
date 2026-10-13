@@ -40,24 +40,21 @@ export default async function WishlistPage({ searchParams }: { searchParams: Pro
   return (
     <main className="flex max-w-4xl flex-col gap-5 px-4 pt-5 pb-10 sm:px-6 md:px-10 md:pt-9">
       <header className="flex flex-col gap-3">
-        <div className="flex flex-col gap-1.5">
-          <h1 className="font-serif text-[32px] font-bold leading-tight md:text-[40px]">
-            Wishlist
-          </h1>
-          <p className="max-w-prose text-[15px] leading-relaxed text-glass-quiet">
-            What you want to try or buy, and why. When you buy one or taste it, say so here and
-            record the bottles or the tasting.
-          </p>
-        </div>
-        {/* A Wish is made where a Label is found — Add, then *Add to the wishlist* — so this is a
-            way there and a sentence saying which button waits at the end of it. */}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-          <Link href="/add" className={QUIET}>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col gap-1.5">
+            <h1 className="font-serif text-[32px] font-bold leading-tight md:text-[40px]">
+              Wishlist
+            </h1>
+            <p className="max-w-prose text-[15px] leading-relaxed text-glass-quiet">
+              What you want to try or buy, and why. To add one, find the wine and choose Add to the
+              wishlist.
+            </p>
+          </div>
+          {/* Placed as the Cellar's Add bottles is: a Wish is made where a Label is found — Add,
+              then *Add to the wishlist* — so this is the way there. */}
+          <Link href="/add" className={cn(QUIET, "mt-1 shrink-0 md:mt-2")}>
             Add a wish
           </Link>
-          <span className="text-sm text-glass-quiet">
-            Find the wine, then choose Add to the wishlist.
-          </span>
         </div>
         <nav aria-label="Show">
           <ul className="flex w-max rounded-xl bg-paper-quiet p-[3px]">
