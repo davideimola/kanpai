@@ -34,6 +34,7 @@ const PROMPTS = [
   ["What you are curious about", "a region, a grape, a kind of spirit you have never tried."],
   ["When you drink", "with dinner, with friends, a glass after work, and with what food."],
   ["What you want to spend", "on a bottle for a weeknight, and on one for an occasion."],
+  ["How much you know", "just starting, so plain words please; or you read a wine list with ease."],
 ] as const;
 
 export default async function PalatePage({ searchParams }: { searchParams: Promise<Asked> }) {

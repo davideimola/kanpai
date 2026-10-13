@@ -173,5 +173,5 @@ storing third-party images · a cellar map with racks and positions.
   public profile may be the better source. To be measured.
 - **Domain.** Proposed `kanpai.davideimola.dev`.
 - **The assistant project.** Like tsundoku's `docs/assistant-projects/`, a prompt for the Claude
-  and ChatGPT project that sets the sommelier's tone: simple explanations for a beginner, the
-  four guided questions after every Tasting, keep the Palate current.
+  and ChatGPT project that sets the sommelier's tone: explanations pitched at what the Palate says
+  the owner knows, the four guided questions after every Tasting, keep the Palate current.
